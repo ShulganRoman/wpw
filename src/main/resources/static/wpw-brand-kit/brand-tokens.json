@@ -1,0 +1,107 @@
+{
+  "_comment": "WPW Creative Cutting Solutions — Design Tokens v1.0",
+  "_source": "Extracted from wpw-tools.com on 2026-03-14",
+
+  "color": {
+    "brand": {
+      "blue":      { "value": "#68C7ED", "note": "Primary brand blue — logo, active nav, accents" },
+      "darkBlue":  { "value": "#1A5F8A", "note": "Dark blue — section headers, icon backgrounds" },
+      "navy":      { "value": "#0D3D5E", "note": "Deep navy — dark slide backgrounds, footers" },
+      "navyDeep":  { "value": "#0A2B42", "note": "Deepest navy — footer bars, overlays" }
+    },
+    "neutral": {
+      "white":     { "value": "#FFFFFF" },
+      "offWhite":  { "value": "#F7F9FC", "note": "Light slide backgrounds" },
+      "lightBlue": { "value": "#E8F4FB", "note": "Chip/tag backgrounds on white slides" },
+      "lightGray": { "value": "#F3F3F3" },
+      "midGray":   { "value": "#9E9E9E", "note": "Footer text, captions, sub-labels" },
+      "gray":      { "value": "#4A4A4A", "note": "Body text on light backgrounds" },
+      "darkText":  { "value": "#1A1A2E" }
+    },
+    "accent": {
+      "orange":    { "value": "#E8820C", "note": "Warm accent — warnings, highlights" }
+    },
+    "text": {
+      "onDark":    { "value": "#FFFFFF" },
+      "onLight":   { "value": "#4A4A4A" },
+      "muted":     { "value": "#9E9E9E" },
+      "link":      { "value": "#68C7ED" },
+      "heading":   { "value": "#1A5F8A" }
+    },
+    "border": {
+      "default":   { "value": "#E0ECF5" },
+      "accent":    { "value": "#68C7ED" }
+    }
+  },
+
+  "typography": {
+    "fontFamily": {
+      "primary": "Roboto, sans-serif",
+      "mono":    "Roboto Mono, monospace"
+    },
+    "fontSize": {
+      "xs":   "8px",
+      "sm":   "10px",
+      "base": "13px",
+      "md":   "16px",
+      "lg":   "20px",
+      "xl":   "26px",
+      "2xl":  "32px",
+      "3xl":  "40px"
+    },
+    "fontWeight": {
+      "regular": 400,
+      "medium":  500,
+      "bold":    700
+    },
+    "lineHeight": {
+      "tight":  1.15,
+      "normal": 1.4,
+      "loose":  1.6
+    },
+    "letterSpacing": {
+      "label": "0.12em",
+      "normal": "0"
+    }
+  },
+
+  "spacing": {
+    "xs":   "4px",
+    "sm":   "8px",
+    "md":   "16px",
+    "lg":   "24px",
+    "xl":   "40px",
+    "2xl":  "64px"
+  },
+
+  "shadow": {
+    "card":  "0 2px 8px rgba(0,0,0,0.08)",
+    "panel": "0 4px 20px rgba(13,61,94,0.15)"
+  },
+
+  "radius": {
+    "none": "0",
+    "sm":   "4px",
+    "md":   "8px",
+    "pill": "999px"
+  },
+
+  "logo": {
+    "file":        "wpw-logo.png",
+    "aspectRatio": "624:180",
+    "ratio":       0.2885,
+    "minWidth":    "80px",
+    "clearspace":  "0.2x logo height on all sides"
+  },
+
+  "slide": {
+    "width":  "10in",
+    "height": "5.625in",
+    "layout": "LAYOUT_16x9",
+    "footer": {
+      "height": "0.325in",
+      "y":      "5.3in",
+      "text":   "WPW Creative Cutting Solutions  |  wpw-tools.com"
+    }
+  }
+}

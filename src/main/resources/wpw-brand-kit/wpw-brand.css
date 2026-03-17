@@ -1,0 +1,405 @@
+/*
+ * WPW Creative Cutting Solutions — Brand CSS v1.0
+ * Source: wpw-tools.com
+ * Generated: 2026-03-14
+ *
+ * Usage:
+ *   @import 'wpw-brand.css';
+ *   or include in HTML: <link rel="stylesheet" href="wpw-brand.css">
+ *
+ * Google Fonts (add to <head>):
+ *   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   1. DESIGN TOKENS — CSS Custom Properties
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  /* Brand Colors */
+  --wpw-blue:        #68C7ED;   /* Primary brand blue — logo, active nav, CTAs */
+  --wpw-dark-blue:   #1A5F8A;   /* Dark blue — headings, icon backgrounds */
+  --wpw-navy:        #0D3D5E;   /* Deep navy — dark backgrounds, panels */
+  --wpw-navy-deep:   #0A2B42;   /* Deepest navy — footer bars, overlays */
+
+  /* Neutral Palette */
+  --wpw-white:       #FFFFFF;
+  --wpw-off-white:   #F7F9FC;   /* Light backgrounds */
+  --wpw-light-blue:  #E8F4FB;   /* Tags, chips on white */
+  --wpw-light-gray:  #F3F3F3;
+  --wpw-mid-gray:    #9E9E9E;   /* Captions, muted text */
+  --wpw-gray:        #4A4A4A;   /* Body text on light */
+  --wpw-dark-text:   #1A1A2E;
+
+  /* Accent */
+  --wpw-orange:      #E8820C;
+
+  /* Semantic Aliases */
+  --wpw-primary:        var(--wpw-blue);
+  --wpw-bg-dark:        var(--wpw-navy);
+  --wpw-bg-light:       var(--wpw-off-white);
+  --wpw-text-on-dark:   var(--wpw-white);
+  --wpw-text-on-light:  var(--wpw-gray);
+  --wpw-text-muted:     var(--wpw-mid-gray);
+  --wpw-text-heading:   var(--wpw-dark-blue);
+  --wpw-border:         #E0ECF5;
+  --wpw-border-accent:  var(--wpw-blue);
+
+  /* Typography */
+  --wpw-font:       'Roboto', sans-serif;
+  --wpw-font-mono:  'Roboto Mono', monospace;
+
+  --wpw-text-xs:    8px;
+  --wpw-text-sm:    10px;
+  --wpw-text-base:  13px;
+  --wpw-text-md:    16px;
+  --wpw-text-lg:    20px;
+  --wpw-text-xl:    26px;
+  --wpw-text-2xl:   32px;
+  --wpw-text-3xl:   40px;
+
+  /* Spacing */
+  --wpw-space-xs:   4px;
+  --wpw-space-sm:   8px;
+  --wpw-space-md:   16px;
+  --wpw-space-lg:   24px;
+  --wpw-space-xl:   40px;
+  --wpw-space-2xl:  64px;
+
+  /* Shadows */
+  --wpw-shadow-card:  0 2px 8px rgba(0, 0, 0, 0.08);
+  --wpw-shadow-panel: 0 4px 20px rgba(13, 61, 94, 0.15);
+
+  /* Border Radius */
+  --wpw-radius-sm:   4px;
+  --wpw-radius-md:   8px;
+  --wpw-radius-pill: 999px;
+
+  /* Transitions */
+  --wpw-transition: 0.2s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   2. RESET / BASE
+   ═══════════════════════════════════════════════════════════ */
+.wpw,
+.wpw * {
+  box-sizing: border-box;
+}
+
+.wpw {
+  font-family: var(--wpw-font);
+  font-size: var(--wpw-text-base);
+  color: var(--wpw-text-on-light);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   3. TYPOGRAPHY
+   ═══════════════════════════════════════════════════════════ */
+.wpw-h1 {
+  font-size: var(--wpw-text-3xl);
+  font-weight: 700;
+  color: var(--wpw-text-heading);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.wpw-h2 {
+  font-size: var(--wpw-text-2xl);
+  font-weight: 700;
+  color: var(--wpw-text-heading);
+  line-height: 1.2;
+}
+.wpw-h3 {
+  font-size: var(--wpw-text-xl);
+  font-weight: 700;
+  color: var(--wpw-text-heading);
+}
+.wpw-h4 {
+  font-size: var(--wpw-text-lg);
+  font-weight: 700;
+  color: var(--wpw-text-heading);
+}
+
+/* On dark backgrounds */
+.wpw-dark .wpw-h1,
+.wpw-dark .wpw-h2,
+.wpw-dark .wpw-h3,
+.wpw-dark .wpw-h4 {
+  color: var(--wpw-white);
+}
+
+.wpw-body {
+  font-size: var(--wpw-text-base);
+  color: var(--wpw-gray);
+  line-height: 1.5;
+}
+.wpw-caption {
+  font-size: var(--wpw-text-sm);
+  color: var(--wpw-mid-gray);
+}
+.wpw-label {
+  font-size: var(--wpw-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--wpw-mid-gray);
+}
+.wpw-tagline {
+  font-style: italic;
+  color: var(--wpw-blue);
+}
+.wpw-mono {
+  font-family: var(--wpw-font-mono);
+  font-size: var(--wpw-text-sm);
+  color: var(--wpw-blue);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   4. BACKGROUNDS
+   ═══════════════════════════════════════════════════════════ */
+.wpw-bg-dark    { background-color: var(--wpw-navy);      color: var(--wpw-white); }
+.wpw-bg-navy    { background-color: var(--wpw-navy-deep); color: var(--wpw-white); }
+.wpw-bg-blue    { background-color: var(--wpw-blue);      color: var(--wpw-navy); }
+.wpw-bg-light   { background-color: var(--wpw-off-white); }
+.wpw-bg-white   { background-color: var(--wpw-white); }
+
+/* ═══════════════════════════════════════════════════════════
+   5. BUTTONS
+   ═══════════════════════════════════════════════════════════ */
+.wpw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wpw-space-sm);
+  padding: 10px 24px;
+  font-family: var(--wpw-font);
+  font-size: var(--wpw-text-base);
+  font-weight: 700;
+  border: none;
+  border-radius: 0;             /* WPW uses sharp corners */
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity var(--wpw-transition), transform var(--wpw-transition);
+  white-space: nowrap;
+}
+.wpw-btn:hover  { opacity: 0.88; transform: translateY(-1px); }
+.wpw-btn:active { opacity: 1;    transform: translateY(0); }
+
+/* Primary — blue fill */
+.wpw-btn-primary {
+  background: var(--wpw-blue);
+  color: var(--wpw-navy);
+}
+
+/* Secondary — outline */
+.wpw-btn-secondary {
+  background: transparent;
+  color: var(--wpw-blue);
+  border: 1.5px solid var(--wpw-blue);
+}
+.wpw-btn-secondary:hover { background: rgba(104, 199, 237, 0.1); }
+
+/* Dark — navy fill */
+.wpw-btn-dark {
+  background: var(--wpw-navy);
+  color: var(--wpw-white);
+  border: 1.5px solid var(--wpw-dark-blue);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   6. CARDS
+   ═══════════════════════════════════════════════════════════ */
+.wpw-card {
+  background: var(--wpw-white);
+  border: 1px solid var(--wpw-border);
+  box-shadow: var(--wpw-shadow-card);
+  padding: var(--wpw-space-lg);
+}
+
+.wpw-card-dark {
+  background: var(--wpw-navy-deep);
+  border: 1px solid var(--wpw-dark-blue);
+  color: var(--wpw-white);
+  padding: var(--wpw-space-lg);
+}
+
+/* Top accent stripe (color bar at top of card) */
+.wpw-card-accent-top::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 4px;
+  background: var(--wpw-blue);
+  margin: calc(-1 * var(--wpw-space-lg)) calc(-1 * var(--wpw-space-lg)) var(--wpw-space-md);
+  width: calc(100% + 2 * var(--wpw-space-lg));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   7. SECTION LABEL / BADGE
+   ═══════════════════════════════════════════════════════════ */
+.wpw-section-label {
+  display: inline-block;
+  background: var(--wpw-blue);
+  color: var(--wpw-navy);
+  font-size: var(--wpw-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+.wpw-badge {
+  display: inline-block;
+  background: var(--wpw-light-blue);
+  color: var(--wpw-dark-blue);
+  font-size: var(--wpw-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 3px 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   8. ICON BLOCK
+   ═══════════════════════════════════════════════════════════ */
+.wpw-icon-block {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wpw-space-md);
+}
+
+.wpw-icon-wrap {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background: var(--wpw-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wpw-blue);
+}
+
+.wpw-icon-wrap.light {
+  background: var(--wpw-light-blue);
+  color: var(--wpw-dark-blue);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   9. STAT / KPI BLOCK
+   ═══════════════════════════════════════════════════════════ */
+.wpw-stat {
+  text-align: center;
+  padding: var(--wpw-space-md);
+  border: 1px solid var(--wpw-border);
+  background: var(--wpw-white);
+  box-shadow: var(--wpw-shadow-card);
+}
+.wpw-stat-number {
+  font-size: var(--wpw-text-2xl);
+  font-weight: 700;
+  color: var(--wpw-dark-blue);
+  line-height: 1;
+  display: block;
+}
+.wpw-stat-label {
+  font-size: var(--wpw-text-sm);
+  color: var(--wpw-mid-gray);
+  margin-top: 4px;
+  display: block;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   10. DIVIDERS
+   ═══════════════════════════════════════════════════════════ */
+.wpw-divider {
+  height: 1px;
+  background: var(--wpw-border);
+  border: none;
+  margin: var(--wpw-space-lg) 0;
+}
+.wpw-divider-blue {
+  height: 3px;
+  background: var(--wpw-blue);
+  border: none;
+  margin: var(--wpw-space-lg) 0;
+  width: 60px;          /* short accent line, not full-width */
+}
+
+/* ═══════════════════════════════════════════════════════════
+   11. NAVIGATION BAR (reference)
+   ═══════════════════════════════════════════════════════════ */
+.wpw-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--wpw-space-lg);
+  padding: 12px 32px;
+  background: var(--wpw-white);
+  border-bottom: 1px solid var(--wpw-border);
+}
+.wpw-nav-link {
+  font-size: var(--wpw-text-base);
+  color: var(--wpw-gray);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--wpw-transition);
+}
+.wpw-nav-link:hover { color: var(--wpw-dark-blue); }
+.wpw-nav-link.active {
+  background: var(--wpw-blue);
+  color: var(--wpw-navy);
+  padding: 6px 14px;
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   12. FOOTER
+   ═══════════════════════════════════════════════════════════ */
+.wpw-footer {
+  background: var(--wpw-navy);
+  color: var(--wpw-mid-gray);
+  font-size: var(--wpw-text-sm);
+  padding: var(--wpw-space-md) var(--wpw-space-lg);
+  border-top: 3px solid var(--wpw-blue);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   13. CODE / API TOKENS
+   ═══════════════════════════════════════════════════════════ */
+.wpw-code-block {
+  background: var(--wpw-navy-deep);
+  border: 1px solid var(--wpw-dark-blue);
+  border-left: 3px solid var(--wpw-blue);
+  padding: var(--wpw-space-md);
+  font-family: var(--wpw-font-mono);
+  font-size: var(--wpw-text-sm);
+  color: var(--wpw-blue);
+  overflow-x: auto;
+}
+.wpw-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: var(--wpw-navy-deep);
+  border: 1px solid var(--wpw-blue);
+  color: var(--wpw-blue);
+  font-size: var(--wpw-text-xs);
+  font-weight: 700;
+  font-family: var(--wpw-font-mono);
+  letter-spacing: 0.05em;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   14. UTILITIES
+   ═══════════════════════════════════════════════════════════ */
+.wpw-text-blue      { color: var(--wpw-blue); }
+.wpw-text-dark-blue { color: var(--wpw-dark-blue); }
+.wpw-text-white     { color: var(--wpw-white); }
+.wpw-text-muted     { color: var(--wpw-mid-gray); }
+.wpw-text-center    { text-align: center; }
+
+.wpw-mt-sm  { margin-top: var(--wpw-space-sm); }
+.wpw-mt-md  { margin-top: var(--wpw-space-md); }
+.wpw-mt-lg  { margin-top: var(--wpw-space-lg); }
+.wpw-mt-xl  { margin-top: var(--wpw-space-xl); }
