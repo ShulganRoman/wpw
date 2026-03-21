@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getCategories, getProducts } from '../api/api';
+import { getCategories, getProducts, getOperations } from '../api/api';
 import ProductCard from '../components/ProductCard';
 import Pagination from '../components/Pagination';
 import { SkeletonGrid, ErrorState } from '../components/LoadingState';
@@ -26,13 +26,13 @@ function CategoryTree({ categories, selected, onSelect }) {
   function renderNode(node, depth = 0) {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expanded[node.id];
-    const isSelected = selected === node.id;
+    const isSelected = selected && selected.id === node.id;
 
     return (
       <div key={node.id} className="category-tree-item" style={{ paddingLeft: depth > 0 ? 0 : 0 }}>
         <button
           className={`category-tree-btn${isSelected ? ' active' : ''}`}
-          onClick={() => { onSelect(isSelected ? null : node.id); }}
+          onClick={() => { onSelect(isSelected ? null : { type: node.type, id: node.id }); }}
         >
           {hasChildren && (
             <span
@@ -43,7 +43,7 @@ function CategoryTree({ categories, selected, onSelect }) {
             </span>
           )}
           {!hasChildren && <span style={{ width: 14, flexShrink: 0 }} />}
-          <span style={{ flex: 1, textAlign: 'left' }}>{node.name || node.label}</span>
+          <span className="category-tree-text">{node.name || node.slug || node.groupCode || node.label || 'Unnamed'}</span>
         </button>
         {hasChildren && isExpanded && (
           <div className="category-children">
@@ -56,7 +56,7 @@ function CategoryTree({ categories, selected, onSelect }) {
 
   return (
     <div className="category-tree">
-      <div className="category-tree-header">Categories</div>
+      <div className="category-tree-header">Catalog</div>
       <div className="category-tree-list">
         <div className="category-tree-item">
           <button
@@ -169,10 +169,26 @@ const EMPTY_FILTERS = {
   productType: '', inStock: '',
 };
 
+function normalizeTree(sections) {
+  return sections.map(s => ({
+    ...s,
+    type: 'section',
+    children: (s.categories || []).map(c => ({
+      ...c,
+      type: 'category',
+      children: (c.groups || []).map(g => ({
+        ...g,
+        type: 'group',
+        children: []
+      }))
+    }))
+  }));
+}
+
 export default function CatalogPage({ locale }) {
   const toast = useToast();
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedNode, setSelectedNode] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
@@ -180,21 +196,37 @@ export default function CatalogPage({ locale }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [catLoading, setCatLoading] = useState(true);
+  const [operations, setOperations] = useState([]);
+  const [selectedOperation, setSelectedOperation] = useState(null);
 
   useEffect(() => {
     setCatLoading(true);
     getCategories(locale)
-      .then(data => setCategories(Array.isArray(data) ? data : data.categories || []))
+      .then(data => {
+        const raw = Array.isArray(data) ? data : data.categories || [];
+        setCategories(normalizeTree(raw));
+      })
       .catch(() => toast('Failed to load categories', 'error'))
       .finally(() => setCatLoading(false));
   }, [locale]);
+
+  useEffect(() => {
+    getOperations()
+      .then(data => setOperations(Array.isArray(data) ? data : data.items || data.operations || []))
+      .catch(() => {});
+  }, []);
 
   const fetchProducts = useCallback(async (pg = 1) => {
     setLoading(true);
     setError(null);
     try {
       const params = { ...filters, locale, page: pg, perPage: PER_PAGE };
-      if (selectedCategory) params.categoryId = selectedCategory;
+      if (selectedNode) {
+        if (selectedNode.type === 'section') params.sectionId = selectedNode.id;
+        else if (selectedNode.type === 'category') params.categoryId = selectedNode.id;
+        else if (selectedNode.type === 'group') params.groupId = selectedNode.id;
+      }
+      if (selectedOperation) params.operation = selectedOperation;
       const data = await getProducts(params);
       const items = Array.isArray(data) ? data : data.items || data.products || data.content || [];
       const totalCount = typeof data === 'object' && !Array.isArray(data)
@@ -208,12 +240,12 @@ export default function CatalogPage({ locale }) {
     } finally {
       setLoading(false);
     }
-  }, [filters, locale, selectedCategory]);
+  }, [filters, locale, selectedNode, selectedOperation]);
 
   useEffect(() => {
     setPage(1);
     fetchProducts(1);
-  }, [filters, locale, selectedCategory]);
+  }, [filters, locale, selectedNode, selectedOperation]);
 
   function handlePageChange(p) {
     setPage(p);
@@ -221,8 +253,8 @@ export default function CatalogPage({ locale }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function handleCategorySelect(id) {
-    setSelectedCategory(id);
+  function handleCategorySelect(node) {
+    setSelectedNode(node);
     setPage(1);
   }
 
@@ -237,12 +269,31 @@ export default function CatalogPage({ locale }) {
         <p className="page-subtitle">Browse and filter our complete product range</p>
       </div>
 
+      {operations.length > 0 && (
+        <div className="operation-bar">
+          {operations.map(op => {
+            const code = op.code || op.id;
+            const label = op.name || op.label || op.code || '';
+            const isActive = selectedOperation === code;
+            return (
+              <button
+                key={code}
+                className={`operation-chip${isActive ? ' active' : ''}`}
+                onClick={() => setSelectedOperation(isActive ? null : code)}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="catalog-layout">
         <aside className="catalog-sidebar">
           {!catLoading && (
             <CategoryTree
               categories={categories}
-              selected={selectedCategory}
+              selected={selectedNode}
               onSelect={handleCategorySelect}
             />
           )}

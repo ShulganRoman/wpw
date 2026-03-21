@@ -79,6 +79,9 @@ export function getProducts(filters = {}) {
     locale: filters.locale || 'en',
     page: filters.page || 1,
     perPage: filters.perPage || 48,
+    sectionId: filters.sectionId || '',
+    categoryId: filters.categoryId || '',
+    groupId: filters.groupId || '',
     operation: filters.operation || '',
     toolMaterial: filters.toolMaterial || '',
     workpieceMaterial: filters.workpieceMaterial || '',
@@ -91,7 +94,6 @@ export function getProducts(filters = {}) {
     hasBallBearing: filters.hasBallBearing || '',
     productType: filters.productType || '',
     inStock: filters.inStock || '',
-    categoryId: filters.categoryId || '',
   };
   return request(`/products?${buildQuery(params)}`);
 }
@@ -205,6 +207,47 @@ export async function importPhotos(files) {
     throw new Error(text || `HTTP ${res.status}`);
   }
   return res.json();
+}
+
+// Admin Catalog CRUD
+export function createSection(data) {
+  return request('/admin/catalog/sections', { method: 'POST', body: JSON.stringify(data) });
+}
+export function updateSection(id, data) {
+  return request(`/admin/catalog/sections/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+export function deleteSection(id, cascade = false) {
+  return request(`/admin/catalog/sections/${id}?cascade=${cascade}`, { method: 'DELETE' });
+}
+export function reorderSections(items) {
+  return request('/admin/catalog/sections/reorder', { method: 'PUT', body: JSON.stringify({ items }) });
+}
+export function createCategory(data) {
+  return request('/admin/catalog/categories', { method: 'POST', body: JSON.stringify(data) });
+}
+export function updateCategory(id, data) {
+  return request(`/admin/catalog/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+export function deleteCategory(id, cascade = false) {
+  return request(`/admin/catalog/categories/${id}?cascade=${cascade}`, { method: 'DELETE' });
+}
+export function reorderCategories(items) {
+  return request('/admin/catalog/categories/reorder', { method: 'PUT', body: JSON.stringify({ items }) });
+}
+export function createProductGroup(data) {
+  return request('/admin/catalog/product-groups', { method: 'POST', body: JSON.stringify(data) });
+}
+export function updateProductGroup(id, data) {
+  return request(`/admin/catalog/product-groups/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+export function deleteProductGroup(id) {
+  return request(`/admin/catalog/product-groups/${id}`, { method: 'DELETE' });
+}
+export function reorderProductGroups(items) {
+  return request('/admin/catalog/product-groups/reorder', { method: 'PUT', body: JSON.stringify({ items }) });
+}
+export function getChildrenCount(type, id) {
+  return request(`/admin/catalog/${type}/${id}/children-count`);
 }
 
 export function getPriceList(apiKey) {

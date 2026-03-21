@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { validateImport, executeImport, validatePhotos, importPhotos } from '../api/api';
 import { useToast } from '../components/ToastContext';
+import AdminCatalogTree from '../components/AdminCatalogTree';
 
 function parseMarkdown(text) {
   // Minimal markdown rendering: headings, bold, code, tables, lists
@@ -505,21 +506,12 @@ export default function AdminPage() {
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-        <button
-          className={`btn ${tab === 'excel' ? 'btn-primary' : ''}`}
-          onClick={() => setTab('excel')}
-        >
-          Excel Import
-        </button>
-        <button
-          className={`btn ${tab === 'photos' ? 'btn-primary' : ''}`}
-          onClick={() => setTab('photos')}
-        >
-          Photo Import
-        </button>
+        <button className={`btn ${tab === 'excel' ? 'btn-primary' : ''}`} onClick={() => setTab('excel')}>Excel Import</button>
+        <button className={`btn ${tab === 'photos' ? 'btn-primary' : ''}`} onClick={() => setTab('photos')}>Photo Import</button>
+        <button className={`btn ${tab === 'catalog' ? 'btn-primary' : ''}`} onClick={() => setTab('catalog')}>Catalog Tree</button>
       </div>
 
-      {tab === 'excel' ? <ExcelImportTab /> : <PhotoImportTab />}
+      {tab === 'excel' ? <ExcelImportTab /> : tab === 'photos' ? <PhotoImportTab /> : <AdminCatalogTree />}
     </div>
   );
 }
