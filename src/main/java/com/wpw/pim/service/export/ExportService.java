@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
-import java.math.BigDecimal;
+
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -37,11 +37,7 @@ public class ExportService {
     };
 
     @Transactional(readOnly = true)
-    public byte[] export(String format, String locale,
-                         List<String> toolMaterial, List<String> workpieceMaterial,
-                         BigDecimal dMmMin, BigDecimal dMmMax) {
-        ProductFilter filter = new ProductFilter(locale, null, toolMaterial, workpieceMaterial,
-            null, null, null, dMmMin, dMmMax, null, null, null, null, 1, 10_000);
+    public byte[] export(String format, String locale, ProductFilter filter) {
         List<Product> products = productRepo.findAll(new ProductFilterSpec(filter));
 
         List<UUID> ids = products.stream().map(Product::getId).toList();

@@ -29,7 +29,7 @@ public class OperationService {
 
     @Transactional(readOnly = true)
     public PagedResponse<ProductSummaryDto> findProductsByOperation(String code, String locale, int page, int perPage) {
-        ProductFilter filter = new ProductFilter(locale, code, null, null, null, null, null,
+        ProductFilter filter = new ProductFilter(locale, null, null, null, code, null, null, null, null, null,
             null, null, null, null, null, null, page, perPage);
         return productService.findAll(filter);
     }

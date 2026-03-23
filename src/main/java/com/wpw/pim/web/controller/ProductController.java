@@ -20,6 +20,9 @@ public class ProductController {
     @GetMapping
     public PagedResponse<ProductSummaryDto> list(
         @RequestParam(defaultValue = "en") String locale,
+        @RequestParam(required = false) UUID sectionId,
+        @RequestParam(required = false) UUID categoryId,
+        @RequestParam(required = false) UUID groupId,
         @RequestParam(required = false) String operation,
         @RequestParam(required = false) List<String> toolMaterial,
         @RequestParam(required = false) List<String> workpieceMaterial,
@@ -35,7 +38,7 @@ public class ProductController {
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "48") int perPage
     ) {
-        ProductFilter filter = new ProductFilter(locale, operation, toolMaterial, workpieceMaterial,
+        ProductFilter filter = new ProductFilter(locale, sectionId, categoryId, groupId, operation, toolMaterial, workpieceMaterial,
             machineType, machineBrand, cuttingType, dMmMin, dMmMax, shankMm, hasBallBearing,
             productType, inStock, page, perPage);
         return productService.findAll(filter);

@@ -68,6 +68,21 @@ public class ProductFilterSpec implements Specification<Product> {
             } catch (IllegalArgumentException ignored) {}
         }
 
+        // group
+        if (filter.groupId() != null) {
+            predicates.add(cb.equal(root.get("group").get("id"), filter.groupId()));
+        }
+
+        // category (via group → category)
+        if (filter.categoryId() != null) {
+            predicates.add(cb.equal(root.get("group").get("category").get("id"), filter.categoryId()));
+        }
+
+        // section (via group → category → section)
+        if (filter.sectionId() != null) {
+            predicates.add(cb.equal(root.get("group").get("category").get("section").get("id"), filter.sectionId()));
+        }
+
         // status — по умолчанию только active
         predicates.add(cb.equal(root.get("status"), ProductStatus.active));
 

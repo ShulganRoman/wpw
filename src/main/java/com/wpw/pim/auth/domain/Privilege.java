@@ -10,5 +10,6 @@ public enum Privilege {
     DELETE_ROLES,
     MODIFY_ROLES,
     MODIFY_PRODUCTS,
-    BULK_EXPORT
+    BULK_EXPORT,
+    MANAGE_CATALOG
 }

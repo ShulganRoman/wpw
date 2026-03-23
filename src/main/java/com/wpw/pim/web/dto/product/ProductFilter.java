@@ -2,9 +2,13 @@ package com.wpw.pim.web.dto.product;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public record ProductFilter(
     String locale,
+    UUID sectionId,
+    UUID categoryId,
+    UUID groupId,
     String operation,
     List<String> toolMaterial,
     List<String> workpieceMaterial,
