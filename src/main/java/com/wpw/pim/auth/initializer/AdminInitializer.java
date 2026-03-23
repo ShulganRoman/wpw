@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -30,28 +31,40 @@ public class AdminInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        // --- admin role: all privileges ---
         Role adminRole = roleRepository.findByName(ADMIN_ROLE_NAME)
                 .orElseGet(() -> {
                     log.info("Creating built-in admin role with all privileges");
-                    Role role = new Role(ADMIN_ROLE_NAME, true, EnumSet.allOf(Privilege.class));
-                    return roleRepository.save(role);
+                    return roleRepository.save(new Role(ADMIN_ROLE_NAME, true, EnumSet.allOf(Privilege.class)));
                 });
 
-        // Ensure admin role always has all privileges
         if (!adminRole.getPrivileges().containsAll(EnumSet.allOf(Privilege.class))) {
             log.info("Updating admin role to include all privileges");
             adminRole.setPrivileges(EnumSet.allOf(Privilege.class));
             roleRepository.save(adminRole);
         }
 
+        // --- dealer role: modify products ---
+        ensureRole("dealer", Set.of(Privilege.MODIFY_PRODUCTS));
+
+        // --- user role: export only ---
+        ensureRole("user", Set.of(Privilege.BULK_EXPORT));
+
+        // --- default admin user ---
         if (!userRepository.existsByUsername(ADMIN_USERNAME)) {
             log.info("Creating default admin user");
-            User admin = new User(
+            userRepository.save(new User(
                     ADMIN_USERNAME,
                     passwordEncoder.encode(ADMIN_DEFAULT_PASSWORD),
                     adminRole
-            );
-            userRepository.save(admin);
+            ));
         }
+    }
+
+    private void ensureRole(String name, Set<Privilege> privileges) {
+        roleRepository.findByName(name).orElseGet(() -> {
+            log.info("Creating built-in role '{}' with privileges {}", name, privileges);
+            return roleRepository.save(new Role(name, true, EnumSet.copyOf(privileges)));
+        });
     }
 }
