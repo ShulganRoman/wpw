@@ -255,6 +255,18 @@ export function getChildrenCount(type, id) {
   return request(`/admin/catalog/${type}/${id}/children-count`);
 }
 
+// Users
+export function getUsers() { return request('/users'); }
+export function createUser(data) { return request('/users', { method: 'POST', body: JSON.stringify(data) }); }
+export function updateUser(id, data) { return request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
+export function deleteUser(id) { return request(`/users/${id}`, { method: 'DELETE' }); }
+
+// Roles
+export function getRoles() { return request('/roles'); }
+export function createRole(data) { return request('/roles', { method: 'POST', body: JSON.stringify(data) }); }
+export function updateRole(id, data) { return request(`/roles/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
+export function deleteRole(id) { return request(`/roles/${id}`, { method: 'DELETE' }); }
+
 export function getPriceList(apiKey) {
   return request('/dealer/price-list', { headers: { 'X-Api-Key': apiKey } });
 }
