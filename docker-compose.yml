@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: wpw-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wpw_db
+      POSTGRES_USER: wpw_user
+      POSTGRES_PASSWORD: wpw_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wpw-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wpw_user -d wpw_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  wpw-backend:
+    image: ghcr.io/shulganroman/wpw-backend:latest
+    container_name: wpw-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./media:/media
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/wpw_db
+      SPRING_DATASOURCE_USERNAME: wpw_user
+      SPRING_DATASOURCE_PASSWORD: wpw_pass
+      LOGGING_LEVEL_COM_WPW_wpw: INFO
+    networks:
+      - wpw-net
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8080/api-docs > /dev/null || exit 1",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 6
+      start_period: 90s
+
+  wpw-frontend:
+    image: ghcr.io/shulganroman/wpw-frontend:latest
+    container_name: wpw-frontend
+    restart: unless-stopped
+    depends_on:
+      wpw-backend:
+        condition: service_healthy
+    volumes:
+      - ./media:/media:ro
+    ports:
+      - "80:80"
+    networks:
+      - wpw-net
+
+networks:
+  wpw-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
