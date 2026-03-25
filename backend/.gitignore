@@ -1,0 +1,10 @@
+*.md
+target/
+
+.classpath
+.factorypath
+
+.idea
+
+*.xlsx
+.claude
