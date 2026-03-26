@@ -120,6 +120,19 @@
             <version>5.9</version>
         </dependency>
 
+        <!-- Archive extraction (ZIP, 7Z, TAR, TAR.GZ) -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.27.1</version>
+        </dependency>
+        <!-- XZ support for Commons Compress (required for 7z LZMA/LZMA2) -->
+        <dependency>
+            <groupId>org.tukaani</groupId>
+            <artifactId>xz</artifactId>
+            <version>1.10</version>
+        </dependency>
+
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

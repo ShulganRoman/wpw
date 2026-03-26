@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { validateImport, executeImport, validatePhotos, importPhotos, getUsers, createUser, updateUser, deleteUser, getRoles } from '../api/api';
+import { validateImport, executeImport, validatePhotos, importPhotos, validateArchive, importArchive, getUsers, createUser, updateUser, deleteUser, getRoles } from '../api/api';
 import { useToast } from '../components/ToastContext';
 import AdminCatalogTree from '../components/AdminCatalogTree';
 
@@ -324,7 +324,39 @@ function ExcelImportTab() {
   );
 }
 
-function PhotoImportTab() {
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+const ARCHIVE_ACCEPT = '.zip,.7z,.tar,.tar.gz,.tgz';
+const ARCHIVE_ACCEPT_PATTERN = /\.(zip|7z|tar|tar\.gz|tgz)$/i;
+
+function ArchiveIcon() {
+  return (
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ opacity: 0.45, color: 'var(--wpw-mid-gray)' }}
+      aria-hidden="true"
+    >
+      <path d="M21 8v13H3V8" />
+      <path d="M1 3h22v5H1z" />
+      <path d="M10 12h4" />
+    </svg>
+  );
+}
+
+function IndividualPhotosTab() {
   const toast = useToast();
   const [files, setFiles] = useState([]);
   const [dragging, setDragging] = useState(false);
@@ -391,6 +423,10 @@ function PhotoImportTab() {
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onClick={() => inputRef.current?.click()}
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => e.key === 'Enter' && inputRef.current?.click()}
+        aria-label="Drop product photos here or click to browse"
       >
         <input
           ref={inputRef}
@@ -402,7 +438,7 @@ function PhotoImportTab() {
         />
         {files.length > 0 ? (
           <div>
-            <div className="dropzone-icon">🖼️</div>
+            <div className="dropzone-icon">🖼</div>
             <div className="dropzone-text">{files.length} images selected</div>
             <div className="dropzone-hint">Click or drop to replace</div>
           </div>
@@ -418,12 +454,21 @@ function PhotoImportTab() {
       {files.length > 0 && (
         <div className="import-actions">
           <button className="btn btn-primary" onClick={handleValidate} disabled={validating}>
-            {validating ? 'Validating…' : 'Validate Photos'}
+            {validating ? (
+              <>
+                <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                Validating…
+              </>
+            ) : 'Validate Photos'}
           </button>
           {validation && validation.matched > 0 && (
-            <button className="btn btn-primary" onClick={handleImport} disabled={importing}
-              style={{ marginLeft: 8 }}>
-              {importing ? 'Importing…' : `Import ${validation.matched} Matched Photos`}
+            <button className="btn btn-primary" onClick={handleImport} disabled={importing}>
+              {importing ? (
+                <>
+                  <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                  Importing…
+                </>
+              ) : `Import ${validation.matched} Matched Photos`}
             </button>
           )}
         </div>
@@ -433,27 +478,28 @@ function PhotoImportTab() {
         <div className="card" style={{ marginTop: 16 }}>
           <div className="card-body">
             <h3 style={{ marginBottom: 12 }}>Validation Result</h3>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-              <div className="stat-badge" style={{ background: '#e8f5e9', color: '#2e7d32', padding: '8px 16px', borderRadius: 8 }}>
-                ✓ {validation.matched} matched
+            <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
+              <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
+                {validation.matched} matched
               </div>
-              <div className="stat-badge" style={{ background: '#fbe9e7', color: '#c62828', padding: '8px 16px', borderRadius: 8 }}>
-                ✗ {validation.unmatched} unmatched
+              <div style={{ background: '#fbe9e7', color: '#c62828', padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
+                {validation.unmatched} unmatched
               </div>
-              <div style={{ padding: '8px 16px', color: '#666' }}>
+              <div style={{ padding: '8px 16px', color: '#666', fontSize: 13 }}>
                 {validation.totalFiles} total files
               </div>
             </div>
 
             {validation.matchedFiles && validation.matchedFiles.length > 0 && (
               <details open>
-                <summary style={{ cursor: 'pointer', fontWeight: 600, marginBottom: 8, color: '#2e7d32' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 600, marginBottom: 8, color: '#2e7d32', fontSize: 13 }}>
                   Matched files ({validation.matchedFiles.length})
                 </summary>
                 <div style={{ maxHeight: 200, overflow: 'auto', fontSize: 13 }}>
                   {validation.matchedFiles.map((f, i) => (
                     <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #eee' }}>
-                      <span style={{ color: '#2e7d32' }}>✓</span> {f.filename} → <strong>{f.toolNo}</strong>
+                      <span style={{ color: '#2e7d32', marginRight: 6 }}>+</span>
+                      {f.filename} → <strong>{f.toolNo}</strong>
                     </div>
                   ))}
                 </div>
@@ -462,13 +508,14 @@ function PhotoImportTab() {
 
             {validation.unmatchedFiles && validation.unmatchedFiles.length > 0 && (
               <details style={{ marginTop: 12 }}>
-                <summary style={{ cursor: 'pointer', fontWeight: 600, marginBottom: 8, color: '#c62828' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 600, marginBottom: 8, color: '#c62828', fontSize: 13 }}>
                   Unmatched files ({validation.unmatchedFiles.length})
                 </summary>
                 <div style={{ maxHeight: 200, overflow: 'auto', fontSize: 13 }}>
                   {validation.unmatchedFiles.map((f, i) => (
                     <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #eee' }}>
-                      <span style={{ color: '#c62828' }}>✗</span> {f.filename} → <span style={{ color: '#999' }}>{f.toolNo} (not found)</span>
+                      <span style={{ color: '#c62828', marginRight: 6 }}>-</span>
+                      {f.filename} → <span style={{ color: '#999' }}>{f.toolNo} (not found)</span>
                     </div>
                   ))}
                 </div>
@@ -491,6 +538,407 @@ function PhotoImportTab() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ArchiveImportTab() {
+  const toast = useToast();
+  const [archiveFile, setArchiveFile] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [validation, setValidation] = useState(null);
+  const [importResult, setImportResult] = useState(null);
+  const [unmatchedOpen, setUnmatchedOpen] = useState(false);
+  const inputRef = useRef(null);
+
+  function handleFile(f) {
+    if (!f) return;
+    if (!ARCHIVE_ACCEPT_PATTERN.test(f.name)) {
+      toast('Unsupported file type. Please select a ZIP, 7Z, TAR, TAR.GZ, or TGZ archive.', 'error');
+      return;
+    }
+    setArchiveFile(f);
+    setValidation(null);
+    setImportResult(null);
+    setUnmatchedOpen(false);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    setDragging(false);
+    const f = e.dataTransfer.files[0];
+    handleFile(f);
+  }
+
+  function handleRemove() {
+    setArchiveFile(null);
+    setValidation(null);
+    setImportResult(null);
+    setUnmatchedOpen(false);
+    if (inputRef.current) inputRef.current.value = '';
+  }
+
+  async function handleValidate() {
+    if (!archiveFile) return;
+    setValidating(true);
+    setValidation(null);
+    setImportResult(null);
+    try {
+      const result = await validateArchive(archiveFile);
+      setValidation(result);
+      if (result.matched > 0) {
+        toast(`Found ${result.imageFiles} images, matched ${result.matched} products`, 'success');
+      } else {
+        toast('Validation complete — no matched products found', 'warning');
+      }
+    } catch (err) {
+      toast(`Validation failed: ${err.message}`, 'error');
+    } finally {
+      setValidating(false);
+    }
+  }
+
+  async function handleImport() {
+    if (!archiveFile || !validation || validation.matched === 0) return;
+    setImporting(true);
+    try {
+      const result = await importArchive(archiveFile);
+      setImportResult(result);
+      toast(`Archive import complete — ${result.converted} photos imported for ${result.productsUpdated} products`, 'success');
+      setArchiveFile(null);
+      setValidation(null);
+      if (inputRef.current) inputRef.current.value = '';
+    } catch (err) {
+      toast(`Import failed: ${err.message}`, 'error');
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  const canImport = validation !== null && validation.matched > 0 && !importing && !validating;
+
+  return (
+    <div>
+      {/* Dropzone — hidden after file is selected */}
+      {!archiveFile && (
+        <div
+          className={`dropzone${dragging ? ' drag-over' : ''}`}
+          onDrop={handleDrop}
+          onDragOver={e => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onClick={() => inputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => e.key === 'Enter' && inputRef.current?.click()}
+          aria-label="Drop archive file here or click to browse"
+        >
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <ArchiveIcon />
+          </div>
+          <div className="dropzone-text">Drag and drop archive file here or click to browse</div>
+          <div className="dropzone-hint" style={{ marginTop: 8 }}>
+            Accepted formats: .zip, .7z, .tar, .tar.gz, .tgz
+          </div>
+          <div className="dropzone-hint" style={{ marginTop: 4 }}>
+            Up to 500 MB
+          </div>
+        </div>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ARCHIVE_ACCEPT}
+        style={{ display: 'none' }}
+        onChange={e => handleFile(e.target.files[0])}
+      />
+
+      {/* Selected file row */}
+      {archiveFile && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '12px 16px',
+          background: 'var(--wpw-off-white)',
+          border: '1px solid var(--wpw-border)',
+          borderRadius: 'var(--wpw-radius)',
+          marginBottom: 16,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <ArchiveIcon />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontFamily: 'var(--wpw-font-mono)',
+              fontSize: 13,
+              color: 'var(--wpw-navy)',
+              fontWeight: 500,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              {archiveFile.name}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--wpw-mid-gray)', marginTop: 2 }}>
+              {formatFileSize(archiveFile.size)}
+            </div>
+          </div>
+          <button
+            className="btn btn-secondary"
+            onClick={handleRemove}
+            disabled={validating || importing}
+            style={{ flexShrink: 0 }}
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
+      {/* Actions */}
+      {archiveFile && (
+        <div className="import-actions">
+          <button
+            className="btn btn-secondary"
+            onClick={handleValidate}
+            disabled={validating || importing}
+          >
+            {validating ? (
+              <>
+                <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                Validating…
+              </>
+            ) : 'Validate'}
+          </button>
+
+          <button
+            className="btn btn-primary"
+            onClick={handleImport}
+            disabled={!canImport}
+            title={!validation ? 'Run validation first' : validation.matched === 0 ? 'No matched products to import' : ''}
+          >
+            {importing ? (
+              <>
+                <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                Importing…
+              </>
+            ) : validation && validation.matched > 0
+              ? `Import ${validation.matched} Photos`
+              : 'Import'}
+          </button>
+        </div>
+      )}
+
+      {/* Importing long-running notice */}
+      {importing && (
+        <p style={{ marginTop: 10, fontSize: 12, color: 'var(--wpw-mid-gray)' }}>
+          Importing... This may take a few minutes for large archives.
+        </p>
+      )}
+
+      {/* Validation results */}
+      {validation && (
+        <div className="import-report" style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 12 }}>
+            Validation Result
+          </div>
+
+          {/* Summary banner */}
+          <div style={{
+            background: validation.matched > 0 ? '#e8f5e9' : '#fff8e1',
+            border: `1px solid ${validation.matched > 0 ? '#c8e6c9' : '#ffe082'}`,
+            borderRadius: 'var(--wpw-radius-sm)',
+            padding: '10px 14px',
+            fontSize: 13,
+            fontWeight: 500,
+            color: validation.matched > 0 ? '#2e7d32' : '#e65100',
+            marginBottom: 14,
+          }}>
+            {validation.matched > 0
+              ? `Found ${validation.imageFiles} images, matched ${validation.matched} products`
+              : `Found ${validation.imageFiles ?? 0} images — no products matched`
+            }
+          </div>
+
+          {/* Stats grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+            gap: 10,
+            marginBottom: 14,
+          }}>
+            {[
+              { label: 'Total files in archive', value: validation.totalFiles ?? '—' },
+              { label: 'Image files found', value: validation.imageFiles ?? '—' },
+              { label: 'Non-image files skipped', value: validation.nonImageFiles ?? '—' },
+              { label: 'Products matched', value: validation.matched ?? '—' },
+              { label: 'Products not found', value: validation.unmatched ?? '—' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{
+                background: '#fff',
+                border: '1px solid var(--wpw-border)',
+                borderRadius: 'var(--wpw-radius-sm)',
+                padding: '10px 12px',
+              }}>
+                <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 4, lineHeight: 1.3 }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--wpw-navy)' }}>
+                  {value}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Unmatched filenames */}
+          {validation.unmatchedFiles && validation.unmatchedFiles.length > 0 && (
+            <div>
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#c62828',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+                onClick={() => setUnmatchedOpen(v => !v)}
+                aria-expanded={unmatchedOpen}
+              >
+                <span style={{
+                  display: 'inline-block',
+                  transform: unmatchedOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s',
+                  fontSize: 11,
+                }}>
+                  &#9654;
+                </span>
+                Not found ({validation.unmatchedFiles.length} filenames)
+              </button>
+
+              {unmatchedOpen && (
+                <div style={{
+                  marginTop: 8,
+                  maxHeight: 200,
+                  overflow: 'auto',
+                  border: '1px solid var(--wpw-border)',
+                  borderRadius: 'var(--wpw-radius-sm)',
+                  background: '#fff',
+                }}>
+                  {validation.unmatchedFiles.map((name, i) => (
+                    <div key={i} style={{
+                      padding: '5px 12px',
+                      borderBottom: i < validation.unmatchedFiles.length - 1 ? '1px solid var(--wpw-border)' : 'none',
+                      fontSize: 12,
+                      fontFamily: 'var(--wpw-font-mono)',
+                      color: 'var(--wpw-gray)',
+                    }}>
+                      {typeof name === 'string' ? name : name.filename || JSON.stringify(name)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Import result */}
+      {importResult && (
+        <div className="import-report" style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#2e7d32', marginBottom: 12 }}>
+            Import Complete
+          </div>
+          <div style={{ fontSize: 13, lineHeight: 2 }}>
+            <div>
+              Photos converted:{' '}
+              <strong style={{ color: 'var(--wpw-navy)' }}>{importResult.converted ?? '—'}</strong>
+            </div>
+            <div>
+              Products updated:{' '}
+              <strong style={{ color: 'var(--wpw-navy)' }}>{importResult.productsUpdated ?? importResult.matchedProducts ?? '—'}</strong>
+            </div>
+            {(importResult.skipped ?? 0) > 0 && (
+              <div>
+                Skipped:{' '}
+                <strong style={{ color: 'var(--wpw-mid-gray)' }}>{importResult.skipped}</strong>
+              </div>
+            )}
+            {(importResult.errors ?? 0) > 0 && (
+              <div style={{ color: '#c62828' }}>
+                Errors: <strong>{importResult.errors}</strong>
+                {importResult.errorDetails && importResult.errorDetails.length > 0 && (
+                  <ul style={{ marginTop: 6, paddingLeft: 20, listStyle: 'disc', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {importResult.errorDetails.slice(0, 20).map((e, i) => (
+                      <li key={i} style={{ fontSize: 12 }}>
+                        {typeof e === 'string' ? e : e.message || JSON.stringify(e)}
+                      </li>
+                    ))}
+                    {importResult.errorDetails.length > 20 && (
+                      <li style={{ fontSize: 12, color: 'var(--wpw-mid-gray)' }}>
+                        …and {importResult.errorDetails.length - 20} more
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PhotoImportTab() {
+  const [mode, setMode] = useState('individual');
+
+  return (
+    <div>
+      {/* Mode switcher */}
+      <div style={{
+        display: 'inline-flex',
+        border: '1px solid var(--wpw-border)',
+        borderRadius: 'var(--wpw-radius-sm)',
+        overflow: 'hidden',
+        marginBottom: 20,
+      }}
+        role="group"
+        aria-label="Photo import mode"
+      >
+        {[
+          { value: 'individual', label: 'Individual Photos' },
+          { value: 'archive', label: 'Archive Import' },
+        ].map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => setMode(value)}
+            style={{
+              padding: '7px 18px',
+              fontSize: 13,
+              fontWeight: 500,
+              border: 'none',
+              borderRight: value === 'individual' ? '1px solid var(--wpw-border)' : 'none',
+              cursor: 'pointer',
+              background: mode === value ? 'var(--wpw-blue)' : '#fff',
+              color: mode === value ? '#fff' : 'var(--wpw-gray)',
+              transition: 'background 0.15s, color 0.15s',
+            }}
+            aria-pressed={mode === value}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === 'individual' && <IndividualPhotosTab />}
+      {mode === 'archive' && <ArchiveImportTab />}
     </div>
   );
 }

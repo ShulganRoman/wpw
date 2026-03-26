@@ -214,6 +214,36 @@ export async function importPhotos(files) {
   return res.json();
 }
 
+export async function validateArchive(file) {
+  const form = new FormData();
+  form.append('archive', file);
+  const res = await fetch(`${BASE}/admin/photos/archive/validate`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: form,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function importArchive(file) {
+  const form = new FormData();
+  form.append('archive', file);
+  const res = await fetch(`${BASE}/admin/photos/archive/import`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: form,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 // Admin Catalog CRUD
 export function createSection(data) {
   return request('/admin/catalog/sections', { method: 'POST', body: JSON.stringify(data) });
