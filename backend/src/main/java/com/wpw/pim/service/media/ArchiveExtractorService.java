@@ -270,6 +270,151 @@ public class ArchiveExtractorService {
         }
     }
 
+    /**
+     * Функциональный интерфейс для потоковой обработки файлов из архива.
+     * Вызывается для каждого извлечённого изображения.
+     */
+    @FunctionalInterface
+    public interface ImageFileHandler {
+        void handle(Path tempFile, String originalName) throws IOException;
+    }
+
+    /**
+     * Результат потоковой обработки архива.
+     */
+    public record StreamResult(
+            int totalEntries,
+            int imageEntries,
+            int skippedEntries
+    ) {}
+
+    /**
+     * Потоковая обработка архива — извлекает по одному файлу, вызывает handler, удаляет temp.
+     * Пиковое использование диска: один файл вместо всего архива.
+     */
+    public StreamResult processImages(MultipartFile archive, ImageFileHandler handler) throws IOException {
+        String filename = archive.getOriginalFilename();
+        if (filename == null || filename.isBlank()) {
+            throw new IOException("Имя файла архива не указано");
+        }
+
+        String lowerName = filename.toLowerCase();
+        ArchiveType type = detectArchiveType(lowerName);
+
+        log.info("Потоковая обработка архива '{}', тип: {}", filename, type);
+
+        if (type == ArchiveType.SEVEN_Z) {
+            return processSevenZ(archive, handler);
+        }
+
+        try (InputStream is = archive.getInputStream()) {
+            ArchiveInputStream<?> ais = switch (type) {
+                case ZIP -> new ZipArchiveInputStream(is);
+                case TAR -> new TarArchiveInputStream(is);
+                case TAR_GZ -> new TarArchiveInputStream(new GzipCompressorInputStream(is));
+                default -> throw new IOException("Unexpected type: " + type);
+            };
+            try (ais) {
+                return processFromStream(ais, handler);
+            }
+        }
+    }
+
+    private StreamResult processFromStream(ArchiveInputStream<?> ais, ImageFileHandler handler) throws IOException {
+        int totalEntries = 0;
+        int imageEntries = 0;
+        int skippedEntries = 0;
+
+        ArchiveEntry entry;
+        while ((entry = ais.getNextEntry()) != null) {
+            if (entry.isDirectory()) continue;
+            totalEntries++;
+
+            String entryName = entry.getName();
+            String fileName = extractFileName(entryName);
+
+            if (shouldSkipEntry(entryName, fileName)) {
+                skippedEntries++;
+                continue;
+            }
+
+            String ext = getExtension(fileName.toLowerCase());
+            if (!IMAGE_EXTENSIONS.contains(ext)) {
+                skippedEntries++;
+                continue;
+            }
+
+            Path tempFile = Files.createTempFile("img-", "." + ext);
+            try {
+                try (OutputStream os = Files.newOutputStream(tempFile)) {
+                    ais.transferTo(os);
+                }
+                handler.handle(tempFile, fileName);
+                imageEntries++;
+            } finally {
+                Files.deleteIfExists(tempFile);
+            }
+        }
+
+        return new StreamResult(totalEntries, imageEntries, skippedEntries);
+    }
+
+    private StreamResult processSevenZ(MultipartFile archive, ImageFileHandler handler) throws IOException {
+        Path tempArchive = Files.createTempFile("archive-7z-", ".7z");
+        try {
+            archive.transferTo(tempArchive.toFile());
+
+            int totalEntries = 0;
+            int imageEntries = 0;
+            int skippedEntries = 0;
+
+            try (SevenZFile sevenZFile = SevenZFile.builder()
+                    .setFile(tempArchive.toFile())
+                    .get()) {
+
+                SevenZArchiveEntry entry;
+                while ((entry = sevenZFile.getNextEntry()) != null) {
+                    if (entry.isDirectory()) continue;
+                    totalEntries++;
+
+                    String entryName = entry.getName();
+                    String fileName = extractFileName(entryName);
+
+                    if (shouldSkipEntry(entryName, fileName)) {
+                        skippedEntries++;
+                        continue;
+                    }
+
+                    String ext = getExtension(fileName.toLowerCase());
+                    if (!IMAGE_EXTENSIONS.contains(ext)) {
+                        skippedEntries++;
+                        continue;
+                    }
+
+                    Path tempFile = Files.createTempFile("img-", "." + ext);
+                    try {
+                        try (OutputStream os = Files.newOutputStream(tempFile)) {
+                            byte[] buffer = new byte[8192];
+                            int len;
+                            InputStream entryStream = sevenZFile.getInputStream(entry);
+                            while ((len = entryStream.read(buffer)) != -1) {
+                                os.write(buffer, 0, len);
+                            }
+                        }
+                        handler.handle(tempFile, fileName);
+                        imageEntries++;
+                    } finally {
+                        Files.deleteIfExists(tempFile);
+                    }
+                }
+            }
+
+            return new StreamResult(totalEntries, imageEntries, skippedEntries);
+        } finally {
+            Files.deleteIfExists(tempArchive);
+        }
+    }
+
     // ========================= Внутренние методы =========================
 
     /**
