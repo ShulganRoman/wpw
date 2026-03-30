@@ -158,6 +158,118 @@ public class ArchiveExtractorService {
         }
     }
 
+    /**
+     * Результат сканирования архива без извлечения файлов.
+     */
+    public record ScanResult(
+            List<String> imageFileNames,
+            int totalEntries,
+            int imageEntries,
+            List<String> skippedEntries
+    ) {}
+
+    /**
+     * Сканирует архив и возвращает список имён файлов-изображений БЕЗ извлечения на диск.
+     * Быстрая операция — читает только заголовки записей.
+     */
+    public ScanResult scanImageNames(MultipartFile archive) throws IOException {
+        String filename = archive.getOriginalFilename();
+        if (filename == null || filename.isBlank()) {
+            throw new IOException("Имя файла архива не указано");
+        }
+
+        String lowerName = filename.toLowerCase();
+        ArchiveType type = detectArchiveType(lowerName);
+
+        log.info("Сканирование архива '{}', тип: {}", filename, type);
+
+        if (type == ArchiveType.SEVEN_Z) {
+            return scanSevenZ(archive);
+        }
+
+        try (InputStream is = archive.getInputStream()) {
+            ArchiveInputStream<?> ais = switch (type) {
+                case ZIP -> new ZipArchiveInputStream(is);
+                case TAR -> new TarArchiveInputStream(is);
+                case TAR_GZ -> new TarArchiveInputStream(new GzipCompressorInputStream(is));
+                default -> throw new IOException("Unexpected type: " + type);
+            };
+            try (ais) {
+                return scanFromStream(ais);
+            }
+        }
+    }
+
+    private ScanResult scanFromStream(ArchiveInputStream<?> ais) throws IOException {
+        List<String> imageNames = new ArrayList<>();
+        List<String> skipped = new ArrayList<>();
+        int totalEntries = 0;
+
+        ArchiveEntry entry;
+        while ((entry = ais.getNextEntry()) != null) {
+            if (entry.isDirectory()) continue;
+            totalEntries++;
+
+            String entryName = entry.getName();
+            String fileName = extractFileName(entryName);
+
+            if (shouldSkipEntry(entryName, fileName)) {
+                skipped.add(entryName);
+                continue;
+            }
+
+            String ext = getExtension(fileName.toLowerCase());
+            if (!IMAGE_EXTENSIONS.contains(ext)) {
+                skipped.add(entryName);
+                continue;
+            }
+
+            imageNames.add(fileName);
+        }
+
+        return new ScanResult(imageNames, totalEntries, imageNames.size(), skipped);
+    }
+
+    private ScanResult scanSevenZ(MultipartFile archive) throws IOException {
+        Path tempArchive = Files.createTempFile("archive-7z-scan-", ".7z");
+        try {
+            archive.transferTo(tempArchive.toFile());
+            List<String> imageNames = new ArrayList<>();
+            List<String> skipped = new ArrayList<>();
+            int totalEntries = 0;
+
+            try (SevenZFile sevenZFile = SevenZFile.builder()
+                    .setFile(tempArchive.toFile())
+                    .get()) {
+                SevenZArchiveEntry entry;
+                while ((entry = sevenZFile.getNextEntry()) != null) {
+                    if (entry.isDirectory()) continue;
+                    totalEntries++;
+
+                    String entryName = entry.getName();
+                    String fileName = extractFileName(entryName);
+
+                    if (shouldSkipEntry(entryName, fileName)) {
+                        skipped.add(entryName);
+                        continue;
+                    }
+
+                    String ext = getExtension(fileName.toLowerCase());
+                    if (!IMAGE_EXTENSIONS.contains(ext)) {
+                        skipped.add(entryName);
+                        continue;
+                    }
+
+                    imageNames.add(fileName);
+                }
+            }
+
+            return new ScanResult(imageNames, totalEntries, imageNames.size(), skipped);
+        } finally {
+            Files.deleteIfExists(tempArchive);
+        }
+    }
+
     // ========================= Внутренние методы =========================
 
     /**

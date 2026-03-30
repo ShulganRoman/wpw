@@ -7,6 +7,7 @@ import com.wpw.pim.repository.media.MediaFileRepository;
 import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.service.media.ArchiveExtractorService.ExtractionResult;
 import com.wpw.pim.service.media.ArchiveExtractorService.ExtractedFile;
+import com.wpw.pim.service.media.ArchiveExtractorService.ScanResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,11 +41,15 @@ public class PhotoImportService {
     private static final Pattern TOOL_NO_PATTERN = Pattern.compile("^(.+?)(?:_\\d+)?\\.[a-zA-Z]+$");
 
     @PostConstruct
-    void ensureMediaDirectory() throws IOException {
+    void ensureMediaDirectory() {
         Path mediaDir = Paths.get(mediaBasePath);
         if (!Files.exists(mediaDir)) {
-            Files.createDirectories(mediaDir);
-            log.info("Created media directory: {}", mediaDir);
+            try {
+                Files.createDirectories(mediaDir);
+                log.info("Created media directory: {}", mediaDir);
+            } catch (IOException e) {
+                log.warn("Could not create media directory '{}': {}. Create it manually and ensure the app has write access.", mediaDir, e.getMessage());
+            }
         }
     }
 
@@ -258,50 +263,43 @@ public class PhotoImportService {
      * @throws IOException при ошибке чтения архива
      */
     public Map<String, Object> validateArchive(MultipartFile archive) throws IOException {
-        ExtractionResult extraction = null;
-        try {
-            extraction = archiveExtractorService.extractImages(archive);
+        ScanResult scan = archiveExtractorService.scanImageNames(archive);
 
-            Map<String, Product> productsByToolNo = getProductMap();
-            List<Map<String, Object>> matched = new ArrayList<>();
-            List<Map<String, Object>> unmatched = new ArrayList<>();
+        Map<String, Product> productsByToolNo = getProductMap();
+        List<Map<String, Object>> matched = new ArrayList<>();
+        List<Map<String, Object>> unmatched = new ArrayList<>();
 
-            for (ExtractedFile ef : extraction.extractedFiles()) {
-                String originalName = ef.originalName();
-                String toolNo = extractToolNo(originalName);
+        for (String originalName : scan.imageFileNames()) {
+            String toolNo = extractToolNo(originalName);
 
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("filename", originalName);
-                entry.put("toolNo", toolNo);
-                entry.put("size", Files.size(ef.tempFile()));
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("filename", originalName);
+            entry.put("toolNo", toolNo);
 
-                Product product = productsByToolNo.get(toolNo.toUpperCase());
-                if (product != null) {
-                    entry.put("productName", toolNo);
-                    entry.put("productId", product.getId().toString());
-                    matched.add(entry);
-                } else {
-                    unmatched.add(entry);
-                }
+            Product product = productsByToolNo.get(toolNo.toUpperCase());
+            if (product != null) {
+                entry.put("productName", toolNo);
+                entry.put("productId", product.getId().toString());
+                matched.add(entry);
+            } else {
+                unmatched.add(entry);
             }
-
-            Map<String, Object> report = new LinkedHashMap<>();
-            report.put("archiveName", archive.getOriginalFilename());
-            report.put("archiveSize", archive.getSize());
-            report.put("totalEntriesInArchive", extraction.totalEntries());
-            report.put("imagesExtracted", extraction.imageEntries());
-            report.put("skippedFiles", extraction.skippedEntries().size());
-            report.put("matched", matched.size());
-            report.put("unmatched", unmatched.size());
-            report.put("matchedFiles", matched);
-            report.put("unmatchedFiles", unmatched);
-            if (!extraction.skippedEntries().isEmpty()) {
-                report.put("skippedFileNames", extraction.skippedEntries());
-            }
-            return report;
-        } finally {
-            archiveExtractorService.cleanup(extraction);
         }
+
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("archiveName", archive.getOriginalFilename());
+        report.put("archiveSize", archive.getSize());
+        report.put("totalEntriesInArchive", scan.totalEntries());
+        report.put("imagesExtracted", scan.imageEntries());
+        report.put("skippedFiles", scan.skippedEntries().size());
+        report.put("matched", matched.size());
+        report.put("unmatched", unmatched.size());
+        report.put("matchedFiles", matched);
+        report.put("unmatchedFiles", unmatched);
+        if (!scan.skippedEntries().isEmpty()) {
+            report.put("skippedFileNames", scan.skippedEntries());
+        }
+        return report;
     }
 
     /**
