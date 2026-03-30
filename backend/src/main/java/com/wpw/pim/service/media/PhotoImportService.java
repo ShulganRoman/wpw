@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.annotation.PostConstruct;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -37,6 +38,15 @@ public class PhotoImportService {
     private String mediaBaseUrl;
 
     private static final Pattern TOOL_NO_PATTERN = Pattern.compile("^(.+?)(?:_\\d+)?\\.[a-zA-Z]+$");
+
+    @PostConstruct
+    void ensureMediaDirectory() throws IOException {
+        Path mediaDir = Paths.get(mediaBasePath);
+        if (!Files.exists(mediaDir)) {
+            Files.createDirectories(mediaDir);
+            log.info("Created media directory: {}", mediaDir);
+        }
+    }
 
     /**
      * Validate uploaded photos - match filenames to products, return report without importing.
