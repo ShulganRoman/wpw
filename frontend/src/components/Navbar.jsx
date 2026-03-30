@@ -35,6 +35,7 @@ export default function Navbar({ locale, onLocaleChange }) {
       <NavLink to="/catalog" className="navbar-brand">
         <img src="/wpw-logo.png" alt="WPW" />
       </NavLink>
+      <span className="navbar-version">{__APP_VERSION__}</span>
       <div className="navbar-links">
         {LINKS.map(link => (
           <NavLink
