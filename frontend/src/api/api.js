@@ -32,10 +32,11 @@ export async function login(username, password) {
   if (!res.ok) {
     let message = `HTTP ${res.status}`;
     try {
-      const body = await res.json();
+      const text = await res.text();
+      const body = JSON.parse(text);
       message = body.message || body.error || message;
     } catch {
-      message = (await res.text()) || message;
+      // text already consumed or not valid JSON — keep default message
     }
     throw new Error(message);
   }
