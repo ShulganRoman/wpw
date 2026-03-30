@@ -5,8 +5,9 @@ import com.wpw.pim.domain.media.MediaFile;
 import com.wpw.pim.domain.product.Product;
 import com.wpw.pim.repository.media.MediaFileRepository;
 import com.wpw.pim.repository.product.ProductRepository;
+import com.wpw.pim.service.media.ArchiveExtractorService.ExtractionResult;
+import com.wpw.pim.service.media.ArchiveExtractorService.ExtractedFile;
 import com.wpw.pim.service.media.ArchiveExtractorService.ScanResult;
-import com.wpw.pim.service.media.ArchiveExtractorService.StreamResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -302,111 +303,114 @@ public class PhotoImportService {
     }
 
     /**
-     * Импорт фотографий из архива — потоковая обработка.
-     * Файлы извлекаются по одному, конвертируются в WebP, temp удаляется сразу.
-     * БД-записи сохраняются пачками по BATCH_SIZE.
+     * Импорт фотографий из архива - извлекает изображения, конвертирует в WebP, сохраняет на диск и создаёт записи MediaFile.
+     * <p>
+     * Процесс: архив распаковывается -> изображения группируются по toolNo ->
+     * каждое изображение конвертируется в WebP через cwebp -> создаётся запись в БД.
+     * Переиспользует логику конвертации из {@link #importPhotos(MultipartFile[])}.
+     * </p>
+     *
+     * @param archive загруженный архивный файл
+     * @return отчёт об импорте со статистикой обработки
+     * @throws IOException при ошибке чтения архива или записи файлов
      */
-    private static final int BATCH_SIZE = 50;
-
     @Transactional
     public Map<String, Object> importArchive(MultipartFile archive) throws IOException {
-        Map<String, Product> productsByToolNo = getProductMap();
-        Path mediaDir = Paths.get(mediaBasePath);
-        Files.createDirectories(mediaDir);
+        ExtractionResult extraction = null;
+        try {
+            extraction = archiveExtractorService.extractImages(archive);
 
-        // Собираем ID matched-продуктов для точечного запроса дубликатов
-        Set<UUID> matchedProductIds = productsByToolNo.values().stream()
-                .map(Product::getId)
-                .collect(Collectors.toSet());
-        Set<String> existingUrls = matchedProductIds.isEmpty()
-                ? new HashSet<>()
-                : mediaFileRepository.findUrlsByProductIds(matchedProductIds);
+            Map<String, Product> productsByToolNo = getProductMap();
+            Path mediaDir = Paths.get(mediaBasePath);
+            Files.createDirectories(mediaDir);
 
-        // Счётчики — используем массивы для доступа из лямбды
-        int[] converted = {0};
-        int[] skipped = {0};
-        int[] errors = {0};
-        Set<String> matchedToolNos = new HashSet<>();
-        List<String> errorDetails = new ArrayList<>();
-        List<MediaFile> batch = new ArrayList<>();
+            int matchedProducts = 0;
+            int converted = 0;
+            int skipped = 0;
+            int errors = 0;
+            List<String> errorDetails = new ArrayList<>();
 
-        // Кэш nextVariant по toolNo — чтобы не сканировать директорию повторно
-        Map<String, Integer> variantCache = new HashMap<>();
+            // Получаем существующие URL для предотвращения дубликатов
+            Set<String> existingUrls = mediaFileRepository.findAll().stream()
+                    .map(MediaFile::getUrl)
+                    .collect(Collectors.toSet());
 
-        StreamResult streamResult = archiveExtractorService.processImages(archive, (tempFile, originalName) -> {
-            String toolNo = extractToolNo(originalName).toUpperCase();
-            Product product = productsByToolNo.get(toolNo);
-
-            if (product == null) {
-                skipped[0]++;
-                return;
+            // Группируем извлечённые файлы по номеру инструмента
+            Map<String, List<ExtractedFile>> filesByTool = new LinkedHashMap<>();
+            for (ExtractedFile ef : extraction.extractedFiles()) {
+                String toolNo = extractToolNo(ef.originalName()).toUpperCase();
+                filesByTool.computeIfAbsent(toolNo, k -> new ArrayList<>()).add(ef);
             }
 
-            matchedToolNos.add(toolNo);
+            for (Map.Entry<String, List<ExtractedFile>> entry : filesByTool.entrySet()) {
+                String toolNo = entry.getKey();
+                List<ExtractedFile> toolFiles = entry.getValue();
+                Product product = productsByToolNo.get(toolNo);
 
-            try {
+                if (product == null) {
+                    skipped += toolFiles.size();
+                    continue;
+                }
+
+                matchedProducts++;
                 Path toolDir = mediaDir.resolve(toolNo);
                 Files.createDirectories(toolDir);
 
-                int nextVariant = variantCache.computeIfAbsent(toolNo, k -> {
-                    try { return getNextVariant(toolDir); }
-                    catch (IOException e) { return 1; }
-                });
+                int nextVariant = getNextVariant(toolDir);
 
-                String webpName = nextVariant + ".webp";
-                String url = mediaBaseUrl + "/" + toolNo + "/" + webpName;
+                for (ExtractedFile ef : toolFiles) {
+                    try {
+                        String webpName = nextVariant + ".webp";
+                        Path webpPath = toolDir.resolve(webpName);
+                        String url = mediaBaseUrl + "/" + toolNo + "/" + webpName;
 
-                while (existingUrls.contains(url)) {
-                    nextVariant++;
-                    webpName = nextVariant + ".webp";
-                    url = mediaBaseUrl + "/" + toolNo + "/" + webpName;
+                        if (existingUrls.contains(url)) {
+                            nextVariant++;
+                            webpName = nextVariant + ".webp";
+                            webpPath = toolDir.resolve(webpName);
+                            url = mediaBaseUrl + "/" + toolNo + "/" + webpName;
+                        }
+
+                        // Конвертируем в WebP из временного файла
+                        convertTempFileToWebp(ef.tempFile(), ef.originalName(), webpPath);
+
+                        // Создаём запись MediaFile
+                        MediaFile mf = new MediaFile();
+                        mf.setProduct(product);
+                        mf.setFileType(FileType.image);
+                        mf.setUrl(url);
+                        mf.setThumbnailUrl(url);
+                        mf.setAltText(product.getToolNo() + " image " + nextVariant);
+                        mf.setSortOrder(nextVariant - 1);
+                        mediaFileRepository.save(mf);
+
+                        existingUrls.add(url);
+                        converted++;
+                        nextVariant++;
+                    } catch (Exception e) {
+                        errors++;
+                        errorDetails.add(ef.originalName() + ": " + e.getMessage());
+                        log.error("Ошибка конвертации {}: {}", ef.originalName(), e.getMessage());
+                    }
                 }
-
-                Path webpPath = toolDir.resolve(webpName);
-                convertTempFileToWebp(tempFile, originalName, webpPath);
-
-                MediaFile mf = new MediaFile();
-                mf.setProduct(product);
-                mf.setFileType(FileType.image);
-                mf.setUrl(url);
-                mf.setThumbnailUrl(url);
-                mf.setAltText(product.getToolNo() + " image " + nextVariant);
-                mf.setSortOrder(nextVariant - 1);
-                batch.add(mf);
-
-                existingUrls.add(url);
-                variantCache.put(toolNo, nextVariant + 1);
-                converted[0]++;
-
-                if (batch.size() >= BATCH_SIZE) {
-                    mediaFileRepository.saveAll(batch);
-                    batch.clear();
-                }
-            } catch (Exception e) {
-                errors[0]++;
-                errorDetails.add(originalName + ": " + e.getMessage());
-                log.error("Ошибка конвертации {}: {}", originalName, e.getMessage());
             }
-        });
 
-        // Сохраняем остаток
-        if (!batch.isEmpty()) {
-            mediaFileRepository.saveAll(batch);
+            Map<String, Object> report = new LinkedHashMap<>();
+            report.put("archiveName", archive.getOriginalFilename());
+            report.put("totalEntriesInArchive", extraction.totalEntries());
+            report.put("imagesExtracted", extraction.imageEntries());
+            report.put("skippedInArchive", extraction.skippedEntries().size());
+            report.put("matchedProducts", matchedProducts);
+            report.put("converted", converted);
+            report.put("skipped", skipped);
+            report.put("errors", errors);
+            if (!errorDetails.isEmpty()) {
+                report.put("errorDetails", errorDetails);
+            }
+            return report;
+        } finally {
+            archiveExtractorService.cleanup(extraction);
         }
-
-        Map<String, Object> report = new LinkedHashMap<>();
-        report.put("archiveName", archive.getOriginalFilename());
-        report.put("totalEntriesInArchive", streamResult.totalEntries());
-        report.put("imagesExtracted", streamResult.imageEntries());
-        report.put("skippedInArchive", streamResult.skippedEntries());
-        report.put("matchedProducts", matchedToolNos.size());
-        report.put("converted", converted[0]);
-        report.put("skipped", skipped[0]);
-        report.put("errors", errors[0]);
-        if (!errorDetails.isEmpty()) {
-            report.put("errorDetails", errorDetails);
-        }
-        return report;
     }
 
     /**
