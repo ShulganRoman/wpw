@@ -341,6 +341,10 @@ export function deleteProductImage(productId, imageId) {
   return request(`/products/${productId}/images/${imageId}`, { method: 'DELETE' });
 }
 
+export function deleteProduct(id) {
+  return request(`/products/${id}`, { method: 'DELETE' });
+}
+
 export function getProductImages(productId) {
   return request(`/products/${productId}/images`);
 }

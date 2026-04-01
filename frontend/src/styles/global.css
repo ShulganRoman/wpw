@@ -35,6 +35,7 @@ body {
   color: var(--wpw-gray);
   line-height: 1.5;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 a {
   color: var(--wpw-blue);

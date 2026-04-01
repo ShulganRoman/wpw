@@ -8,6 +8,7 @@ import {
   getProductImages,
   uploadProductImages,
   deleteProductImage,
+  deleteProduct,
 } from '../api/api';
 import ProductCard from '../components/ProductCard';
 import { LoadingSpinner, ErrorState } from '../components/LoadingState';
@@ -525,11 +526,17 @@ export default function ProductPage({ locale }) {
 
   // Edit mode state
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [editData, setEditData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [imageData, setImageData] = useState([]);
 
-  const isAuthed = !!localStorage.getItem('authToken');
+  const canEdit = (() => {
+    try {
+      const privs = JSON.parse(localStorage.getItem('userPrivileges') || '[]');
+      return privs.includes('MODIFY_PRODUCTS');
+    } catch { return false; }
+  })();
 
   useEffect(() => {
     async function fetchProduct() {
@@ -617,6 +624,20 @@ export default function ProductPage({ locale }) {
     }
   }
 
+  async function handleDelete() {
+    if (!window.confirm(`Delete product "${product.toolNo}"? This action cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await deleteProduct(product.id);
+      toast('Product deleted', 'success');
+      navigate(-1);
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   async function handleUpload(files) {
     try {
       const updated = await uploadProductImages(product.id, files);
@@ -657,7 +678,7 @@ export default function ProductPage({ locale }) {
           &larr; Back
         </button>
 
-        {isAuthed && (
+        {canEdit && (
           <div className="product-edit-actions">
             {editing ? (
               <>
@@ -673,9 +694,14 @@ export default function ProductPage({ locale }) {
                 </button>
               </>
             ) : (
-              <button className="btn-edit" onClick={startEditing}>
-                Edit
-              </button>
+              <>
+                <button className="btn-edit" onClick={startEditing}>
+                  Edit
+                </button>
+                <button className="btn-delete" onClick={handleDelete} disabled={deleting}>
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </>
             )}
           </div>
         )}
