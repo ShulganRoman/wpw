@@ -68,7 +68,7 @@ services:
       - frontend_static:/usr/share/nginx/html:ro
       - ./media:/media:ro
     ports:
-      - "8090:80"
+      - "80:80"
     networks:
       - wpw-net
 
