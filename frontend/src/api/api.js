@@ -14,6 +14,13 @@ async function request(path, options = {}) {
     },
     ...options,
   });
+  if (res.status === 401) {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userPrivileges');
+    window.location.hash = '#/login';
+    throw new Error('Session expired');
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `HTTP ${res.status}`);
@@ -339,6 +346,10 @@ export async function uploadProductImages(productId, files) {
 
 export function deleteProductImage(productId, imageId) {
   return request(`/products/${productId}/images/${imageId}`, { method: 'DELETE' });
+}
+
+export function deleteProduct(id) {
+  return request(`/products/${id}`, { method: 'DELETE' });
 }
 
 export function getProductImages(productId) {
