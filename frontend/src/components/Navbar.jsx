@@ -5,7 +5,6 @@ const LINKS = [
   { to: '/catalog', label: 'Catalog' },
   { to: '/export', label: 'Export' },
   { to: '/admin', label: 'Admin' },
-  { to: '/dealer', label: 'Dealer' },
 ];
 
 function isLoggedIn() {

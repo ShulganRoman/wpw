@@ -215,111 +215,117 @@ function ExcelImportTab() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  const hasReport = validationReport || executeReport;
+
   return (
-    <div className="admin-section">
-      {/* Dropzone */}
-      <div
-        ref={dropzoneRef}
-        className={`dropzone${dragOver ? ' drag-over' : ''}`}
-        onClick={handleClickDropzone}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        role="button"
-        tabIndex={0}
-        onKeyDown={e => e.key === 'Enter' && handleClickDropzone()}
-      >
-        <div className="dropzone-icon">📂</div>
-        <div className="dropzone-text">
-          {file ? 'Click or drop to replace file' : 'Click to select or drag & drop an Excel file here'}
+    <div className="admin-import-layout">
+      {/* Left column: controls */}
+      <div className="admin-import-left">
+        <div
+          ref={dropzoneRef}
+          className={`dropzone${dragOver ? ' drag-over' : ''}`}
+          onClick={handleClickDropzone}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => e.key === 'Enter' && handleClickDropzone()}
+        >
+          <div className="dropzone-icon">📂</div>
+          <div className="dropzone-text">
+            {file ? 'Click or drop to replace file' : 'Click to select or drag & drop an Excel file here'}
+          </div>
+          <div className="dropzone-hint">Supported formats: .xlsx, .xls</div>
+          {file && <div className="dropzone-filename">📎 {file.name}</div>}
         </div>
-        <div className="dropzone-hint">Supported formats: .xlsx, .xls</div>
-        {file && <div className="dropzone-filename">📎 {file.name}</div>}
-      </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".xlsx,.xls"
-        style={{ display: 'none' }}
-        onChange={e => handleFile(e.target.files[0])}
-      />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          style={{ display: 'none' }}
+          onChange={e => handleFile(e.target.files[0])}
+        />
 
-      {/* Actions */}
-      <div className="import-actions">
-        <button
-          className="btn btn-secondary"
-          onClick={handleValidate}
-          disabled={!file || validating || executing}
-        >
-          {validating ? (
-            <>
-              <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-              Validating…
-            </>
-          ) : '✓ Validate'}
-        </button>
-
-        <button
-          className="btn btn-primary"
-          onClick={handleExecute}
-          disabled={!file || executing || validating || validationValid === false}
-          title={validationValid === false ? 'Fix validation errors before importing' : ''}
-        >
-          {executing ? (
-            <>
-              <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-              Importing…
-            </>
-          ) : '⬆ Execute Import'}
-        </button>
-
-        {file && (
-          <button className="btn btn-secondary" onClick={handleReset}>
-            ✕ Reset
+        <div className="import-actions">
+          <button
+            className="btn btn-secondary"
+            onClick={handleValidate}
+            disabled={!file || validating || executing}
+          >
+            {validating ? (
+              <>
+                <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                Validating…
+              </>
+            ) : '✓ Validate'}
           </button>
+
+          <button
+            className="btn btn-primary"
+            onClick={handleExecute}
+            disabled={!file || executing || validating || validationValid === false}
+            title={validationValid === false ? 'Fix validation errors before importing' : ''}
+          >
+            {executing ? (
+              <>
+                <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                Importing…
+              </>
+            ) : '⬆ Execute Import'}
+          </button>
+
+          {file && (
+            <button className="btn btn-secondary" onClick={handleReset}>
+              ✕ Reset
+            </button>
+          )}
+        </div>
+
+        {validationValid === false && (
+          <p style={{ marginTop: 8, fontSize: 12, color: '#c62828' }}>
+            Validation must pass before executing the import.
+          </p>
         )}
+
+        <div className="card" style={{ marginTop: 24 }}>
+          <div className="card-title">Import Instructions</div>
+          <ol style={{ paddingLeft: 20, listStyle: 'decimal', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
+            <li>Prepare an Excel file (.xlsx) with product data following the required column structure.</li>
+            <li>Upload the file using the drop zone above.</li>
+            <li>Click <strong>Validate</strong> to check for errors before importing.</li>
+            <li>If validation passes, click <strong>Execute Import</strong> to apply the changes.</li>
+            <li>Review the import report for details on what was added or updated.</li>
+          </ol>
+        </div>
       </div>
 
-      {validationValid === false && (
-        <p style={{ marginTop: 8, fontSize: 12, color: '#c62828' }}>
-          Validation must pass before executing the import.
-        </p>
-      )}
-
-      {/* Validation Report */}
-      {validationReport && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>
-            Validation Report
-          </div>
-          <ValidationReport report={validationReport} />
-        </div>
-      )}
-
-      {/* Execute Report */}
-      {executeReport && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>
-            Import Report
-          </div>
-          <div className="import-report">
-            <MarkdownReport text={executeReport} />
+      {/* Right column: reports (scrollable, page stays static) */}
+      {hasReport && (
+        <div className="admin-import-right">
+          <div className="admin-report-panel">
+            {validationReport && (
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>
+                  Validation Report
+                </div>
+                <ValidationReport report={validationReport} />
+              </div>
+            )}
+            {executeReport && (
+              <div style={{ marginTop: validationReport ? 20 : 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>
+                  Import Report
+                </div>
+                <div className="import-report">
+                  <MarkdownReport text={executeReport} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
-
-      {/* Instructions */}
-      <div className="card" style={{ marginTop: 24 }}>
-        <div className="card-title">Import Instructions</div>
-        <ol style={{ paddingLeft: 20, listStyle: 'decimal', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
-          <li>Prepare an Excel file (.xlsx) with product data following the required column structure.</li>
-          <li>Upload the file using the drop zone above.</li>
-          <li>Click <strong>Validate</strong> to check for errors before importing.</li>
-          <li>If validation passes, click <strong>Execute Import</strong> to apply the changes.</li>
-          <li>Review the import report for details on what was added or updated.</li>
-        </ol>
-      </div>
     </div>
   );
 }

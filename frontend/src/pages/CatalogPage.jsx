@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getCategories, getProducts, getOperations, search } from '../api/api';
 import ProductCard from '../components/ProductCard';
 import Pagination from '../components/Pagination';
@@ -186,23 +185,9 @@ function normalizeTree(sections) {
   }));
 }
 
-const STOCK_LABELS = {
-  in_stock: 'In Stock',
-  low_stock: 'Low Stock',
-  out_of_stock: 'Out of Stock',
-};
-
-const SEARCH_PLACEHOLDER_SVG = (
-  <svg viewBox="0 0 72 72" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="72" height="72" rx="4" fill="#eceff1" />
-    <path d="M18 50L28 34L38 46L46 36L56 50H18Z" fill="#b0bec5" />
-    <circle cx="48" cy="24" r="8" fill="#b0bec5" />
-  </svg>
-);
 
 export default function CatalogPage({ locale }) {
   const toast = useToast();
-  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
@@ -371,43 +356,10 @@ export default function CatalogPage({ locale }) {
             </div>
           ) : (
             <>
-              <div className="search-results-list">
-                {searchResults.map(item => {
-                  const toolNo = item.toolNo || item.tool_no || item.id;
-                  const name = item.name || item.productName || item.product_name || '';
-                  const desc = item.description || item.shortDescription || item.short_description || '';
-                  const imgUrl = item.thumbnailUrl || item.imageUrl || item.image_url || item.mainImageUrl;
-                  const stockKey = item.stockStatus || item.stock_status || 'out_of_stock';
-
-                  return (
-                    <div
-                      key={item.id || toolNo}
-                      className="search-result-item"
-                      onClick={() => navigate(`/product/${encodeURIComponent(toolNo)}`)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={e => e.key === 'Enter' && navigate(`/product/${encodeURIComponent(toolNo)}`)}
-                    >
-                      {imgUrl ? (
-                        <img className="search-result-img" src={imgUrl} alt={name} loading="lazy"
-                          onError={e => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      ) : (
-                        <div className="search-result-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {SEARCH_PLACEHOLDER_SVG}
-                        </div>
-                      )}
-                      <div className="search-result-body">
-                        <div className="search-result-toolno">{toolNo}</div>
-                        <div className="search-result-name">{name}</div>
-                        {desc && <div className="search-result-desc">{desc}</div>}
-                      </div>
-                      <span className={`stock-badge ${stockKey}`} style={{ flexShrink: 0 }}>
-                        {STOCK_LABELS[stockKey] || stockKey}
-                      </span>
-                    </div>
-                  );
-                })}
+              <div className="product-grid">
+                {searchResults.map(p => (
+                  <ProductCard key={p.id || p.toolNo || p.tool_no} product={p} />
+                ))}
               </div>
               <Pagination
                 page={searchPage}

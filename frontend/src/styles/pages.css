@@ -845,6 +845,120 @@
 }
 
 /* ===== Export Page ===== */
+/* Export two-column layout */
+.export-layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.export-left {
+  min-width: 0;
+}
+
+.export-right {
+  min-width: 0;
+}
+
+.export-preview-card {
+  max-height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.export-preview-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.export-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--wpw-border);
+  transition: background 0.1s;
+}
+
+.export-preview-row:last-child {
+  border-bottom: none;
+}
+
+.export-preview-row:hover {
+  background: var(--wpw-off-white);
+}
+
+.export-preview-thumb {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--wpw-light-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.export-preview-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.export-preview-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--wpw-light-gray);
+}
+
+.export-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.export-preview-toolno {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--wpw-mid-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.export-preview-name {
+  font-size: 13px;
+  color: var(--wpw-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.export-preview-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.export-preview-type {
+  font-size: 11px;
+  color: var(--wpw-mid-gray);
+}
+
+.export-preview-status {
+  font-size: 11px;
+  color: var(--wpw-mid-gray);
+}
+
+@media (max-width: 900px) {
+  .export-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .export-form {
   max-width: 520px;
   display: flex;
@@ -921,6 +1035,42 @@
 /* ===== Admin Page ===== */
 .admin-section {
   max-width: 700px;
+}
+
+.admin-import-layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.admin-import-left {
+  min-width: 0;
+}
+
+.admin-import-right {
+  min-width: 0;
+  position: sticky;
+  top: 80px;
+}
+
+.admin-report-panel {
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  background: var(--wpw-off-white);
+  border: 1px solid var(--wpw-border);
+  border-radius: var(--wpw-radius);
+  padding: 16px;
+}
+
+@media (max-width: 900px) {
+  .admin-import-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-import-right {
+    position: static;
+  }
 }
 
 .dropzone {

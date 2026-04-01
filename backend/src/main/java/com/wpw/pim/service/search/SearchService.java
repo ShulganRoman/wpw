@@ -20,12 +20,17 @@ public class SearchService {
 
     private static final String NAME_EXPR = "COALESCE(pt.name, pen.name, '')";
     private static final String DESC_EXPR = "COALESCE(pt.short_description, pen.short_description, '')";
+    private static final String THUMBNAIL_SUBQUERY =
+            "(SELECT mf.thumbnail_url FROM media_files mf" +
+            " WHERE mf.product_id = p.id AND mf.file_type = 'image'" +
+            " ORDER BY mf.sort_order LIMIT 1) AS thumbnail_url";
 
     public List<Map<String, Object>> search(String query, String locale, int page, int perPage) {
         int offset = (page - 1) * perPage;
 
         String ftsSql = """
             SELECT p.id, p.tool_no, %s AS name, %s AS short_description, p.status,
+                   %s,
                    ts_rank(
                        to_tsvector('simple', %s || ' ' || %s || ' ' || p.tool_no),
                        plainto_tsquery('simple', ?)
@@ -37,13 +42,14 @@ public class SearchService {
                   @@ plainto_tsquery('simple', ?)
             ORDER BY rank DESC, p.tool_no
             LIMIT ? OFFSET ?
-            """.formatted(NAME_EXPR, DESC_EXPR, NAME_EXPR, DESC_EXPR, TRANSLATION_JOIN, NAME_EXPR, DESC_EXPR);
+            """.formatted(NAME_EXPR, DESC_EXPR, THUMBNAIL_SUBQUERY, NAME_EXPR, DESC_EXPR, TRANSLATION_JOIN, NAME_EXPR, DESC_EXPR);
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(ftsSql, query, locale, query, perPage, offset);
         if (!results.isEmpty()) return results;
 
         String likeSql = """
-            SELECT p.id, p.tool_no, %s AS name, %s AS short_description, p.status, 1.0 AS rank
+            SELECT p.id, p.tool_no, %s AS name, %s AS short_description, p.status,
+                   %s, 1.0 AS rank
             FROM products p
             %s
             WHERE p.status = 'active'
@@ -54,7 +60,7 @@ public class SearchService {
               )
             ORDER BY p.tool_no
             LIMIT ? OFFSET ?
-            """.formatted(NAME_EXPR, DESC_EXPR, TRANSLATION_JOIN, NAME_EXPR, DESC_EXPR);
+            """.formatted(NAME_EXPR, DESC_EXPR, THUMBNAIL_SUBQUERY, TRANSLATION_JOIN, NAME_EXPR, DESC_EXPR);
 
         String pattern = "%" + query.replace("%", "\\%") + "%";
         return jdbcTemplate.queryForList(likeSql, locale, pattern, pattern, pattern, perPage, offset);

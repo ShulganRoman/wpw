@@ -23,7 +23,7 @@ export default function ProductCard({ product }) {
     navigate(`/product/${encodeURIComponent(product.toolNo || product.tool_no || product.id)}`);
   }
 
-  const imageUrl = product.thumbnailUrl || product.imageUrl || product.image_url || product.mainImageUrl;
+  const imageUrl = product.thumbnailUrl || product.thumbnail_url || product.imageUrl || product.image_url || product.mainImageUrl;
   const name = product.name || product.productName || product.product_name || '';
   const toolNo = product.toolNo || product.tool_no || '';
 
