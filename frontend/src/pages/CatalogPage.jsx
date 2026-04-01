@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getCategories, getProducts, getOperations } from '../api/api';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getCategories, getProducts, getOperations, search } from '../api/api';
 import ProductCard from '../components/ProductCard';
 import Pagination from '../components/Pagination';
 import { SkeletonGrid, ErrorState } from '../components/LoadingState';
@@ -185,8 +186,23 @@ function normalizeTree(sections) {
   }));
 }
 
+const STOCK_LABELS = {
+  in_stock: 'In Stock',
+  low_stock: 'Low Stock',
+  out_of_stock: 'Out of Stock',
+};
+
+const SEARCH_PLACEHOLDER_SVG = (
+  <svg viewBox="0 0 72 72" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="72" height="72" rx="4" fill="#eceff1" />
+    <path d="M18 50L28 34L38 46L46 36L56 50H18Z" fill="#b0bec5" />
+    <circle cx="48" cy="24" r="8" fill="#b0bec5" />
+  </svg>
+);
+
 export default function CatalogPage({ locale }) {
   const toast = useToast();
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
@@ -198,6 +214,14 @@ export default function CatalogPage({ locale }) {
   const [catLoading, setCatLoading] = useState(true);
   const [operations, setOperations] = useState([]);
   const [selectedOperation, setSelectedOperation] = useState(null);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchPage, setSearchPage] = useState(1);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     setCatLoading(true);
@@ -262,6 +286,49 @@ export default function CatalogPage({ locale }) {
     setFilters(EMPTY_FILTERS);
   }
 
+  // Search
+  async function doSearch(q, pg = 1) {
+    if (!q.trim()) {
+      setSearchResults(null);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const data = await search(q, locale, pg, PER_PAGE);
+      const items = Array.isArray(data) ? data : data.items || data.results || data.content || [];
+      const totalCount = typeof data === 'object' && !Array.isArray(data)
+        ? (data.total || data.totalElements || data.count || items.length)
+        : items.length;
+      setSearchResults(items);
+      setSearchTotal(totalCount);
+    } catch (err) {
+      toast(err.message, 'error');
+      setSearchResults(null);
+    } finally {
+      setSearchLoading(false);
+    }
+  }
+
+  function handleSearchSubmit(e) {
+    e.preventDefault();
+    setSearchPage(1);
+    doSearch(searchQuery, 1);
+  }
+
+  function handleSearchPageChange(pg) {
+    setSearchPage(pg);
+    doSearch(searchQuery, pg);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function clearSearch() {
+    setSearchQuery('');
+    setSearchResults(null);
+    setSearchPage(1);
+  }
+
+  const isSearchMode = searchResults !== null;
+
   return (
     <div>
       <div className="page-header">
@@ -269,81 +336,167 @@ export default function CatalogPage({ locale }) {
         <p className="page-subtitle">Browse and filter our complete product range</p>
       </div>
 
-      {operations.length > 0 && (
-        <div className="operation-bar">
-          {operations.map(op => {
-            const code = op.code || op.id;
-            const label = op.name || op.label || op.code || '';
-            const isActive = selectedOperation === code;
-            return (
-              <button
-                key={code}
-                className={`operation-chip${isActive ? ' active' : ''}`}
-                onClick={() => setSelectedOperation(isActive ? null : code)}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="catalog-layout">
-        <aside className="catalog-sidebar">
-          {!catLoading && (
-            <CategoryTree
-              categories={categories}
-              selected={selectedNode}
-              onSelect={handleCategorySelect}
-            />
-          )}
-          <FiltersPanel
-            filters={filters}
-            onChange={setFilters}
-            onClear={handleClearFilters}
+      <div className="catalog-search-bar">
+        <form className="search-bar" onSubmit={handleSearchSubmit}>
+          <input
+            ref={inputRef}
+            className="form-control"
+            type="search"
+            placeholder="Search products by name, tool number, or description..."
+            value={searchQuery}
+            onChange={e => {
+              setSearchQuery(e.target.value);
+              if (!e.target.value.trim()) clearSearch();
+            }}
           />
-        </aside>
+          <button type="submit" className="btn btn-primary">Search</button>
+        </form>
+      </div>
 
-        <main className="catalog-main">
-          <div className="catalog-toolbar">
-            <div className="catalog-count">
-              {!loading && (
-                <span>
-                  Showing <strong>{products.length}</strong> of <strong>{total}</strong> products
-                </span>
-              )}
-            </div>
+      {isSearchMode ? (
+        <div className="catalog-search-results">
+          <div className="catalog-search-results-header">
+            <span style={{ fontSize: 13, color: 'var(--wpw-mid-gray)' }}>
+              Found <strong style={{ color: 'var(--wpw-navy)' }}>{searchTotal}</strong> results for "{searchQuery}"
+            </span>
+            <button className="filters-clear-btn" onClick={clearSearch}>Back to catalog</button>
           </div>
 
-          {error && !loading && (
-            <ErrorState message={error} onRetry={() => fetchProducts(page)} />
-          )}
-
-          {loading ? (
+          {searchLoading ? (
             <SkeletonGrid count={12} />
-          ) : products.length === 0 && !error ? (
+          ) : searchResults.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-icon">📦</div>
-              <h3>No products found</h3>
-              <p>Try adjusting your filters or selecting a different category.</p>
+              <h3>No results found</h3>
+              <p>No products matched "{searchQuery}". Try a different search term.</p>
             </div>
           ) : (
             <>
-              <div className="product-grid">
-                {products.map(p => (
-                  <ProductCard key={p.id || p.toolNo || p.tool_no} product={p} />
-                ))}
+              <div className="search-results-list">
+                {searchResults.map(item => {
+                  const toolNo = item.toolNo || item.tool_no || item.id;
+                  const name = item.name || item.productName || item.product_name || '';
+                  const desc = item.description || item.shortDescription || item.short_description || '';
+                  const imgUrl = item.thumbnailUrl || item.imageUrl || item.image_url || item.mainImageUrl;
+                  const stockKey = item.stockStatus || item.stock_status || 'out_of_stock';
+
+                  return (
+                    <div
+                      key={item.id || toolNo}
+                      className="search-result-item"
+                      onClick={() => navigate(`/product/${encodeURIComponent(toolNo)}`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={e => e.key === 'Enter' && navigate(`/product/${encodeURIComponent(toolNo)}`)}
+                    >
+                      {imgUrl ? (
+                        <img className="search-result-img" src={imgUrl} alt={name} loading="lazy"
+                          onError={e => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="search-result-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {SEARCH_PLACEHOLDER_SVG}
+                        </div>
+                      )}
+                      <div className="search-result-body">
+                        <div className="search-result-toolno">{toolNo}</div>
+                        <div className="search-result-name">{name}</div>
+                        {desc && <div className="search-result-desc">{desc}</div>}
+                      </div>
+                      <span className={`stock-badge ${stockKey}`} style={{ flexShrink: 0 }}>
+                        {STOCK_LABELS[stockKey] || stockKey}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
               <Pagination
-                page={page}
-                total={total}
+                page={searchPage}
+                total={searchTotal}
                 perPage={PER_PAGE}
-                onChange={handlePageChange}
+                onChange={handleSearchPageChange}
               />
             </>
           )}
-        </main>
-      </div>
+        </div>
+      ) : (
+        <>
+          {operations.length > 0 && (
+            <div className="operation-bar">
+              {operations.map(op => {
+                const code = op.code || op.id;
+                const label = op.name || op.label || op.code || '';
+                const isActive = selectedOperation === code;
+                return (
+                  <button
+                    key={code}
+                    className={`operation-chip${isActive ? ' active' : ''}`}
+                    onClick={() => setSelectedOperation(isActive ? null : code)}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="catalog-layout">
+            <aside className="catalog-sidebar">
+              {!catLoading && (
+                <CategoryTree
+                  categories={categories}
+                  selected={selectedNode}
+                  onSelect={handleCategorySelect}
+                />
+              )}
+              <FiltersPanel
+                filters={filters}
+                onChange={setFilters}
+                onClear={handleClearFilters}
+              />
+            </aside>
+
+            <main className="catalog-main">
+              <div className="catalog-toolbar">
+                <div className="catalog-count">
+                  {!loading && (
+                    <span>
+                      Showing <strong>{products.length}</strong> of <strong>{total}</strong> products
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {error && !loading && (
+                <ErrorState message={error} onRetry={() => fetchProducts(page)} />
+              )}
+
+              {loading ? (
+                <SkeletonGrid count={12} />
+              ) : products.length === 0 && !error ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon">📦</div>
+                  <h3>No products found</h3>
+                  <p>Try adjusting your filters or selecting a different category.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="product-grid">
+                    {products.map(p => (
+                      <ProductCard key={p.id || p.toolNo || p.tool_no} product={p} />
+                    ))}
+                  </div>
+                  <Pagination
+                    page={page}
+                    total={total}
+                    perPage={PER_PAGE}
+                    onChange={handlePageChange}
+                  />
+                </>
+              )}
+            </main>
+          </div>
+        </>
+      )}
     </div>
   );
 }

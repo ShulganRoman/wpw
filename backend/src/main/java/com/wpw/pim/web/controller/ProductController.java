@@ -1,10 +1,13 @@
 package com.wpw.pim.web.controller;
 
+import com.wpw.pim.service.media.ProductMediaService;
 import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.common.PagedResponse;
+import com.wpw.pim.web.dto.media.MediaImageDto;
 import com.wpw.pim.web.dto.product.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,6 +19,7 @@ import java.util.UUID;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductMediaService productMediaService;
 
     @GetMapping
     public PagedResponse<ProductSummaryDto> list(
@@ -66,5 +70,65 @@ public class ProductController {
         @RequestParam(defaultValue = "en") String locale
     ) {
         return productService.getCompatibleTools(id, locale);
+    }
+
+    /**
+     * Обновляет товар по его идентификатору.
+     *
+     * @param id     идентификатор продукта
+     * @param locale языковая локаль для обновления перевода
+     * @param dto    данные для обновления
+     * @return обновлённый {@link ProductDetailDto}
+     */
+    @PutMapping("/{id}")
+    public ProductDetailDto update(
+        @PathVariable UUID id,
+        @RequestParam(defaultValue = "en") String locale,
+        @RequestBody ProductUpdateDto dto
+    ) {
+        return productService.updateProduct(id, locale, dto);
+    }
+
+    // ========================= Управление изображениями =========================
+
+    /**
+     * Возвращает список изображений товара.
+     *
+     * @param id идентификатор продукта
+     * @return список {@link MediaImageDto}
+     */
+    @GetMapping("/{id}/images")
+    public List<MediaImageDto> getImages(@PathVariable UUID id) {
+        return productMediaService.getImages(id);
+    }
+
+    /**
+     * Добавляет изображения к товару (конвертация в WebP).
+     *
+     * @param id    идентификатор продукта
+     * @param files массив загружаемых файлов изображений
+     * @return обновлённый список {@link MediaImageDto}
+     */
+    @PostMapping("/{id}/images")
+    public List<MediaImageDto> addImages(
+        @PathVariable UUID id,
+        @RequestParam("files") MultipartFile[] files
+    ) {
+        return productMediaService.addImages(id, files);
+    }
+
+    /**
+     * Удаляет изображение товара.
+     *
+     * @param id      идентификатор продукта
+     * @param imageId идентификатор медиафайла
+     * @return обновлённый список {@link MediaImageDto}
+     */
+    @DeleteMapping("/{id}/images/{imageId}")
+    public List<MediaImageDto> deleteImage(
+        @PathVariable UUID id,
+        @PathVariable UUID imageId
+    ) {
+        return productMediaService.deleteImage(id, imageId);
     }
 }

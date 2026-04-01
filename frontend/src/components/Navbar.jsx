@@ -3,7 +3,6 @@ import LocaleSwitcher from './LocaleSwitcher';
 
 const LINKS = [
   { to: '/catalog', label: 'Catalog' },
-  { to: '/search', label: 'Search' },
   { to: '/export', label: 'Export' },
   { to: '/admin', label: 'Admin' },
   { to: '/dealer', label: 'Dealer' },

@@ -4,7 +4,6 @@ import Navbar from './components/Navbar';
 import { ToastProvider } from './components/Toast';
 import CatalogPage from './pages/CatalogPage';
 import ProductPage from './pages/ProductPage';
-import SearchPage from './pages/SearchPage';
 import ExportPage from './pages/ExportPage';
 import AdminPage from './pages/AdminPage';
 import DealerPage from './pages/DealerPage';
@@ -66,7 +65,7 @@ function AppInner() {
           children: [
             { path: 'catalog', element: <CatalogPage locale={locale} /> },
             { path: 'product/:toolNo', element: <ProductPage locale={locale} /> },
-            { path: 'search', element: <SearchPage locale={locale} /> },
+            { path: 'search', element: <Navigate to="/catalog" replace /> },
             { path: 'operations', element: <Navigate to="/catalog" replace /> },
             { path: 'export', element: <ExportPage locale={locale} /> },
             { path: 'admin', element: <AdminPage /> },

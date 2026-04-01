@@ -313,3 +313,34 @@ export async function addSkuMapping(apiKey, toolNo, dealerSku, note = '') {
     body: JSON.stringify({ toolNo, dealerSku, note }),
   });
 }
+
+// Product edit
+export function updateProduct(id, locale, data) {
+  return request(`/products/${id}?locale=${locale}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function uploadProductImages(productId, files) {
+  const form = new FormData();
+  for (const file of files) form.append('files', file);
+  const res = await fetch(`${BASE}/products/${productId}/images`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: form,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export function deleteProductImage(productId, imageId) {
+  return request(`/products/${productId}/images/${imageId}`, { method: 'DELETE' });
+}
+
+export function getProductImages(productId) {
+  return request(`/products/${productId}/images`);
+}
