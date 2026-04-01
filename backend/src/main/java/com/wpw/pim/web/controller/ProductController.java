@@ -6,6 +6,8 @@ import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.web.dto.media.MediaImageDto;
 import com.wpw.pim.web.dto.product.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -80,6 +82,7 @@ public class ProductController {
      * @param dto    данные для обновления
      * @return обновлённый {@link ProductDetailDto}
      */
+    @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @PutMapping("/{id}")
     public ProductDetailDto update(
         @PathVariable UUID id,
@@ -87,6 +90,19 @@ public class ProductController {
         @RequestBody ProductUpdateDto dto
     ) {
         return productService.updateProduct(id, locale, dto);
+    }
+
+    /**
+     * Удаляет товар по его идентификатору вместе с файлами изображений на диске.
+     *
+     * @param id идентификатор продукта
+     * @return 204 No Content
+     */
+    @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
 
     // ========================= Управление изображениями =========================
@@ -109,6 +125,7 @@ public class ProductController {
      * @param files массив загружаемых файлов изображений
      * @return обновлённый список {@link MediaImageDto}
      */
+    @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @PostMapping("/{id}/images")
     public List<MediaImageDto> addImages(
         @PathVariable UUID id,
@@ -124,6 +141,7 @@ public class ProductController {
      * @param imageId идентификатор медиафайла
      * @return обновлённый список {@link MediaImageDto}
      */
+    @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @DeleteMapping("/{id}/images/{imageId}")
     public List<MediaImageDto> deleteImage(
         @PathVariable UUID id,

@@ -44,11 +44,11 @@ public class AdminInitializer implements CommandLineRunner {
             roleRepository.save(adminRole);
         }
 
-        // --- dealer role: modify products ---
-        ensureRole("dealer", Set.of(Privilege.MODIFY_PRODUCTS));
+        // --- dealer role: export + edit products (no admin capabilities) ---
+        ensureRole("dealer", Set.of(Privilege.BULK_EXPORT, Privilege.MODIFY_PRODUCTS));
 
-        // --- user role: export only ---
-        ensureRole("user", Set.of(Privilege.BULK_EXPORT));
+        // --- user role: catalog only, no export or product editing ---
+        ensureRole("user", Set.of());
 
         // --- default admin user ---
         if (!userRepository.existsByUsername(ADMIN_USERNAME)) {
@@ -62,9 +62,17 @@ public class AdminInitializer implements CommandLineRunner {
     }
 
     private void ensureRole(String name, Set<Privilege> privileges) {
-        roleRepository.findByName(name).orElseGet(() -> {
+        EnumSet<Privilege> privSet = privileges.isEmpty()
+                ? EnumSet.noneOf(Privilege.class)
+                : EnumSet.copyOf(privileges);
+        Role role = roleRepository.findByName(name).orElseGet(() -> {
             log.info("Creating built-in role '{}' with privileges {}", name, privileges);
-            return roleRepository.save(new Role(name, true, EnumSet.copyOf(privileges)));
+            return new Role(name, true, privSet);
         });
+        if (!role.getPrivileges().equals(privSet)) {
+            log.info("Updating built-in role '{}' privileges to {}", name, privileges);
+            role.setPrivileges(privSet);
+        }
+        roleRepository.save(role);
     }
 }

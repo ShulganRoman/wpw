@@ -6,6 +6,7 @@ import com.wpw.pim.domain.product.ProductAttributes;
 import com.wpw.pim.domain.product.ProductSparePart;
 import com.wpw.pim.domain.product.ProductTranslation;
 import com.wpw.pim.domain.product.ProductTranslationId;
+import com.wpw.pim.repository.media.MediaFileRepository;
 import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.repository.product.ProductSparePartRepository;
 import com.wpw.pim.repository.product.ProductTranslationRepository;
@@ -14,12 +15,17 @@ import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.web.dto.product.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,8 +42,15 @@ public class ProductService {
     private final ProductRepository productRepo;
     private final ProductTranslationRepository translationRepo;
     private final ProductSparePartRepository sparePartRepo;
+    private final MediaFileRepository mediaFileRepo;
     private final MediaFallbackService mediaFallback;
     private final JsonLdService jsonLdService;
+
+    @Value("${pim.media.base-path:/media/products}")
+    private String mediaBasePath;
+
+    @Value("${pim.media.base-url:/media/products}")
+    private String mediaBaseUrl;
 
     @Transactional(readOnly = true)
     public PagedResponse<ProductSummaryDto> findAll(ProductFilter filter) {
@@ -94,6 +107,35 @@ public class ProductService {
                 String name = t != null ? t.getName() : product.getToolNo();
                 return new SparePartDto(product.getId(), product.getToolNo(), name, sp.getPartRole());
             }).toList();
+    }
+
+    /**
+     * Удаляет товар по его идентификатору.
+     * <p>
+     * Перед удалением из БД очищает файлы изображений с диска:
+     * загружает все {@link MediaFile} для товара, вычисляет путь каждого файла
+     * по URL и удаляет с диска. Затем удаляет сам товар (каскад очистит записи в БД).
+     * </p>
+     *
+     * @param id идентификатор продукта
+     * @throws ResponseStatusException 404 если продукт не найден
+     */
+    @Transactional
+    public void deleteProduct(UUID id) {
+        Product product = productRepo.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Product not found: " + id));
+
+        // Удаление файлов изображений с диска перед удалением записи из БД
+        List<MediaFile> mediaFiles = mediaFileRepo.findByProductIds(List.of(id));
+        for (MediaFile mf : mediaFiles) {
+            tryDeleteFileFromDisk(mf.getUrl());
+            if (mf.getThumbnailUrl() != null && !mf.getThumbnailUrl().equals(mf.getUrl())) {
+                tryDeleteFileFromDisk(mf.getThumbnailUrl());
+            }
+        }
+
+        productRepo.deleteById(id);
+        log.info("Product deleted: id={}, toolNo={}", id, product.getToolNo());
     }
 
     /**
@@ -283,5 +325,25 @@ public class ProductService {
             jsonLd,
             groupName, categoryName, sectionName
         );
+    }
+
+    /**
+     * Пытается удалить файл с диска по его URL.
+     * При ошибке логирует warning, но не выбрасывает исключение.
+     */
+    private void tryDeleteFileFromDisk(String url) {
+        try {
+            String relativePath = url.startsWith(mediaBaseUrl)
+                ? url.substring(mediaBaseUrl.length())
+                : url;
+            Path filePath = Paths.get(mediaBasePath).resolve(relativePath.replaceFirst("^/", ""));
+            if (Files.deleteIfExists(filePath)) {
+                log.debug("Deleted file from disk: {}", filePath);
+            } else {
+                log.warn("File not found on disk for deletion: {}", filePath);
+            }
+        } catch (IOException e) {
+            log.warn("Failed to delete file from disk for URL {}: {}", url, e.getMessage());
+        }
     }
 }

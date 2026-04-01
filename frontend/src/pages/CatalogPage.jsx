@@ -27,24 +27,29 @@ function CategoryTree({ categories, selected, onSelect }) {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expanded[node.id];
     const isSelected = selected && selected.id === node.id;
+    const label = node.name || node.slug || node.groupCode || node.label || 'Unnamed';
 
     return (
-      <div key={node.id} className="category-tree-item" style={{ paddingLeft: depth > 0 ? 0 : 0 }}>
-        <button
-          className={`category-tree-btn${isSelected ? ' active' : ''}`}
-          onClick={() => { onSelect(isSelected ? null : { type: node.type, id: node.id }); }}
-        >
-          {hasChildren && (
-            <span
-              className={`category-chevron${isExpanded ? ' open' : ''}`}
-              onClick={e => { e.stopPropagation(); toggle(node.id); }}
+      <div key={node.id} className="category-tree-item">
+        <div className={`category-tree-row${isSelected ? ' active' : ''}`}>
+          <button
+            className="category-tree-select"
+            onClick={() => onSelect(isSelected ? null : { type: node.type, id: node.id })}
+          >
+            <span className="category-tree-text">{label}</span>
+          </button>
+          {hasChildren ? (
+            <button
+              className={`category-chevron-btn${isExpanded ? ' open' : ''}`}
+              onClick={() => toggle(node.id)}
+              aria-label={isExpanded ? 'Collapse' : 'Expand'}
             >
               ▶
-            </span>
+            </button>
+          ) : (
+            <span style={{ width: 36, flexShrink: 0 }} />
           )}
-          {!hasChildren && <span style={{ width: 14, flexShrink: 0 }} />}
-          <span className="category-tree-text">{node.name || node.slug || node.groupCode || node.label || 'Unnamed'}</span>
-        </button>
+        </div>
         {hasChildren && isExpanded && (
           <div className="category-children">
             {node.children.map(child => renderNode(child, depth + 1))}
@@ -59,13 +64,12 @@ function CategoryTree({ categories, selected, onSelect }) {
       <div className="category-tree-header">Catalog</div>
       <div className="category-tree-list">
         <div className="category-tree-item">
-          <button
-            className={`category-tree-btn all${!selected ? ' active' : ''}`}
-            onClick={() => onSelect(null)}
-          >
-            <span style={{ width: 14, flexShrink: 0 }} />
-            All Products
-          </button>
+          <div className={`category-tree-row${!selected ? ' active' : ''}`}>
+            <button className="category-tree-select category-tree-select--all" onClick={() => onSelect(null)}>
+              <span className="category-tree-text">All Products</span>
+            </button>
+            <span style={{ width: 36, flexShrink: 0 }} />
+          </div>
         </div>
         {categories.map(cat => renderNode(cat))}
       </div>
@@ -199,6 +203,8 @@ export default function CatalogPage({ locale }) {
   const [catLoading, setCatLoading] = useState(true);
   const [operations, setOperations] = useState([]);
   const [selectedOperation, setSelectedOperation] = useState(null);
+
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -392,12 +398,21 @@ export default function CatalogPage({ locale }) {
           )}
 
           <div className="catalog-layout">
-            <aside className="catalog-sidebar">
+            {/* Mobile filter overlay backdrop */}
+            {mobileFiltersOpen && (
+              <div className="mobile-filters-backdrop" onClick={() => setMobileFiltersOpen(false)} />
+            )}
+
+            <aside className={`catalog-sidebar${mobileFiltersOpen ? ' mobile-open' : ''}`}>
+              <div className="mobile-filters-header">
+                <span>Filters & Categories</span>
+                <button className="mobile-filters-close" onClick={() => setMobileFiltersOpen(false)}>✕</button>
+              </div>
               {!catLoading && (
                 <CategoryTree
                   categories={categories}
                   selected={selectedNode}
-                  onSelect={handleCategorySelect}
+                  onSelect={node => { handleCategorySelect(node); setMobileFiltersOpen(false); }}
                 />
               )}
               <FiltersPanel
@@ -416,6 +431,12 @@ export default function CatalogPage({ locale }) {
                     </span>
                   )}
                 </div>
+                <button
+                  className="catalog-filters-toggle-btn"
+                  onClick={() => setMobileFiltersOpen(true)}
+                >
+                  Filters
+                </button>
               </div>
 
               {error && !loading && (
