@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +17,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     UUID findGroupIdByProductId(UUID productId);
 
     boolean existsByToolNo(String toolNo);
+
+    @Query("SELECT p.toolNo as toolNo, p.updatedAt as updatedAt FROM Product p WHERE p.status = com.wpw.pim.domain.enums.ProductStatus.active")
+    List<ProductSitemapProjection> findAllForSitemap();
 }

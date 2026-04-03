@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createHashRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import { ToastProvider } from './components/Toast';
 import CatalogPage from './pages/CatalogPage';
@@ -45,7 +45,7 @@ function AppInner() {
     localStorage.setItem('pim_locale', l);
   }
 
-  const router = createHashRouter([
+  const router = createBrowserRouter([
     // Public routes (without Navbar)
     {
       path: '/',
