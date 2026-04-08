@@ -34,7 +34,7 @@ function BareLayout() {
 // Protected routes — require authentication
 function PrivateRoute() {
   const token = localStorage.getItem('authToken');
-  return token ? <Outlet /> : <Navigate to="/" replace />;
+  return token ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 function AppInner() {
@@ -55,6 +55,18 @@ function AppInner() {
         { path: 'login', element: <LoginPage /> },
       ],
     },
+    // Public routes (with Navbar, no auth required)
+    {
+      element: <Layout locale={locale} onLocaleChange={handleLocaleChange} />,
+      children: [
+        { path: 'catalog', element: <CatalogPage locale={locale} /> },
+        { path: 'product/:toolNo', element: <ProductPage locale={locale} /> },
+        { path: 'search', element: <Navigate to="/catalog" replace /> },
+        { path: 'operations', element: <Navigate to="/catalog" replace /> },
+        { path: 'dealer', element: <Navigate to="/catalog" replace /> },
+        { path: '*', element: <Navigate to="/catalog" replace /> },
+      ],
+    },
     // Protected routes (with Navbar and auth check)
     {
       element: <PrivateRoute />,
@@ -62,14 +74,8 @@ function AppInner() {
         {
           element: <Layout locale={locale} onLocaleChange={handleLocaleChange} />,
           children: [
-            { path: 'catalog', element: <CatalogPage locale={locale} /> },
-            { path: 'product/:toolNo', element: <ProductPage locale={locale} /> },
-            { path: 'search', element: <Navigate to="/catalog" replace /> },
-            { path: 'operations', element: <Navigate to="/catalog" replace /> },
             { path: 'export', element: <ExportPage locale={locale} /> },
             { path: 'admin', element: <AdminPage /> },
-            { path: 'dealer', element: <Navigate to="/catalog" replace /> },
-            { path: '*', element: <Navigate to="/catalog" replace /> },
           ],
         },
       ],

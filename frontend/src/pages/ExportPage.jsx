@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { exportProducts, getExportPreview, getOperations, getCategories } from '../api/api';
+import { exportProducts, getExportPreview, getOperations, getCategories, getFilterOptions } from '../api/api';
 import { useToast } from '../components/ToastContext';
 
 const FORMATS = [
@@ -47,9 +47,10 @@ export default function ExportPage({ locale: appLocale }) {
   const [previewPage, setPreviewPage] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Operations & categories for dropdowns
+  // Options for dropdowns
   const [operations, setOperations] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [filterOptions, setFilterOptions] = useState({});
 
   useEffect(() => {
     getOperations()
@@ -60,6 +61,9 @@ export default function ExportPage({ locale: appLocale }) {
         const raw = Array.isArray(data) ? data : data.categories || [];
         setCategories(raw);
       })
+      .catch(() => {});
+    getFilterOptions()
+      .then(setFilterOptions)
       .catch(() => {});
   }, [appLocale]);
 
@@ -191,14 +195,15 @@ export default function ExportPage({ locale: appLocale }) {
               {showFilters && (
                 <div className="export-optional-filters">
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+
                     <div className="form-group">
-                      <label className="form-label">Operation</label>
+                      <label className="form-label">Application Tag</label>
                       <select
                         className="form-control"
                         value={filters.operation}
                         onChange={e => handleFilterChange('operation', e.target.value)}
                       >
-                        <option value="">All operations</option>
+                        <option value="">All</option>
                         {operations.map(op => (
                           <option key={op.code || op.id} value={op.code || op.id}>
                             {op.name || op.label || op.code}
@@ -206,6 +211,7 @@ export default function ExportPage({ locale: appLocale }) {
                         ))}
                       </select>
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Product Type</label>
                       <select
@@ -213,72 +219,97 @@ export default function ExportPage({ locale: appLocale }) {
                         value={filters.productType}
                         onChange={e => handleFilterChange('productType', e.target.value)}
                       >
-                        <option value="">All types</option>
+                        <option value="">All</option>
                         <option value="main">Main</option>
                         <option value="spare_part">Spare Part</option>
                         <option value="accessory">Accessory</option>
                       </select>
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Tool Material</label>
-                      <input
+                      <select
                         className="form-control"
-                        type="text"
-                        placeholder="e.g. HSS, Carbide"
                         value={filters.toolMaterial}
                         onChange={e => handleFilterChange('toolMaterial', e.target.value)}
-                      />
+                      >
+                        <option value="">All</option>
+                        {(filterOptions.toolMaterial || []).map(v => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Workpiece Material</label>
-                      <input
+                      <select
                         className="form-control"
-                        type="text"
-                        placeholder="e.g. MDF, Solid wood"
                         value={filters.workpieceMaterial}
                         onChange={e => handleFilterChange('workpieceMaterial', e.target.value)}
-                      />
+                      >
+                        <option value="">All</option>
+                        {(filterOptions.workpieceMaterial || []).map(v => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Machine Type</label>
-                      <input
+                      <select
                         className="form-control"
-                        type="text"
-                        placeholder="e.g. CNC, Manual"
                         value={filters.machineType}
                         onChange={e => handleFilterChange('machineType', e.target.value)}
-                      />
+                      >
+                        <option value="">All</option>
+                        {(filterOptions.machineType || []).map(v => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Machine Brand</label>
-                      <input
+                      <select
                         className="form-control"
-                        type="text"
-                        placeholder="e.g. Biesse, SCM"
                         value={filters.machineBrand}
                         onChange={e => handleFilterChange('machineBrand', e.target.value)}
-                      />
+                      >
+                        <option value="">All</option>
+                        {(filterOptions.machineBrand || []).map(v => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Cutting Type</label>
-                      <input
+                      <select
                         className="form-control"
-                        type="text"
-                        placeholder="e.g. straight, spiral"
                         value={filters.cuttingType}
                         onChange={e => handleFilterChange('cuttingType', e.target.value)}
-                      />
+                      >
+                        <option value="">All</option>
+                        {(filterOptions.cuttingType || []).map(v => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Shank (mm)</label>
-                      <input
+                      <select
                         className="form-control"
-                        type="number"
-                        placeholder="Shank diameter"
                         value={filters.shankMm}
                         onChange={e => handleFilterChange('shankMm', e.target.value)}
-                      />
+                      >
+                        <option value="">All</option>
+                        {(filterOptions.shankMm || []).map(v => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Diameter min (mm)</label>
                       <input
@@ -289,6 +320,7 @@ export default function ExportPage({ locale: appLocale }) {
                         onChange={e => handleFilterChange('dMmMin', e.target.value)}
                       />
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Diameter max (mm)</label>
                       <input
@@ -299,6 +331,7 @@ export default function ExportPage({ locale: appLocale }) {
                         onChange={e => handleFilterChange('dMmMax', e.target.value)}
                       />
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Availability</label>
                       <select
@@ -311,6 +344,7 @@ export default function ExportPage({ locale: appLocale }) {
                         <option value="false">Out of Stock Only</option>
                       </select>
                     </div>
+
                     <div className="form-group">
                       <label className="form-label">Ball Bearing</label>
                       <select
@@ -323,6 +357,7 @@ export default function ExportPage({ locale: appLocale }) {
                         <option value="false">No</option>
                       </select>
                     </div>
+
                   </div>
                   {hasActiveFilters && (
                     <button

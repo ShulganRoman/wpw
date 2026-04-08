@@ -4,15 +4,19 @@ services:
     container_name: wpw-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: wpw_db
-      POSTGRES_USER: wpw_user
-      POSTGRES_PASSWORD: wpw_pass
+      POSTGRES_DB: ${POSTGRES_DB:-wpw_db}
+      POSTGRES_USER: ${POSTGRES_USER:-wpw_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - wpw-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U wpw_user -d wpw_db"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-wpw_user} -d ${POSTGRES_DB:-wpw_db}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,9 +32,10 @@ services:
     volumes:
       - ./media:/media
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/wpw_db
-      SPRING_DATASOURCE_USERNAME: wpw_user
-      SPRING_DATASOURCE_PASSWORD: wpw_pass
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-wpw_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-wpw_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
       LOGGING_LEVEL_COM_WPW_wpw: INFO
     networks:
       - wpw-net

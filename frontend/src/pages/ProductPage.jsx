@@ -284,7 +284,7 @@ function SpecsTable({ product }) {
   add('Workpiece Materials', product.workpieceMaterials);
   add('Machine Types', product.machineTypes);
   add('Machine Brands', product.machineBrands);
-  add('Operations', product.operationCodes);
+  add('Application Tags', product.operationCodes);
 
   add('EAN-13', attrs.ean13);
   add('UPC-12', attrs.upc12);
@@ -481,7 +481,7 @@ function EditableSpecsTable({ product, editData, onChange }) {
         <CollectionField label="Workpiece Materials" fieldKey="workpieceMaterials" />
         <CollectionField label="Machine Types" fieldKey="machineTypes" />
         <CollectionField label="Machine Brands" fieldKey="machineBrands" />
-        <CollectionField label="Operations" fieldKey="operationCodes" />
+        <CollectionField label="Application Tags" fieldKey="operationCodes" />
 
         <TextField label="EAN-13" attrKey="ean13" />
         <TextField label="UPC-12" attrKey="upc12" />

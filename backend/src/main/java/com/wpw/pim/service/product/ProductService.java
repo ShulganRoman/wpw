@@ -1,11 +1,13 @@
 package com.wpw.pim.service.product;
 
+import com.wpw.pim.domain.catalog.ProductGroup;
 import com.wpw.pim.domain.media.MediaFile;
 import com.wpw.pim.domain.product.Product;
 import com.wpw.pim.domain.product.ProductAttributes;
 import com.wpw.pim.domain.product.ProductSparePart;
 import com.wpw.pim.domain.product.ProductTranslation;
 import com.wpw.pim.domain.product.ProductTranslationId;
+import com.wpw.pim.repository.catalog.ProductGroupRepository;
 import com.wpw.pim.repository.media.MediaFileRepository;
 import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.repository.product.ProductSparePartRepository;
@@ -26,12 +28,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
@@ -45,12 +49,27 @@ public class ProductService {
     private final MediaFileRepository mediaFileRepo;
     private final MediaFallbackService mediaFallback;
     private final JsonLdService jsonLdService;
+    private final ProductGroupRepository productGroupRepo;
 
     @Value("${pim.media.base-path:/media/products}")
     private String mediaBasePath;
 
     @Value("${pim.media.base-url:/media/products}")
     private String mediaBaseUrl;
+
+    @Transactional(readOnly = true)
+    public Map<String, List<String>> getFilterOptions() {
+        Map<String, List<String>> options = new LinkedHashMap<>();
+        options.put("toolMaterial", productRepo.findDistinctToolMaterials());
+        options.put("workpieceMaterial", productRepo.findDistinctWorkpieceMaterials());
+        options.put("machineType", productRepo.findDistinctMachineTypes());
+        options.put("machineBrand", productRepo.findDistinctMachineBrands());
+        options.put("cuttingType", productRepo.findDistinctCuttingTypes());
+        options.put("shankMm", productRepo.findDistinctShankMm().stream()
+            .map(v -> v.stripTrailingZeros().toPlainString())
+            .toList());
+        return options;
+    }
 
     @Transactional(readOnly = true)
     public PagedResponse<ProductSummaryDto> findAll(ProductFilter filter) {
@@ -107,6 +126,63 @@ public class ProductService {
                 String name = t != null ? t.getName() : product.getToolNo();
                 return new SparePartDto(product.getId(), product.getToolNo(), name, sp.getPartRole());
             }).toList();
+    }
+
+    /**
+     * Создаёт новый товар с указанным артикулом и опциональной группой.
+     *
+     * @param dto данные нового продукта
+     * @return созданный {@link ProductDetailDto}
+     * @throws ResponseStatusException 409 если артикул уже занят, 404 если группа не найдена
+     */
+    @Transactional
+    public ProductDetailDto createProduct(ProductCreateDto dto) {
+        if (productRepo.existsByToolNo(dto.toolNo())) {
+            throw new ResponseStatusException(CONFLICT, "Product already exists: " + dto.toolNo());
+        }
+
+        Product product = new Product();
+        product.setToolNo(dto.toolNo());
+        if (dto.altToolNo() != null) product.setAltToolNo(dto.altToolNo());
+        if (dto.productType() != null) product.setProductType(dto.productType());
+        if (dto.status() != null) product.setStatus(dto.status());
+        if (dto.isOrderable() != null) product.setOrderable(dto.isOrderable());
+        if (dto.catalogPage() != null) product.setCatalogPage(dto.catalogPage());
+
+        if (dto.groupId() != null) {
+            ProductGroup group = productGroupRepo.findById(dto.groupId())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Group not found: " + dto.groupId()));
+            product.setGroup(group);
+        }
+
+        if (dto.toolMaterials() != null) product.getToolMaterials().addAll(dto.toolMaterials());
+        if (dto.workpieceMaterials() != null) product.getWorkpieceMaterials().addAll(dto.workpieceMaterials());
+        if (dto.machineTypes() != null) product.getMachineTypes().addAll(dto.machineTypes());
+        if (dto.machineBrands() != null) product.getMachineBrands().addAll(dto.machineBrands());
+        if (dto.operationCodes() != null) product.getOperationCodes().addAll(dto.operationCodes());
+
+        productRepo.save(product);
+
+        if (dto.name() != null && !dto.name().isBlank()) {
+            ProductTranslation t = new ProductTranslation();
+            t.setId(new ProductTranslationId(product.getId(), "en"));
+            t.setProduct(product);
+            t.setName(dto.name());
+            if (dto.shortDescription() != null) t.setShortDescription(dto.shortDescription());
+            if (dto.longDescription() != null) t.setLongDescription(dto.longDescription());
+            if (dto.seoTitle() != null) t.setSeoTitle(dto.seoTitle());
+            if (dto.seoDescription() != null) t.setSeoDescription(dto.seoDescription());
+            if (dto.applications() != null) t.setApplications(dto.applications());
+            translationRepo.save(t);
+        }
+
+        if (dto.attributes() != null) {
+            updateAttributes(product, dto.attributes());
+            productRepo.save(product);
+        }
+
+        log.info("Product created: toolNo={}, groupId={}", product.getToolNo(), dto.groupId());
+        return findByToolNo(product.getToolNo(), "en");
     }
 
     /**

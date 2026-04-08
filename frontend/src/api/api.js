@@ -86,7 +86,7 @@ export function getProducts(filters = {}) {
   const params = {
     locale: filters.locale || 'en',
     page: filters.page || 1,
-    perPage: filters.perPage || 48,
+    perPage: filters.perPage || 50,
     sectionId: filters.sectionId || '',
     categoryId: filters.categoryId || '',
     groupId: filters.groupId || '',
@@ -104,6 +104,10 @@ export function getProducts(filters = {}) {
     inStock: filters.inStock || '',
   };
   return request(`/products?${buildQuery(params)}`);
+}
+
+export function getFilterOptions() {
+  return request('/products/filter-options');
 }
 
 export function getProduct(toolNo, locale = 'en') {
@@ -126,7 +130,19 @@ export function getOperations() {
   return request('/operations');
 }
 
-export function getOperationProducts(code, locale = 'en', page = 1, perPage = 48) {
+export function createApplicationTag(data) {
+  return request('/operations', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function updateApplicationTag(code, data) {
+  return request(`/operations/${encodeURIComponent(code)}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deleteApplicationTag(code) {
+  return request(`/operations/${encodeURIComponent(code)}`, { method: 'DELETE' });
+}
+
+export function getOperationProducts(code, locale = 'en', page = 1, perPage = 50) {
   return request(`/operations/${encodeURIComponent(code)}/products?${buildQuery({ locale, page, perPage })}`);
 }
 
@@ -165,6 +181,36 @@ export async function validateImport(file) {
     throw new Error(text || `HTTP ${res.status}`);
   }
   return res.json();
+}
+
+export async function validateWpwCatalogImport(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE}/admin/import/wpw-catalog/validate`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: form,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function executeWpwCatalogImport(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE}/admin/import/wpw-catalog/execute`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: form,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.text();
 }
 
 export async function executeImport(file) {
@@ -321,7 +367,11 @@ export async function addSkuMapping(apiKey, toolNo, dealerSku, note = '') {
   });
 }
 
-// Product edit
+// Product create / edit
+export function createProduct(data) {
+  return request('/products', { method: 'POST', body: JSON.stringify(data) });
+}
+
 export function updateProduct(id, locale, data) {
   return request(`/products/${id}?locale=${locale}`, {
     method: 'PUT',

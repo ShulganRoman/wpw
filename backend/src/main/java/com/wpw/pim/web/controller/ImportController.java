@@ -1,6 +1,7 @@
 package com.wpw.pim.web.controller;
 
 import com.wpw.pim.service.excel.ExcelImportService;
+import com.wpw.pim.service.excel.WpwCatalogImportService;
 import com.wpw.pim.service.excel.dto.ValidationReport;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,7 +28,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "Import", description = "Массовый импорт данных из Excel")
 public class ImportController {
 
-    private final ExcelImportService importService;
+    private final ExcelImportService    importService;
+    private final WpwCatalogImportService wpwCatalogImportService;
 
     /**
      * Шаг 1: Предимпортная валидация.
@@ -60,6 +62,35 @@ public class ImportController {
         @RequestParam("file") MultipartFile file
     ) throws Exception {
         String report = importService.execute(file);
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("text/markdown;charset=UTF-8"))
+            .body(report);
+    }
+
+    // -------------------------------------------------------------------------
+    // WPW Catalog v3 format (single sheet, no SEO columns)
+    // -------------------------------------------------------------------------
+
+    @PostMapping(value = "/wpw-catalog/validate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Валидация файла формата WPW Catalog v3",
+               description = "Принимает файл WPW_Catalog_v3.xlsx (лист Sheet1, без SEO-колонок). "
+                           + "Возвращает ValidationReport без записи в БД.")
+    public ResponseEntity<ValidationReport> validateWpwCatalog(
+        @RequestParam("file") MultipartFile file
+    ) throws Exception {
+        ValidationReport report = wpwCatalogImportService.validate(file);
+        return ResponseEntity.ok(report);
+    }
+
+    @PostMapping(value = "/wpw-catalog/execute", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+                 produces = "text/markdown;charset=UTF-8")
+    @Operation(summary = "Выполнить импорт из WPW Catalog v3",
+               description = "Импортирует товары из файла WPW_Catalog_v3.xlsx. "
+                           + "Возвращает Markdown-отчёт со статистикой.")
+    public ResponseEntity<String> executeWpwCatalog(
+        @RequestParam("file") MultipartFile file
+    ) throws Exception {
+        String report = wpwCatalogImportService.execute(file);
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType("text/markdown;charset=UTF-8"))
             .body(report);

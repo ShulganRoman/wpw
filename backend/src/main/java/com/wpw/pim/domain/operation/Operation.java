@@ -16,6 +16,9 @@ public class Operation {
     @Id
     private String code;
 
+    @Column(nullable = false, length = 100)
+    private String name;
+
     @Column(name = "name_key", nullable = false)
     private String nameKey;
 

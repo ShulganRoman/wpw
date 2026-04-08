@@ -85,14 +85,14 @@ export default function OperationsPage({ locale }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  if (opLoading) return <LoadingSpinner text="Loading operations…" />;
+  if (opLoading) return <LoadingSpinner text="Loading application tags…" />;
   if (error && operations.length === 0) return <ErrorState message={error} />;
 
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Operations</h1>
-        <p className="page-subtitle">Browse products by machining operation</p>
+        <h1 className="page-title">Application Tags</h1>
+        <p className="page-subtitle">Browse products by application</p>
       </div>
 
       <div className="operations-grid">

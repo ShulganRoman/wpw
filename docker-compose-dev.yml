@@ -72,7 +72,7 @@ services:
       - test_frontend_static:/usr/share/nginx/html:ro
       - ./media:/media:ro
     ports:
-      - "8091:80"
+      - "80:80"
     networks:
       - wpw-test-net
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getCategories } from '../api/api';
+import { getCategories, createProduct } from '../api/api';
+import ProductCreateModal from './ProductCreateModal';
 import {
   createSection, updateSection, deleteSection, reorderSections,
   createCategory, updateCategory, deleteCategory, reorderCategories,
@@ -71,6 +72,7 @@ function EditForm({ node, onSave, onCancel }) {
   );
 }
 
+
 export default function AdminCatalogTree({ locale = 'en' }) {
   const toast = useToast();
   const [tree, setTree] = useState([]);
@@ -79,6 +81,7 @@ export default function AdminCatalogTree({ locale = 'en' }) {
   const [editing, setEditing] = useState(null); // { type, id } or { type: 'new', parentType, parentId }
   const [deleteTarget, setDeleteTarget] = useState(null); // { node, childrenInfo }
   const [dragItem, setDragItem] = useState(null);
+  const [addingProductToGroup, setAddingProductToGroup] = useState(null); // { id, name }
 
   const fetchTree = useCallback(() => {
     setLoading(true);
@@ -209,6 +212,16 @@ export default function AdminCatalogTree({ locale = 'en' }) {
     setDragItem(null);
   }
 
+  async function handleCreateProduct(data) {
+    try {
+      await createProduct(data);
+      toast(`Product "${data.toolNo}" created`, 'success');
+      setAddingProductToGroup(null);
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  }
+
   function getChildType(nodeType) {
     if (nodeType === 'section') return 'category';
     if (nodeType === 'category') return 'group';
@@ -221,6 +234,7 @@ export default function AdminCatalogTree({ locale = 'en' }) {
     const isEditing = editing && editing.id === node.id;
     const childType = getChildType(node.type);
     const isAddingChild = editing && editing.type === 'new' && editing.parentId === node.id;
+    const isAddingProduct = addingProductToGroup?.id === node.id;
 
     return (
       <div key={node.id} className="admin-tree-item">
@@ -261,6 +275,15 @@ export default function AdminCatalogTree({ locale = 'en' }) {
               <button className="btn-icon" title={`Add ${childType}`}
                 onClick={() => { setEditing({ type: 'new', parentType: node.type, parentId: node.id, childType }); setExpanded(prev => ({ ...prev, [node.id]: true })); }}>
                 ➕
+              </button>
+            )}
+            {node.type === 'group' && (
+              <button
+                className="btn-icon"
+                title="Add product"
+                onClick={() => setAddingProductToGroup({ id: node.id, name: node.name || node.slug })}
+              >
+                📦
               </button>
             )}
           </div>
@@ -304,6 +327,16 @@ export default function AdminCatalogTree({ locale = 'en' }) {
         </button>
       </div>
 
+      {tree.length === 0 && !(editing?.type === 'new' && editing.parentType === null) && (
+        <div style={{
+          padding: '32px 16px', textAlign: 'center',
+          color: 'var(--wpw-mid-gray)', fontSize: 13,
+          border: '1px dashed var(--wpw-border)', borderRadius: 'var(--wpw-radius)',
+        }}>
+          No sections yet. Click <strong>+ Add Section</strong> to build the catalog structure.
+        </div>
+      )}
+
       {tree.map(section => renderNode(section, 0, tree))}
 
       {editing && editing.type === 'new' && editing.parentType === null && (
@@ -320,6 +353,15 @@ export default function AdminCatalogTree({ locale = 'en' }) {
           childrenInfo={deleteTarget.childrenInfo}
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {addingProductToGroup && (
+        <ProductCreateModal
+          groupId={addingProductToGroup.id}
+          groupName={addingProductToGroup.name}
+          onSave={handleCreateProduct}
+          onCancel={() => setAddingProductToGroup(null)}
         />
       )}
     </div>

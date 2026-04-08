@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { validateImport, executeImport, validatePhotos, importPhotos, validateArchive, importArchive, getUsers, createUser, updateUser, deleteUser, getRoles } from '../api/api';
+import { validateImport, executeImport, validateWpwCatalogImport, executeWpwCatalogImport, validatePhotos, importPhotos, validateArchive, importArchive, getUsers, createUser, updateUser, deleteUser, getRoles, getOperations, createApplicationTag, updateApplicationTag, deleteApplicationTag } from '../api/api';
 import { useToast } from '../components/ToastContext';
 import AdminCatalogTree from '../components/AdminCatalogTree';
 
@@ -124,7 +124,7 @@ function ValidationReport({ report }) {
   );
 }
 
-function ExcelImportTab() {
+function ImportPanel({ onValidate, onExecute, instructions }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
   const dropzoneRef = useRef(null);
@@ -153,21 +153,15 @@ function ExcelImportTab() {
   function handleDrop(e) {
     e.preventDefault();
     setDragOver(false);
-    const f = e.dataTransfer.files[0];
-    handleFile(f);
+    handleFile(e.dataTransfer.files[0]);
   }
 
-  function handleDragOver(e) {
-    e.preventDefault();
-    setDragOver(true);
-  }
-
-  function handleDragLeave() {
-    setDragOver(false);
-  }
-
-  function handleClickDropzone() {
-    fileInputRef.current?.click();
+  function handleReset() {
+    setFile(null);
+    setValidationReport(null);
+    setExecuteReport(null);
+    setValidationValid(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   async function handleValidate() {
@@ -176,15 +170,11 @@ function ExcelImportTab() {
     setValidationReport(null);
     setExecuteReport(null);
     try {
-      const report = await validateImport(file);
+      const report = await onValidate(file);
       setValidationReport(report);
-      const isValid = report.valid !== false;
+      const isValid = report.canProceed !== false;
       setValidationValid(isValid);
-      if (isValid) {
-        toast('Validation passed — ready to import.', 'success');
-      } else {
-        toast('Validation failed. Please review the errors.', 'warning');
-      }
+      toast(isValid ? 'Validation passed — ready to import.' : 'Validation failed. Please review the errors.', isValid ? 'success' : 'warning');
     } catch (err) {
       toast(`Validation error: ${err.message}`, 'error');
     } finally {
@@ -197,7 +187,7 @@ function ExcelImportTab() {
     setExecuting(true);
     setExecuteReport(null);
     try {
-      const report = await executeImport(file);
+      const report = await onExecute(file);
       setExecuteReport(report);
       toast('Import completed successfully!', 'success');
     } catch (err) {
@@ -207,30 +197,21 @@ function ExcelImportTab() {
     }
   }
 
-  function handleReset() {
-    setFile(null);
-    setValidationReport(null);
-    setExecuteReport(null);
-    setValidationValid(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }
-
   const hasReport = validationReport || executeReport;
 
   return (
     <div className="admin-import-layout">
-      {/* Left column: controls */}
       <div className="admin-import-left">
         <div
           ref={dropzoneRef}
           className={`dropzone${dragOver ? ' drag-over' : ''}`}
-          onClick={handleClickDropzone}
+          onClick={() => fileInputRef.current?.click()}
           onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
           role="button"
           tabIndex={0}
-          onKeyDown={e => e.key === 'Enter' && handleClickDropzone()}
+          onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
         >
           <div className="dropzone-icon">📂</div>
           <div className="dropzone-text">
@@ -249,38 +230,18 @@ function ExcelImportTab() {
         />
 
         <div className="import-actions">
-          <button
-            className="btn btn-secondary"
-            onClick={handleValidate}
-            disabled={!file || validating || executing}
-          >
-            {validating ? (
-              <>
-                <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                Validating…
-              </>
-            ) : '✓ Validate'}
+          <button className="btn btn-secondary" onClick={handleValidate} disabled={!file || validating || executing}>
+            {validating ? <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />Validating…</> : '✓ Validate'}
           </button>
-
           <button
             className="btn btn-primary"
             onClick={handleExecute}
             disabled={!file || executing || validating || validationValid === false}
             title={validationValid === false ? 'Fix validation errors before importing' : ''}
           >
-            {executing ? (
-              <>
-                <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                Importing…
-              </>
-            ) : '⬆ Execute Import'}
+            {executing ? <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />Importing…</> : '⬆ Execute Import'}
           </button>
-
-          {file && (
-            <button className="btn btn-secondary" onClick={handleReset}>
-              ✕ Reset
-            </button>
-          )}
+          {file && <button className="btn btn-secondary" onClick={handleReset}>✕ Reset</button>}
         </div>
 
         {validationValid === false && (
@@ -291,40 +252,88 @@ function ExcelImportTab() {
 
         <div className="card" style={{ marginTop: 24 }}>
           <div className="card-title">Import Instructions</div>
-          <ol style={{ paddingLeft: 20, listStyle: 'decimal', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
-            <li>Prepare an Excel file (.xlsx) with product data following the required column structure.</li>
-            <li>Upload the file using the drop zone above.</li>
-            <li>Click <strong>Validate</strong> to check for errors before importing.</li>
-            <li>If validation passes, click <strong>Execute Import</strong> to apply the changes.</li>
-            <li>Review the import report for details on what was added or updated.</li>
-          </ol>
+          {instructions}
         </div>
       </div>
 
-      {/* Right column: reports (scrollable, page stays static) */}
       {hasReport && (
         <div className="admin-import-right">
           <div className="admin-report-panel">
             {validationReport && (
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>
-                  Validation Report
-                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>Validation Report</div>
                 <ValidationReport report={validationReport} />
               </div>
             )}
             {executeReport && (
               <div style={{ marginTop: validationReport ? 20 : 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>
-                  Import Report
-                </div>
-                <div className="import-report">
-                  <MarkdownReport text={executeReport} />
-                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>Import Report</div>
+                <div className="import-report"><MarkdownReport text={executeReport} /></div>
               </div>
             )}
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+function ExcelImportTab() {
+  const [mode, setMode] = useState('standard');
+
+  return (
+    <div>
+      <div style={{ display: 'inline-flex', border: '1px solid var(--wpw-border)', borderRadius: 'var(--wpw-radius-sm)', overflow: 'hidden', marginBottom: 20 }} role="group">
+        {[
+          { value: 'standard',    label: 'Standard Format' },
+          { value: 'wpw-catalog', label: 'WPW Catalog v3' },
+        ].map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => setMode(value)}
+            style={{
+              padding: '7px 18px', fontSize: 13, fontWeight: 500, border: 'none',
+              borderRight: value === 'standard' ? '1px solid var(--wpw-border)' : 'none',
+              cursor: 'pointer',
+              background: mode === value ? 'var(--wpw-blue)' : '#fff',
+              color: mode === value ? '#fff' : 'var(--wpw-gray)',
+              transition: 'background 0.15s, color 0.15s',
+            }}
+            aria-pressed={mode === value}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === 'standard' && (
+        <ImportPanel
+          onValidate={validateImport}
+          onExecute={executeImport}
+          instructions={
+            <ol style={{ paddingLeft: 20, listStyle: 'decimal', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
+              <li>Prepare an Excel file (.xlsx) with two sheets: <strong>Products</strong> and <strong>Product Groups</strong>.</li>
+              <li>Upload the file using the drop zone above.</li>
+              <li>Click <strong>Validate</strong> to check for errors before importing.</li>
+              <li>If validation passes, click <strong>Execute Import</strong> to apply the changes.</li>
+              <li>Review the import report for details on what was added or updated.</li>
+            </ol>
+          }
+        />
+      )}
+      {mode === 'wpw-catalog' && (
+        <ImportPanel
+          onValidate={validateWpwCatalogImport}
+          onExecute={executeWpwCatalogImport}
+          instructions={
+            <ol style={{ paddingLeft: 20, listStyle: 'decimal', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
+              <li>Use the <strong>WPW_Catalog_v3.xlsx</strong> template (single sheet <code>Sheet1</code>).</li>
+              <li>Required columns: <code>SKU</code>, <code>Category</code>, <code>Group</code>.</li>
+              <li>SEO columns are ignored: <code>SEO_Title_EN</code>, <code>SEO_Description_EN</code>, <code>Keywords_EN</code>, <code>URL_Slug</code>.</li>
+              <li>Upload the file, click <strong>Validate</strong>, then <strong>Execute Import</strong>.</li>
+            </ol>
+          }
+        />
       )}
     </div>
   );
@@ -1256,6 +1265,196 @@ function UsersTab() {
   );
 }
 
+function ApplicationTagsTab() {
+  const toast = useToast();
+  const [tags, setTags] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null); // code being edited, or 'new'
+  const [formName, setFormName] = useState('');
+  const [formOrder, setFormOrder] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [confirmDeleteCode, setConfirmDeleteCode] = useState(null);
+
+  useEffect(() => {
+    getOperations()
+      .then(data => setTags(Array.isArray(data) ? data : []))
+      .catch(err => toast(err.message, 'error'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  function openNew() {
+    setEditingId('new');
+    setFormName('');
+    setFormOrder(String(tags.length + 1));
+  }
+
+  function openEdit(tag) {
+    setEditingId(tag.code);
+    setFormName(tag.name);
+    setFormOrder(String(tag.sortOrder));
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setFormName('');
+    setFormOrder('');
+  }
+
+  async function handleSave() {
+    if (!formName.trim()) { toast('Name is required', 'error'); return; }
+    setSaving(true);
+    try {
+      const payload = { name: formName.trim(), sortOrder: formOrder ? Number(formOrder) : undefined };
+      if (editingId === 'new') {
+        const created = await createApplicationTag(payload);
+        setTags(prev => [...prev, created].sort((a, b) => a.sortOrder - b.sortOrder));
+        toast('Tag created', 'success');
+      } else {
+        const updated = await updateApplicationTag(editingId, payload);
+        setTags(prev => prev.map(t => t.code === editingId ? updated : t).sort((a, b) => a.sortOrder - b.sortOrder));
+        toast('Tag updated', 'success');
+      }
+      cancelEdit();
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(code) {
+    try {
+      await deleteApplicationTag(code);
+      setTags(prev => prev.filter(t => t.code !== code));
+      toast('Tag deleted', 'success');
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setConfirmDeleteCode(null);
+    }
+  }
+
+  if (loading) return <div style={{ padding: 32, textAlign: 'center', color: 'var(--wpw-gray)' }}>Loading…</div>;
+
+  return (
+    <div className="admin-section">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ fontSize: 13, color: 'var(--wpw-gray)' }}>
+          {tags.length} tag{tags.length !== 1 ? 's' : ''}
+        </div>
+        <button className="btn btn-primary" onClick={openNew} disabled={editingId !== null}>
+          + Create Tag
+        </button>
+      </div>
+
+      {editingId === 'new' && (
+        <div style={{
+          background: '#f5f7fa', border: '1px solid var(--wpw-border)', borderRadius: 'var(--wpw-radius)',
+          padding: '14px 16px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap',
+        }}>
+          <input
+            className="input"
+            style={{ flex: '1 1 200px' }}
+            placeholder="Tag name"
+            value={formName}
+            onChange={e => setFormName(e.target.value)}
+            autoFocus
+            onKeyDown={e => e.key === 'Enter' && handleSave()}
+          />
+          <input
+            className="input"
+            style={{ width: 80 }}
+            type="number"
+            placeholder="Order"
+            value={formOrder}
+            onChange={e => setFormOrder(e.target.value)}
+          />
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button className="btn btn-secondary" onClick={cancelEdit} disabled={saving}>Cancel</button>
+        </div>
+      )}
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #e8edf5' }}>
+              {['#', 'Name', 'Code', ''].map(h => (
+                <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--wpw-gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tags.map(tag => (
+              <tr key={tag.code} style={{ borderBottom: '1px solid #f0f2f5' }}>
+                <td style={{ padding: '10px 12px', color: 'var(--wpw-mid-gray)', width: 40 }}>{tag.sortOrder}</td>
+                <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--wpw-navy)' }}>
+                  {editingId === tag.code ? (
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input
+                        className="input"
+                        style={{ flex: 1, minWidth: 120 }}
+                        value={formName}
+                        onChange={e => setFormName(e.target.value)}
+                        autoFocus
+                        onKeyDown={e => e.key === 'Enter' && handleSave()}
+                      />
+                      <input
+                        className="input"
+                        style={{ width: 70 }}
+                        type="number"
+                        value={formOrder}
+                        onChange={e => setFormOrder(e.target.value)}
+                      />
+                      <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={handleSave} disabled={saving}>
+                        {saving ? '…' : 'Save'}
+                      </button>
+                      <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={cancelEdit}>Cancel</button>
+                    </div>
+                  ) : tag.name}
+                </td>
+                <td style={{ padding: '10px 12px', fontFamily: 'var(--wpw-font-mono)', fontSize: 12, color: 'var(--wpw-mid-gray)' }}>
+                  {tag.code}
+                </td>
+                <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
+                  {editingId !== tag.code && (
+                    confirmDeleteCode === tag.code ? (
+                      <span style={{ fontSize: 12, display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <span style={{ color: '#c62828' }}>Delete?</span>
+                        <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12, background: '#c62828', borderColor: '#c62828' }} onClick={() => handleDelete(tag.code)}>Yes</button>
+                        <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setConfirmDeleteCode(null)}>No</button>
+                      </span>
+                    ) : (
+                      <span style={{ display: 'flex', gap: 6 }}>
+                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => openEdit(tag)} disabled={editingId !== null}>
+                          Edit
+                        </button>
+                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: '#c62828' }} onClick={() => setConfirmDeleteCode(tag.code)} disabled={editingId !== null}>
+                          Delete
+                        </button>
+                      </span>
+                    )
+                  )}
+                </td>
+              </tr>
+            ))}
+            {tags.length === 0 && (
+              <tr>
+                <td colSpan={4} style={{ padding: '32px 12px', textAlign: 'center', color: 'var(--wpw-gray)', fontSize: 13 }}>
+                  No application tags yet
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [tab, setTab] = useState('excel');
   const userRole = localStorage.getItem('userRole');
@@ -1267,10 +1466,11 @@ export default function AdminPage() {
         <p className="page-subtitle">Import product data and photos</p>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         <button className={`btn ${tab === 'excel' ? 'btn-primary' : ''}`} onClick={() => setTab('excel')}>Excel Import</button>
         <button className={`btn ${tab === 'photos' ? 'btn-primary' : ''}`} onClick={() => setTab('photos')}>Photo Import</button>
         <button className={`btn ${tab === 'catalog' ? 'btn-primary' : ''}`} onClick={() => setTab('catalog')}>Catalog Tree</button>
+        <button className={`btn ${tab === 'tags' ? 'btn-primary' : ''}`} onClick={() => setTab('tags')}>Application Tags</button>
         {userRole === 'admin' && (
           <button className={`btn ${tab === 'users' ? 'btn-primary' : ''}`} onClick={() => setTab('users')}>Users</button>
         )}
@@ -1279,6 +1479,7 @@ export default function AdminPage() {
       {tab === 'excel' && <ExcelImportTab />}
       {tab === 'photos' && <PhotoImportTab />}
       {tab === 'catalog' && <AdminCatalogTree />}
+      {tab === 'tags' && <ApplicationTagsTab />}
       {tab === 'users' && <UsersTab />}
     </div>
   );

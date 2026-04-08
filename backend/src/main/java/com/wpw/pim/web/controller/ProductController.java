@@ -6,6 +6,7 @@ import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.web.dto.media.MediaImageDto;
 import com.wpw.pim.web.dto.product.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -22,6 +24,11 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductMediaService productMediaService;
+
+    @GetMapping("/filter-options")
+    public Map<String, List<String>> getFilterOptions() {
+        return productService.getFilterOptions();
+    }
 
     @GetMapping
     public PagedResponse<ProductSummaryDto> list(
@@ -72,6 +79,18 @@ public class ProductController {
         @RequestParam(defaultValue = "en") String locale
     ) {
         return productService.getCompatibleTools(id, locale);
+    }
+
+    /**
+     * Создаёт новый товар.
+     *
+     * @param dto данные нового продукта (toolNo обязателен)
+     * @return созданный {@link ProductDetailDto} со статусом 201
+     */
+    @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
+    @PostMapping
+    public ResponseEntity<ProductDetailDto> create(@RequestBody ProductCreateDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(dto));
     }
 
     /**
