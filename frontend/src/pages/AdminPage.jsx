@@ -657,7 +657,7 @@ function ArchiveImportTab() {
             Accepted formats: .zip, .7z, .tar, .tar.gz, .tgz
           </div>
           <div className="dropzone-hint" style={{ marginTop: 4 }}>
-            Up to 500 MB
+            Up to 1 GB
           </div>
         </div>
       )}
