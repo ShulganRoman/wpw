@@ -6,6 +6,7 @@ import com.wpw.pim.domain.catalog.Section;
 import com.wpw.pim.repository.catalog.CategoryRepository;
 import com.wpw.pim.repository.catalog.ProductGroupRepository;
 import com.wpw.pim.repository.catalog.SectionRepository;
+import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.catalog.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,6 +29,7 @@ public class CatalogService {
     private final SectionRepository sectionRepository;
     private final CategoryRepository categoryRepository;
     private final ProductGroupRepository productGroupRepository;
+    private final ProductService productService;
 
     @Cacheable("categories")
     @Transactional(readOnly = true)
@@ -94,6 +96,9 @@ public class CatalogService {
         if (cascade) {
             List<UUID> catIds = cats.stream().map(Category::getId).toList();
             if (!catIds.isEmpty()) {
+                List<UUID> groupIds = productGroupRepository.findByCategoryIdIn(catIds)
+                    .stream().map(ProductGroup::getId).toList();
+                productService.deleteProductsByGroupIds(groupIds);
                 for (UUID catId : catIds) {
                     productGroupRepository.deleteByCategoryId(catId);
                 }
@@ -155,6 +160,8 @@ public class CatalogService {
                 "Category has " + groups.size() + " product groups. Use cascade=true to delete all.");
         }
         if (cascade) {
+            List<UUID> groupIds = groups.stream().map(ProductGroup::getId).toList();
+            productService.deleteProductsByGroupIds(groupIds);
             productGroupRepository.deleteByCategoryId(id);
         }
         categoryRepository.delete(c);
@@ -208,6 +215,7 @@ public class CatalogService {
     public void deleteProductGroup(UUID id) {
         ProductGroup g = productGroupRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        productService.deleteProductsByGroupIds(List.of(id));
         productGroupRepository.delete(g);
     }
 

@@ -3,9 +3,12 @@ package com.wpw.pim.repository.product;
 import com.wpw.pim.domain.product.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +21,13 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     UUID findGroupIdByProductId(UUID productId);
 
     boolean existsByToolNo(String toolNo);
+
+    @Query("SELECT p.id FROM Product p WHERE p.group.id IN :groupIds")
+    List<UUID> findIdsByGroupIdIn(@Param("groupIds") Collection<UUID> groupIds);
+
+    @Modifying
+    @Query("DELETE FROM Product p WHERE p.id IN :ids")
+    void deleteByIdIn(@Param("ids") Collection<UUID> ids);
 
     @Query("SELECT p.toolNo as toolNo, p.updatedAt as updatedAt FROM Product p WHERE p.status = com.wpw.pim.domain.enums.ProductStatus.active")
     List<ProductSitemapProjection> findAllForSitemap();

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -212,6 +213,31 @@ public class ProductService {
 
         productRepo.deleteById(id);
         log.info("Product deleted: id={}, toolNo={}", id, product.getToolNo());
+    }
+
+    /**
+     * Удаляет все товары, принадлежащие указанным группам, вместе с их медиафайлами на диске.
+     * Связанные данные в БД (атрибуты, переводы, теги, м2м-таблицы) удаляются каскадно.
+     *
+     * @param groupIds идентификаторы групп товаров
+     */
+    @Transactional
+    public void deleteProductsByGroupIds(Collection<UUID> groupIds) {
+        if (groupIds == null || groupIds.isEmpty()) return;
+        List<UUID> productIds = productRepo.findIdsByGroupIdIn(groupIds);
+        if (productIds.isEmpty()) return;
+
+        // Удаление файлов с диска (только URL — сущности не грузим во избежание TransientObjectException при flush)
+        List<MediaFile> mediaFiles = mediaFileRepo.findByProductIds(productIds);
+        for (MediaFile mf : mediaFiles) {
+            tryDeleteFileFromDisk(mf.getUrl());
+            if (mf.getThumbnailUrl() != null && !mf.getThumbnailUrl().equals(mf.getUrl())) {
+                tryDeleteFileFromDisk(mf.getThumbnailUrl());
+            }
+        }
+
+        productRepo.deleteByIdIn(productIds);
+        log.info("Deleted {} products from {} groups", productIds.size(), groupIds.size());
     }
 
     /**
