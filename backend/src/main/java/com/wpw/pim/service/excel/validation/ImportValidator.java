@@ -145,6 +145,20 @@ public class ImportValidator {
             validateInteger(issues, row, "Blade No", p.getBladeNo());
             validateInteger(issues, row, "Catalog Page", p.getCatalogPage());
 
+            // New fields validation
+            validateDecimal(issues, row, "D2 (mm)", p.getD2Mm());
+            validateInteger(issues, row, "Weight (g)", p.getWeightG());
+            validateInteger(issues, row, "Package Qty", p.getPkgQty());
+            validateInteger(issues, row, "Carton Qty", p.getCartonQty());
+            validateInteger(issues, row, "Stock Qty", p.getStockQty());
+
+            validateEnum(issues, row, "status", p.getStatus(),
+                Set.of("active", "discontinued", "coming_soon"));
+            validateEnum(issues, row, "productType", p.getProductType(),
+                Set.of("main", "spare_part", "accessory"));
+            validateEnum(issues, row, "stockStatus", p.getStockStatus(),
+                Set.of("in_stock", "low_stock", "out_of_stock", "on_order"));
+
             // Cutting Type — предупреждение если не нормализуется в известный код
             if (!blank(p.getCuttingType())) {
                 String normalized = cuttingTypeNormalizer.normalize(p.getCuttingType());
@@ -195,6 +209,15 @@ public class ImportValidator {
             // Диапазоны или нечисловые значения (напр. "CM501217 x2") — WARNING
             issues.add(ValidationIssue.warning(Sheet.PRODUCTS, row, field, value,
                 "Нечисловое значение «" + value + "» — будет сохранено как null"));
+        }
+    }
+
+    private static void validateEnum(List<ValidationIssue> issues, int row,
+                                     String field, String value, Set<String> allowed) {
+        if (value == null || value.isBlank()) return;
+        if (!allowed.contains(value.toLowerCase().trim())) {
+            issues.add(ValidationIssue.warning(Sheet.PRODUCTS, row, field, value,
+                "Неизвестное значение «" + value + "» — допустимые: " + allowed));
         }
     }
 

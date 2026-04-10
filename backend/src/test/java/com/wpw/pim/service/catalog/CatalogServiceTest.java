@@ -6,6 +6,7 @@ import com.wpw.pim.domain.catalog.Section;
 import com.wpw.pim.repository.catalog.CategoryRepository;
 import com.wpw.pim.repository.catalog.ProductGroupRepository;
 import com.wpw.pim.repository.catalog.SectionRepository;
+import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.catalog.*;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +36,7 @@ class CatalogServiceTest {
     @Mock private SectionRepository sectionRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private ProductGroupRepository productGroupRepository;
+    @Mock private ProductRepository productRepository;
     @Mock private ProductService productService;
 
     @InjectMocks

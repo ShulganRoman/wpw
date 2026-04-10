@@ -62,6 +62,34 @@ public class ExcelImportProperties {
         private String machines     = "Machines";
         private String typeNote     = "Type / Note";
         private String catalogPage  = "Catalog Page";
+
+        // --- New fields covering full UI surface ---
+        private String productName        = "Name";
+        private String shortDescription   = "Short Description";
+        private String longDescription    = "Long Description";
+        private String status             = "Status";
+        private String orderable          = "Orderable";
+        private String productType        = "Product Type";
+        private String d2Mm               = "D2 (mm)";
+        private String rotationDirection  = "Rotation Direction";
+        private String boreType           = "Bore Type";
+        private String hasBallBearing     = "Has Ball Bearing";
+        private String hasRetainer        = "Has Retainer";
+        private String canResharpen       = "Can Resharpen";
+        private String toolMaterials      = "Tool Materials";
+        private String workpieceMaterials = "Workpiece Materials";
+        private String machineTypes       = "Machine Types";
+        private String machineBrands      = "Machine Brands";
+        private String applicationTags    = "Application Tags";
+        private String ean13              = "EAN-13";
+        private String upc12              = "UPC-12";
+        private String hsCode             = "HS Code";
+        private String countryOfOrigin    = "Country of Origin";
+        private String weightG            = "Weight (g)";
+        private String pkgQty             = "Package Qty";
+        private String cartonQty          = "Carton Qty";
+        private String stockStatus        = "Stock Status";
+        private String stockQty           = "Stock Qty";
     }
 
     @Getter

@@ -46,19 +46,37 @@ class ProductsSheetParserTest {
                     "L / Total (mm)", "L1 (mm)", "R (mm)", "A (mm)", "Angle (\u00b0)",
                     "Shank (mm)", "Shank (in)", "Flutes", "Cutting Type", "Ball Bearing",
                     "Retainer", "Blade No", "Materials", "Applications", "Machines",
-                    "Type / Note", "Catalog Page"};
+                    "Type / Note", "Catalog Page",
+                    "Name", "Short Description", "Long Description", "Status", "Orderable",
+                    "Product Type", "D2 (mm)", "Rotation Direction", "Bore Type",
+                    "Has Ball Bearing", "Has Retainer", "Can Resharpen",
+                    "Tool Materials", "Workpiece Materials", "Machine Types", "Machine Brands",
+                    "Application Tags", "EAN-13", "UPC-12", "HS Code", "Country of Origin",
+                    "Weight (g)", "Package Qty", "Carton Qty", "Stock Status", "Stock Qty"};
             String[] row1 = {"WPW-001", "ALT-001", "Router Bits", "GRP-01", "Straight Bits",
                     "Straight router bit", "12.5", "8.0", "25", null,
                     "60", null, null, null, null,
                     "8", "5/16", "2", "straight", null,
                     null, null, "HM", "Grooving", "CNC",
-                    "Standard", "42"};
+                    "Standard", "42",
+                    "My Product Name", "Short desc", "Long desc", "active", "yes",
+                    "main", "6.5", "right", "shank",
+                    "yes", "no", "yes",
+                    "K-Carbide", "MDF, Plywood", "CNC, Router", "Festool",
+                    "plunge-cutting, trimming", "1234567890123", "123456789012", "8207.70", "Israel",
+                    "150", "1", "10", "in_stock", "500"};
             String[] row2 = {"WPW-002", null, "Router Bits", "GRP-01", "Straight Bits",
                     "Another bit", "10", null, "20", null,
                     "50", null, null, null, null,
                     "12", "1/2", "3", "spiral", null,
                     null, null, "HSS", "Profiling", "Router",
-                    null, null};
+                    null, null,
+                    null, null, null, null, null,
+                    null, null, null, null,
+                    null, null, null,
+                    null, null, null, null,
+                    null, null, null, null, null,
+                    null, null, null, null, null};
 
             Sheet sheet = createSheet(wb, headers, row1, row2);
             var evaluator = wb.getCreationHelper().createFormulaEvaluator();
@@ -75,9 +93,36 @@ class ProductsSheetParserTest {
             assertThat(rows.get(0).getFlutes()).isEqualTo("2");
             assertThat(rows.get(0).getCatalogPage()).isEqualTo("42");
             assertThat(rows.get(0).getRowNum()).isEqualTo(3);
+            assertThat(rows.get(0).getName()).isEqualTo("My Product Name");
+            assertThat(rows.get(0).getShortDescription()).isEqualTo("Short desc");
+            assertThat(rows.get(0).getLongDescription()).isEqualTo("Long desc");
+            assertThat(rows.get(0).getStatus()).isEqualTo("active");
+            assertThat(rows.get(0).getOrderable()).isEqualTo("yes");
+            assertThat(rows.get(0).getProductType()).isEqualTo("main");
+            assertThat(rows.get(0).getD2Mm()).isEqualTo("6.5");
+            assertThat(rows.get(0).getRotationDirection()).isEqualTo("right");
+            assertThat(rows.get(0).getBoreType()).isEqualTo("shank");
+            assertThat(rows.get(0).getHasBallBearing()).isEqualTo("yes");
+            assertThat(rows.get(0).getHasRetainer()).isEqualTo("no");
+            assertThat(rows.get(0).getCanResharpen()).isEqualTo("yes");
+            assertThat(rows.get(0).getToolMaterials()).isEqualTo("K-Carbide");
+            assertThat(rows.get(0).getWorkpieceMaterials()).isEqualTo("MDF, Plywood");
+            assertThat(rows.get(0).getMachineTypes()).isEqualTo("CNC, Router");
+            assertThat(rows.get(0).getMachineBrands()).isEqualTo("Festool");
+            assertThat(rows.get(0).getApplicationTags()).isEqualTo("plunge-cutting, trimming");
+            assertThat(rows.get(0).getEan13()).isEqualTo("1234567890123");
+            assertThat(rows.get(0).getUpc12()).isEqualTo("123456789012");
+            assertThat(rows.get(0).getHsCode()).isEqualTo("8207.70");
+            assertThat(rows.get(0).getCountryOfOrigin()).isEqualTo("Israel");
+            assertThat(rows.get(0).getWeightG()).isEqualTo("150");
+            assertThat(rows.get(0).getPkgQty()).isEqualTo("1");
+            assertThat(rows.get(0).getCartonQty()).isEqualTo("10");
+            assertThat(rows.get(0).getStockStatus()).isEqualTo("in_stock");
+            assertThat(rows.get(0).getStockQty()).isEqualTo("500");
 
             assertThat(rows.get(1).getToolNo()).isEqualTo("WPW-002");
             assertThat(rows.get(1).getAltToolNo()).isNull();
+            assertThat(rows.get(1).getName()).isNull();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

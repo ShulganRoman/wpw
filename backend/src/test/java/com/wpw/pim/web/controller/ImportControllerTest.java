@@ -5,6 +5,9 @@ import com.wpw.pim.auth.service.PimUserDetailsService;
 import com.wpw.pim.config.SecurityConfig;
 import com.wpw.pim.security.ApiKeyAuthProvider;
 import com.wpw.pim.service.excel.ExcelImportService;
+import com.wpw.pim.service.excel.ExcelImportV4Service;
+import com.wpw.pim.service.excel.ExcelTemplateGenerator;
+import com.wpw.pim.service.excel.ExcelTemplateV4Generator;
 import com.wpw.pim.service.excel.WpwCatalogImportService;
 import com.wpw.pim.service.excel.dto.ValidationReport;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +35,9 @@ class ImportControllerTest {
     @Autowired private MockMvc mockMvc;
 
     @MockitoBean private ExcelImportService importService;
+    @MockitoBean private ExcelImportV4Service importV4Service;
+    @MockitoBean private ExcelTemplateGenerator templateGenerator;
+    @MockitoBean private ExcelTemplateV4Generator templateV4Generator;
     @MockitoBean private WpwCatalogImportService wpwCatalogImportService;
     @MockitoBean private JwtService jwtService;
     @MockitoBean private PimUserDetailsService pimUserDetailsService;

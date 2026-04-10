@@ -16,6 +16,7 @@ public interface ProductGroupRepository extends JpaRepository<ProductGroup, UUID
     UUID findCategoryIdByGroupId(UUID groupId);
 
     Optional<ProductGroup> findBySlug(String slug);
+    Optional<ProductGroup> findByCategoryIdAndSlug(UUID categoryId, String slug);
     List<ProductGroup> findByCategoryId(UUID categoryId);
     void deleteByCategoryId(UUID categoryId);
     long countByCategoryId(UUID categoryId);

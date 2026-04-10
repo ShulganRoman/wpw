@@ -168,7 +168,7 @@ class AdminCatalogControllerTest {
         @DisplayName("POST /api/v1/admin/catalog/product-groups -- создаёт группу")
         void createProductGroup_authorized_returns200() throws Exception {
             UUID categoryId = UUID.randomUUID();
-            ProductGroupDto dto = new ProductGroupDto(UUID.randomUUID(), "straight", "GRP-001", "Straight", 0);
+            ProductGroupDto dto = new ProductGroupDto(UUID.randomUUID(), "straight", "GRP-001", "Straight", 0, 0L);
             when(catalogService.createProductGroup(any(CreateProductGroupRequest.class), eq("en"))).thenReturn(dto);
 
             CreateProductGroupRequest req = new CreateProductGroupRequest(

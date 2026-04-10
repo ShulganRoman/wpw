@@ -25,6 +25,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     @Query("SELECT p.id FROM Product p WHERE p.group.id IN :groupIds")
     List<UUID> findIdsByGroupIdIn(@Param("groupIds") Collection<UUID> groupIds);
 
+    long countByGroupId(UUID groupId);
+
     @Modifying
     @Query("DELETE FROM Product p WHERE p.id IN :ids")
     void deleteByIdIn(@Param("ids") Collection<UUID> ids);

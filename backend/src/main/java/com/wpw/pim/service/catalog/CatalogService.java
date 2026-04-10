@@ -6,6 +6,7 @@ import com.wpw.pim.domain.catalog.Section;
 import com.wpw.pim.repository.catalog.CategoryRepository;
 import com.wpw.pim.repository.catalog.ProductGroupRepository;
 import com.wpw.pim.repository.catalog.SectionRepository;
+import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.catalog.*;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class CatalogService {
     private final SectionRepository sectionRepository;
     private final CategoryRepository categoryRepository;
     private final ProductGroupRepository productGroupRepository;
+    private final ProductRepository productRepository;
     private final ProductService productService;
 
     @Cacheable("categories")
@@ -259,6 +261,7 @@ public class CatalogService {
     }
 
     private ProductGroupDto toGroupDto(ProductGroup g, String locale) {
-        return new ProductGroupDto(g.getId(), g.getSlug(), g.getGroupCode(), translate(g.getTranslations(), locale), g.getSortOrder());
+        long count = productRepository.countByGroupId(g.getId());
+        return new ProductGroupDto(g.getId(), g.getSlug(), g.getGroupCode(), translate(g.getTranslations(), locale), g.getSortOrder(), count);
     }
 }

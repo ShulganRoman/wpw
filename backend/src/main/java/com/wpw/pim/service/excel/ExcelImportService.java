@@ -32,12 +32,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import com.wpw.pim.domain.enums.BoreType;
+import com.wpw.pim.domain.enums.RotationDirection;
+import com.wpw.pim.domain.enums.StockStatus;
+
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Сервис массового импорта из Excel.
@@ -202,23 +207,35 @@ public class ExcelImportService {
         Map<String, ProductGroup> cache,
         StatsAccumulator acc
     ) {
-        String slug = slugify(g.getGroupId());
-        if (cache.containsKey(slug)) return cache.get(slug);
+        String baseSlug = slugify(g.getGroupId());
+        // Ключ кеша уникален в рамках категории
+        String cacheKey = category.getId() + ":" + baseSlug;
+        if (cache.containsKey(cacheKey)) return cache.get(cacheKey);
 
-        ProductGroup group = groupRepo.findBySlug(slug).orElseGet(() -> {
-            ProductGroup pg = new ProductGroup();
-            pg.setSlug(slug);
-            pg.setGroupCode(g.getGroupCode() != null ? g.getGroupCode() : g.getGroupId());
-            pg.setTranslations(buildTranslations(g.getGroupName()));
-            pg.setCategory(category);
-            pg.setSortOrder(cache.size());
-            acc.groupsCreated++;
-            return groupRepo.save(pg);
-        });
+        // Сначала ищем по (категория + slug) — правильный поиск
+        Optional<ProductGroup> existing = groupRepo.findByCategoryIdAndSlug(category.getId(), baseSlug);
+        if (existing.isPresent()) {
+            acc.groupsFound++;
+            cache.put(cacheKey, existing.get());
+            return existing.get();
+        }
 
-        if (!cache.containsKey(slug)) acc.groupsFound++;
-        cache.put(slug, group);
-        return group;
+        // Slug свободен глобально — используем простой;
+        // занят другой категорией — добавляем префикс категории
+        String slug = groupRepo.findBySlug(baseSlug).isEmpty()
+            ? baseSlug
+            : slugify(category.getTranslations().getOrDefault("en", category.getSlug())) + "-" + baseSlug;
+
+        ProductGroup pg = new ProductGroup();
+        pg.setSlug(slug);
+        pg.setGroupCode(g.getGroupCode() != null ? g.getGroupCode() : g.getGroupId());
+        pg.setTranslations(buildTranslations(g.getGroupName()));
+        pg.setCategory(category);
+        pg.setSortOrder(cache.size());
+        acc.groupsCreated++;
+        ProductGroup saved = groupRepo.save(pg);
+        cache.put(cacheKey, saved);
+        return saved;
     }
 
     // -------------------------------------------------------------------------
@@ -237,8 +254,24 @@ public class ExcelImportService {
 
         product.setToolNo(p.getToolNo());
         product.setAltToolNo(p.getAltToolNo());
-        product.setProductType(ProductType.main);
-        product.setStatus(ProductStatus.active);
+
+        if (p.getProductType() != null) {
+            try { product.setProductType(ProductType.valueOf(p.getProductType())); }
+            catch (IllegalArgumentException ignored) { }
+        } else {
+            product.setProductType(ProductType.main);
+        }
+
+        if (p.getStatus() != null) {
+            try { product.setStatus(ProductStatus.valueOf(p.getStatus())); }
+            catch (IllegalArgumentException ignored) { }
+        } else {
+            product.setStatus(ProductStatus.active);
+        }
+
+        if (p.getOrderable() != null) {
+            product.setOrderable(truthy(p.getOrderable()));
+        }
 
         if (p.getCatalogPage() != null) {
             try { product.setCatalogPage(Short.parseShort(p.getCatalogPage())); }
@@ -250,13 +283,38 @@ public class ExcelImportService {
             if (group != null) product.setGroup(group);
         }
 
-        var matClass = materialClassifier.classify(p.getMaterials());
-        product.setToolMaterials(matClass.toolMaterials());
-        product.setWorkpieceMaterials(matClass.workpieceMaterials());
+        // Application Tags
+        if (p.getApplicationTags() != null && !p.getApplicationTags().isBlank()) {
+            Set<String> tags = Arrays.stream(p.getApplicationTags().split(","))
+                .map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toSet());
+            product.setOperationCodes(tags);
+        }
 
-        var machClass = machineClassifier.classify(p.getMachines());
-        product.setMachineTypes(machClass.machineTypes());
-        product.setMachineBrands(machClass.machineBrands());
+        // Materials: prefer explicit Tool/Workpiece columns, fallback to classifier
+        if (notBlank(p.getToolMaterials()) || notBlank(p.getWorkpieceMaterials())) {
+            product.setToolMaterials(splitToSet(p.getToolMaterials()));
+            product.setWorkpieceMaterials(splitToSet(p.getWorkpieceMaterials()));
+        } else {
+            var matClass = materialClassifier.classify(p.getMaterials());
+            product.setToolMaterials(matClass.toolMaterials());
+            product.setWorkpieceMaterials(matClass.workpieceMaterials());
+        }
+
+        // Machines: prefer explicit columns, fallback to classifier
+        if (notBlank(p.getMachineTypes())) {
+            product.setMachineTypes(splitToSet(p.getMachineTypes()));
+            if (notBlank(p.getMachineBrands())) {
+                product.setMachineBrands(splitToSet(p.getMachineBrands()));
+            }
+        } else {
+            var machClass = machineClassifier.classify(p.getMachines());
+            product.setMachineTypes(machClass.machineTypes());
+            product.setMachineBrands(machClass.machineBrands());
+        }
+
+        if (notBlank(p.getMachineBrands()) && !notBlank(p.getMachineTypes())) {
+            product.setMachineBrands(splitToSet(p.getMachineBrands()));
+        }
 
         // Атрибуты — создаём/обновляем ДО save, чтобы cascade CascadeType.ALL их сохранил
         ProductAttributes attr = product.getAttributes();
@@ -280,6 +338,7 @@ public class ExcelImportService {
     private void fillAttributes(ProductAttributes attr, RawProductRow p) {
         attr.setDMm(decimal(p.getDMm()));
         attr.setD1Mm(decimal(p.getD1Mm()));
+        attr.setD2Mm(decimal(p.getD2Mm()));
         attr.setBMm(decimal(p.getBMm()));
         attr.setB1Mm(decimal(p.getB1Mm()));
         attr.setLMm(decimal(p.getLMm()));
@@ -294,18 +353,64 @@ public class ExcelImportService {
         if (p.getCuttingType() != null) {
             attr.setCuttingType(cuttingTypeNormalizer.normalize(p.getCuttingType()));
         }
-        if (p.getBallBearing() != null && !p.getBallBearing().isBlank()) {
+
+        // Rotation Direction
+        if (p.getRotationDirection() != null) {
+            try { attr.setRotationDirection(RotationDirection.valueOf(p.getRotationDirection().toLowerCase().trim())); }
+            catch (IllegalArgumentException ignored) { }
+        }
+
+        // Bore Type
+        if (p.getBoreType() != null) {
+            try { attr.setBoreType(BoreType.valueOf(p.getBoreType().toLowerCase().trim())); }
+            catch (IllegalArgumentException ignored) { }
+        }
+
+        // Ball Bearing: explicit flag takes priority
+        if (p.getHasBallBearing() != null) {
+            attr.setHasBallBearing(truthy(p.getHasBallBearing()));
+            if (p.getBallBearing() != null && !p.getBallBearing().isBlank()) {
+                attr.setBallBearingCode(p.getBallBearing());
+            }
+        } else if (p.getBallBearing() != null && !p.getBallBearing().isBlank()) {
             attr.setHasBallBearing(true);
             attr.setBallBearingCode(p.getBallBearing());
         }
-        if (p.getRetainer() != null && !p.getRetainer().isBlank()) {
+
+        // Retainer: explicit flag takes priority
+        if (p.getHasRetainer() != null) {
+            attr.setHasRetainer(truthy(p.getHasRetainer()));
+            if (p.getRetainer() != null && !p.getRetainer().isBlank()) {
+                attr.setRetainerCode(p.getRetainer());
+            }
+        } else if (p.getRetainer() != null && !p.getRetainer().isBlank()) {
             attr.setHasRetainer(true);
             attr.setRetainerCode(p.getRetainer());
+        }
+
+        attr.setCanResharpen(truthy(p.getCanResharpen()));
+
+        attr.setEan13(p.getEan13());
+        attr.setUpc12(p.getUpc12());
+        attr.setHsCode(p.getHsCode());
+        attr.setCountryOfOrigin(p.getCountryOfOrigin());
+        attr.setWeightG(intVal(p.getWeightG()));
+        attr.setPkgQty(shortVal(p.getPkgQty()));
+        attr.setCartonQty(shortVal(p.getCartonQty()));
+        attr.setStockQty(intVal(p.getStockQty()));
+
+        // Stock Status
+        if (p.getStockStatus() != null) {
+            try { attr.setStockStatus(StockStatus.valueOf(p.getStockStatus().toLowerCase().trim())); }
+            catch (IllegalArgumentException ignored) { }
         }
     }
 
     private void upsertTranslation(Product product, RawProductRow p) {
-        if (p.getDescription() == null && p.getGroupName() == null) return;
+        boolean hasTranslationData = p.getName() != null || p.getDescription() != null
+            || p.getGroupName() != null || p.getShortDescription() != null
+            || p.getLongDescription() != null;
+        if (!hasTranslationData) return;
 
         ProductTranslationId id = new ProductTranslationId(product.getId(), "en");
         ProductTranslation translation = translationRepo.findById(id)
@@ -316,10 +421,22 @@ public class ExcelImportService {
                 return t;
             });
 
-        // name = description из Excel (или groupName если нет description)
-        String name = p.getDescription() != null ? p.getDescription()
-            : (p.getGroupName() != null ? p.getToolNo() + " " + p.getGroupName() : p.getToolNo());
-        translation.setName(name);
+        // Name: explicit column takes priority, then Description, then fallback
+        if (p.getName() != null) {
+            translation.setName(p.getName());
+        } else {
+            String name = p.getDescription() != null ? p.getDescription()
+                : (p.getGroupName() != null ? p.getToolNo() + " " + p.getGroupName() : p.getToolNo());
+            translation.setName(name);
+        }
+
+        if (p.getShortDescription() != null) {
+            translation.setShortDescription(p.getShortDescription());
+        }
+
+        if (p.getLongDescription() != null) {
+            translation.setLongDescription(p.getLongDescription());
+        }
 
         if (p.getApplications() != null && !p.getApplications().isBlank()) {
             translation.setApplications(p.getApplications());
@@ -359,6 +476,22 @@ public class ExcelImportService {
         if (s == null) return false;
         String lower = s.toLowerCase().trim();
         return lower.equals("yes") || lower.equals("true") || lower.equals("1") || lower.equals("y");
+    }
+
+    private static Integer intVal(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return Integer.parseInt(s); } catch (NumberFormatException e) { return null; }
+    }
+
+    private static boolean notBlank(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    private static Set<String> splitToSet(String s) {
+        if (s == null || s.isBlank()) return new HashSet<>();
+        return Arrays.stream(s.split(","))
+            .map(String::trim).filter(v -> !v.isEmpty())
+            .collect(Collectors.toCollection(HashSet::new));
     }
 
     // -------------------------------------------------------------------------

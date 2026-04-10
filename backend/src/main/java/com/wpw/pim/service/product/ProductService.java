@@ -18,6 +18,7 @@ import com.wpw.pim.web.dto.product.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -136,6 +137,7 @@ public class ProductService {
      * @return созданный {@link ProductDetailDto}
      * @throws ResponseStatusException 409 если артикул уже занят, 404 если группа не найдена
      */
+    @CacheEvict(value = "categories", allEntries = true)
     @Transactional
     public ProductDetailDto createProduct(ProductCreateDto dto) {
         if (productRepo.existsByToolNo(dto.toolNo())) {

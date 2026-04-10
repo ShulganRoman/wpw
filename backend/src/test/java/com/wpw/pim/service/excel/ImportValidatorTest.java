@@ -307,6 +307,71 @@ class ImportValidatorTest {
         }
 
         @Test
+        void validate_invalidStatus_warningIssue() {
+            RawProductRow p = RawProductRow.builder().rowNum(3).toolNo("DR001")
+                .groupId("GRP-001").description("desc").status("bogus").build();
+
+            ValidationReport report = validator.validate(
+                List.of(p), List.of(validGroup()), List.of());
+
+            assertThat(report.getIssues()).anyMatch(i ->
+                i.getSeverity() == ValidationIssue.Severity.WARNING
+                    && i.getField().equals("status"));
+        }
+
+        @Test
+        void validate_invalidProductType_warningIssue() {
+            RawProductRow p = RawProductRow.builder().rowNum(3).toolNo("DR001")
+                .groupId("GRP-001").description("desc").productType("unknown").build();
+
+            ValidationReport report = validator.validate(
+                List.of(p), List.of(validGroup()), List.of());
+
+            assertThat(report.getIssues()).anyMatch(i ->
+                i.getSeverity() == ValidationIssue.Severity.WARNING
+                    && i.getField().equals("productType"));
+        }
+
+        @Test
+        void validate_invalidStockStatus_warningIssue() {
+            RawProductRow p = RawProductRow.builder().rowNum(3).toolNo("DR001")
+                .groupId("GRP-001").description("desc").stockStatus("bogus").build();
+
+            ValidationReport report = validator.validate(
+                List.of(p), List.of(validGroup()), List.of());
+
+            assertThat(report.getIssues()).anyMatch(i ->
+                i.getSeverity() == ValidationIssue.Severity.WARNING
+                    && i.getField().equals("stockStatus"));
+        }
+
+        @Test
+        void validate_nonNumericStockQty_warningIssue() {
+            RawProductRow p = RawProductRow.builder().rowNum(3).toolNo("DR001")
+                .groupId("GRP-001").description("desc").stockQty("abc").build();
+
+            ValidationReport report = validator.validate(
+                List.of(p), List.of(validGroup()), List.of());
+
+            assertThat(report.getIssues()).anyMatch(i ->
+                i.getSeverity() == ValidationIssue.Severity.WARNING
+                    && i.getField().equals("Stock Qty"));
+        }
+
+        @Test
+        void validate_nonNumericWeightG_warningIssue() {
+            RawProductRow p = RawProductRow.builder().rowNum(3).toolNo("DR001")
+                .groupId("GRP-001").description("desc").weightG("heavy").build();
+
+            ValidationReport report = validator.validate(
+                List.of(p), List.of(validGroup()), List.of());
+
+            assertThat(report.getIssues()).anyMatch(i ->
+                i.getSeverity() == ValidationIssue.Severity.WARNING
+                    && i.getField().equals("Weight (g)"));
+        }
+
+        @Test
         void validate_unknownHeaders_passedThrough() {
             ValidationReport report = validator.validate(
                 List.of(), List.of(), List.of("Unknown Col 1", "Unknown Col 2"));
