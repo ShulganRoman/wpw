@@ -68,13 +68,11 @@ services:
       wpw-backend:
         condition: service_healthy
     volumes:
-      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/nginx-dev.conf:/etc/nginx/nginx.conf:ro
       - test_frontend_static:/usr/share/nginx/html:ro
       - ./media:/media:ro
-      - ./certs:/etc/nginx/certs:ro
     ports:
       - "80:80"
-      - "443:443"
     networks:
       - wpw-test-net
 

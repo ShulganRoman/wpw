@@ -12,8 +12,14 @@ import { useToast } from './ToastContext';
 
 const LOCALES = ['en', 'he', 'ru', 'de'];
 
+function slugify(s) {
+  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 function EditForm({ node, onSave, onCancel }) {
+  const isNew = !node?.id;
   const [slug, setSlug] = useState(node?.slug || '');
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(!isNew);
   const [translations, setTranslations] = useState(() => {
     const t = {};
     LOCALES.forEach(l => { t[l] = node?.translations?.[l] || node?.name || ''; });
@@ -22,6 +28,13 @@ function EditForm({ node, onSave, onCancel }) {
   const [isActive, setIsActive] = useState(node?.isActive !== false);
   const [groupCode, setGroupCode] = useState(node?.groupCode || '');
   const [saving, setSaving] = useState(false);
+
+  function handleEnNameChange(value) {
+    setTranslations(prev => ({ ...prev, en: value }));
+    if (!slugManuallyEdited) {
+      setSlug(slugify(value));
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -37,7 +50,12 @@ function EditForm({ node, onSave, onCancel }) {
     <form className="admin-tree-form" onSubmit={handleSubmit}>
       <div className="form-row">
         <label>Slug</label>
-        <input className="form-control" value={slug} onChange={e => setSlug(e.target.value)} required />
+        <input
+          className="form-control"
+          value={slug}
+          onChange={e => { setSlug(e.target.value); setSlugManuallyEdited(true); }}
+          required
+        />
       </div>
       {LOCALES.map(l => (
         <div className="form-row" key={l}>
@@ -45,7 +63,7 @@ function EditForm({ node, onSave, onCancel }) {
           <input
             className="form-control"
             value={translations[l]}
-            onChange={e => setTranslations(prev => ({ ...prev, [l]: e.target.value }))}
+            onChange={e => l === 'en' ? handleEnNameChange(e.target.value) : setTranslations(prev => ({ ...prev, [l]: e.target.value }))}
             placeholder={`Name (${l})`}
           />
         </div>
@@ -217,6 +235,7 @@ export default function AdminCatalogTree({ locale = 'en' }) {
       await createProduct(data);
       toast(`Product "${data.toolNo}" created`, 'success');
       setAddingProductToGroup(null);
+      fetchTree();
     } catch (err) {
       toast(err.message, 'error');
     }
@@ -262,6 +281,9 @@ export default function AdminCatalogTree({ locale = 'en' }) {
           </span>
           {!node.isActive && node.isActive !== undefined && (
             <span className="admin-tree-badge">inactive</span>
+          )}
+          {node.type === 'group' && node.productCount > 0 && (
+            <span className="admin-tree-badge">{node.productCount}</span>
           )}
           <span className="admin-tree-type">{node.type}</span>
           <div className="admin-tree-actions">

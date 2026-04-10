@@ -153,7 +153,7 @@ public class ExcelImportV4Service {
                     continue;
                 }
                 try {
-                    importProduct(row, groupCache, acc);
+                    importProduct(row, categoryCache, groupCache, acc);
                 } catch (Exception e) {
                     acc.errors.add("Товар " + row.getToolNo() + " (строка " + row.getRowNum() + "): "
                         + e.getMessage());
@@ -190,15 +190,17 @@ public class ExcelImportV4Service {
         String slug = slugify(categoryName);
         if (cache.containsKey(slug)) return cache.get(slug);
 
-        Category cat = categoryRepo.findBySlug(slug).orElseGet(() -> {
-            Category c = new Category();
-            c.setSlug(slug);
-            c.setSection(section);
-            c.setTranslations(Map.of("en", categoryName));
-            c.setSortOrder(cache.size());
-            acc.categoriesCreated++;
-            return categoryRepo.save(c);
-        });
+        Category cat = categoryRepo.findBySlug(slug)
+            .or(() -> categoryRepo.findByNameEnIgnoreCase(categoryName))
+            .orElseGet(() -> {
+                Category c = new Category();
+                c.setSlug(slug);
+                c.setSection(section);
+                c.setTranslations(Map.of("en", categoryName));
+                c.setSortOrder(cache.size());
+                acc.categoriesCreated++;
+                return categoryRepo.save(c);
+            });
 
         if (!cache.containsKey(slug)) acc.categoriesFound++;
         cache.put(slug, cat);
@@ -214,8 +216,9 @@ public class ExcelImportV4Service {
         String cacheKey = category.getId() + ":" + baseSlug;
         if (cache.containsKey(cacheKey)) return cache.get(cacheKey);
 
-        // Сначала ищем по (категория + slug) — правильный поиск
-        Optional<ProductGroup> existing = groupRepo.findByCategoryIdAndSlug(category.getId(), baseSlug);
+        // Ищем по (categoryId, slug), fallback — по (categoryId, name)
+        Optional<ProductGroup> existing = groupRepo.findByCategoryIdAndSlug(category.getId(), baseSlug)
+            .or(() -> groupRepo.findByCategoryIdAndNameEnIgnoreCase(category.getId(), groupName));
         if (existing.isPresent()) {
             acc.groupsFound++;
             cache.put(cacheKey, existing.get());
@@ -244,7 +247,9 @@ public class ExcelImportV4Service {
     // Товары
     // -------------------------------------------------------------------------
 
-    private void importProduct(RawV4Row row, Map<String, ProductGroup> groupCache,
+    private void importProduct(RawV4Row row,
+                               Map<String, Category> categoryCache,
+                               Map<String, ProductGroup> groupCache,
                                StatsAccumulator acc) {
         boolean isNew = !productRepo.existsByToolNo(row.getToolNo());
 
@@ -283,10 +288,14 @@ public class ExcelImportV4Service {
             catch (NumberFormatException ignored) { }
         }
 
-        // Group — по slugify(groupName)
-        if (row.getGroupName() != null) {
-            ProductGroup group = groupCache.get(slugify(row.getGroupName()));
-            if (group != null) product.setGroup(group);
+        // Group — ключ кэша: categoryId:groupSlug (как в findOrCreateGroup)
+        if (notBlank(row.getGroupName()) && notBlank(row.getCategoryName())) {
+            Category cat = categoryCache.get(slugify(row.getCategoryName()));
+            if (cat != null) {
+                String cacheKey = cat.getId() + ":" + slugify(row.getGroupName());
+                ProductGroup group = groupCache.get(cacheKey);
+                if (group != null) product.setGroup(group);
+            }
         }
 
         // Application Tags

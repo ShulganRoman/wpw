@@ -8,8 +8,7 @@ import lombok.Getter;
  * <p>
  * Все поля хранятся как String (кроме rowNum).
  * Тип-конвертация происходит в {@code ExcelImportV4Service}.
- * Ключевое отличие от {@link RawProductRow}: нет поля groupId —
- * группа определяется по паре (categoryName, groupName).
+ * Группа определяется по паре (categoryName, groupName) — явный groupId не используется.
  * </p>
  */
 @Getter

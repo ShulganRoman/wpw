@@ -168,6 +168,19 @@ export async function exportProducts(format, locale = 'en', extraFilters = {}) {
   URL.revokeObjectURL(link.href);
 }
 
+export async function downloadImportTemplate() {
+  const res = await fetch(`${BASE}/admin/import/template`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'wpw-pim-import-template.xlsx';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
 export async function validateImport(file) {
   const form = new FormData();
   form.append('file', file);
@@ -181,36 +194,6 @@ export async function validateImport(file) {
     throw new Error(text || `HTTP ${res.status}`);
   }
   return res.json();
-}
-
-export async function validateWpwCatalogImport(file) {
-  const form = new FormData();
-  form.append('file', file);
-  const res = await fetch(`${BASE}/admin/import/wpw-catalog/validate`, {
-    method: 'POST',
-    headers: { ...getAuthHeaders() },
-    body: form,
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `HTTP ${res.status}`);
-  }
-  return res.json();
-}
-
-export async function executeWpwCatalogImport(file) {
-  const form = new FormData();
-  form.append('file', file);
-  const res = await fetch(`${BASE}/admin/import/wpw-catalog/execute`, {
-    method: 'POST',
-    headers: { ...getAuthHeaders() },
-    body: form,
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `HTTP ${res.status}`);
-  }
-  return res.text();
 }
 
 export async function executeImport(file) {

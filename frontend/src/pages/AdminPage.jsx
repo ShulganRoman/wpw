@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { validateImport, executeImport, validateWpwCatalogImport, executeWpwCatalogImport, validatePhotos, importPhotos, validateArchive, importArchive, getUsers, createUser, updateUser, deleteUser, getRoles, getOperations, createApplicationTag, updateApplicationTag, deleteApplicationTag } from '../api/api';
+import { validateImport, executeImport, downloadImportTemplate, validatePhotos, importPhotos, validateArchive, importArchive, getUsers, createUser, updateUser, deleteUser, getRoles, getOperations, createApplicationTag, updateApplicationTag, deleteApplicationTag } from '../api/api';
 import { useToast } from '../components/ToastContext';
 import AdminCatalogTree from '../components/AdminCatalogTree';
 
@@ -279,62 +279,51 @@ function ImportPanel({ onValidate, onExecute, instructions }) {
 }
 
 function ExcelImportTab() {
-  const [mode, setMode] = useState('standard');
+  const toast = useToast();
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownloadTemplate() {
+    setDownloading(true);
+    try {
+      await downloadImportTemplate();
+      toast('Template downloaded', 'success');
+    } catch (err) {
+      toast(`Download failed: ${err.message}`, 'error');
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', border: '1px solid var(--wpw-border)', borderRadius: 'var(--wpw-radius-sm)', overflow: 'hidden', marginBottom: 20 }} role="group">
-        {[
-          { value: 'standard',    label: 'Standard Format' },
-          { value: 'wpw-catalog', label: 'WPW Catalog v3' },
-        ].map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setMode(value)}
-            style={{
-              padding: '7px 18px', fontSize: 13, fontWeight: 500, border: 'none',
-              borderRight: value === 'standard' ? '1px solid var(--wpw-border)' : 'none',
-              cursor: 'pointer',
-              background: mode === value ? 'var(--wpw-blue)' : '#fff',
-              color: mode === value ? '#fff' : 'var(--wpw-gray)',
-              transition: 'background 0.15s, color 0.15s',
-            }}
-            aria-pressed={mode === value}
-          >
-            {label}
-          </button>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
+        <button
+          className="btn btn-secondary"
+          onClick={handleDownloadTemplate}
+          disabled={downloading}
+          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          {downloading
+            ? <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />Downloading…</>
+            : <>⬇ Download Template</>
+          }
+        </button>
       </div>
 
-      {mode === 'standard' && (
-        <ImportPanel
-          onValidate={validateImport}
-          onExecute={executeImport}
-          instructions={
-            <ol style={{ paddingLeft: 20, listStyle: 'decimal', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
-              <li>Prepare an Excel file (.xlsx) with two sheets: <strong>Products</strong> and <strong>Product Groups</strong>.</li>
-              <li>Upload the file using the drop zone above.</li>
-              <li>Click <strong>Validate</strong> to check for errors before importing.</li>
-              <li>If validation passes, click <strong>Execute Import</strong> to apply the changes.</li>
-              <li>Review the import report for details on what was added or updated.</li>
-            </ol>
-          }
-        />
-      )}
-      {mode === 'wpw-catalog' && (
-        <ImportPanel
-          onValidate={validateWpwCatalogImport}
-          onExecute={executeWpwCatalogImport}
-          instructions={
-            <ol style={{ paddingLeft: 20, listStyle: 'decimal', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
-              <li>Use the <strong>WPW_Catalog_v3.xlsx</strong> template (single sheet <code>Sheet1</code>).</li>
-              <li>Required columns: <code>SKU</code>, <code>Category</code>, <code>Group</code>.</li>
-              <li>SEO columns are ignored: <code>SEO_Title_EN</code>, <code>SEO_Description_EN</code>, <code>Keywords_EN</code>, <code>URL_Slug</code>.</li>
-              <li>Upload the file, click <strong>Validate</strong>, then <strong>Execute Import</strong>.</li>
-            </ol>
-          }
-        />
-      )}
+      <ImportPanel
+        onValidate={validateImport}
+        onExecute={executeImport}
+        instructions={
+          <ol style={{ paddingLeft: 20, listStyle: 'decimal', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
+            <li>Click <strong>⬇ Download Template</strong> to get the Excel file with all supported columns.</li>
+            <li>Fill in products starting from row 3 — row 2 contains column headers.</li>
+            <li>Groups are created automatically from <code>Category</code> + <code>Group Name</code> columns.</li>
+            <li>Upload the completed file using the drop zone above.</li>
+            <li>Click <strong>✓ Validate</strong> to check for errors before importing.</li>
+            <li>If validation passes, click <strong>⬆ Execute Import</strong> to apply changes.</li>
+          </ol>
+        }
+      />
     </div>
   );
 }
