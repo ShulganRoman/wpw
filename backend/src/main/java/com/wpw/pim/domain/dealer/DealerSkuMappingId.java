@@ -16,6 +16,6 @@ import java.util.UUID;
 public class DealerSkuMappingId implements Serializable {
     @Column(name = "dealer_id")
     private UUID dealerId;
-    @Column(name = "product_id")
-    private UUID productId;
+    @Column(name = "wpw_sku")
+    private String wpwSku;
 }

@@ -1,6 +1,5 @@
 package com.wpw.pim.domain.dealer;
 
-import com.wpw.pim.domain.product.Product;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,14 +20,15 @@ public class DealerSkuMapping {
     @JoinColumn(name = "dealer_id")
     private Dealer dealer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("productId")
-    @JoinColumn(name = "product_id")
-    private Product product;
-
-    @Column(name = "dealer_sku", nullable = false, length = 100)
+    @Column(name = "dealer_sku", nullable = false)
     private String dealerSku;
+
+    @Column(name = "dealer_brand")
+    private String dealerBrand;
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt = OffsetDateTime.now();
 }

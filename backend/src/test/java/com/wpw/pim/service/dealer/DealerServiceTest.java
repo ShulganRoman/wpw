@@ -33,10 +33,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit-тесты для {@link DealerService}.
- * Покрывают SKU маппинг и работу с прайс-листами дилеров.
- */
 @ExtendWith(MockitoExtension.class)
 class DealerServiceTest {
 
@@ -55,22 +51,19 @@ class DealerServiceTest {
         @DisplayName("возвращает список SKU-маппингов для дилера")
         void getSkuMapping_existingDealer_returnsMappings() {
             UUID dealerId = UUID.randomUUID();
-            UUID productId = UUID.randomUUID();
-
-            Product product = new Product();
-            product.setId(productId);
-            product.setToolNo("TOOL-001");
 
             DealerSkuMapping mapping = new DealerSkuMapping();
-            mapping.setProduct(product);
+            DealerSkuMappingId id = new DealerSkuMappingId(dealerId, "WPW-001");
+            mapping.setId(id);
             mapping.setDealerSku("DEALER-SKU-001");
+            mapping.setDealerBrand("BrandX");
 
             when(skuMappingRepo.findByDealerId(dealerId)).thenReturn(List.of(mapping));
 
             List<SkuMappingDto> result = dealerService.getSkuMapping(dealerId);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).toolNo()).isEqualTo("TOOL-001");
+            assertThat(result.get(0).wpwSku()).isEqualTo("WPW-001");
             assertThat(result.get(0).dealerSku()).isEqualTo("DEALER-SKU-001");
         }
 
@@ -92,39 +85,20 @@ class DealerServiceTest {
         @DisplayName("создаёт новый SKU маппинг")
         void saveSkuMapping_newMapping_createsSuccessfully() {
             UUID dealerId = UUID.randomUUID();
-            UUID productId = UUID.randomUUID();
-            Product product = new Product();
-            product.setId(productId);
-            product.setToolNo("TOOL-001");
 
             Dealer dealer = new Dealer();
             dealer.setId(dealerId);
 
-            DealerSkuMappingId mappingId = new DealerSkuMappingId(dealerId, productId);
-            SkuMappingCreateRequest request = new SkuMappingCreateRequest(productId, "MY-SKU");
+            SkuMappingCreateRequest request = new SkuMappingCreateRequest("WPW-001", "MY-SKU", "BrandX");
 
-            when(productRepo.findById(productId)).thenReturn(Optional.of(product));
+            DealerSkuMappingId mappingId = new DealerSkuMappingId(dealerId, "WPW-001");
             when(skuMappingRepo.findById(mappingId)).thenReturn(Optional.empty());
 
             SkuMappingDto result = dealerService.saveSkuMapping(dealerId, request, dealer);
 
-            assertThat(result.toolNo()).isEqualTo("TOOL-001");
+            assertThat(result.wpwSku()).isEqualTo("WPW-001");
             assertThat(result.dealerSku()).isEqualTo("MY-SKU");
             verify(skuMappingRepo).save(any(DealerSkuMapping.class));
-        }
-
-        @Test
-        @DisplayName("бросает NOT_FOUND если продукт не найден")
-        void saveSkuMapping_productNotFound_throws404() {
-            UUID dealerId = UUID.randomUUID();
-            UUID productId = UUID.randomUUID();
-            Dealer dealer = new Dealer();
-
-            when(productRepo.findById(productId)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> dealerService.saveSkuMapping(dealerId,
-                    new SkuMappingCreateRequest(productId, "SKU"), dealer))
-                    .isInstanceOf(ResponseStatusException.class);
         }
     }
 

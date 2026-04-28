@@ -44,10 +44,12 @@ export default function Navbar({ locale, onLocaleChange }) {
 
   const canExport = privileges.has('BULK_EXPORT');
   const canAdmin = [...ADMIN_PRIVILEGES].some(p => privileges.has(p));
+  const isDealer = localStorage.getItem('userRole') === 'dealer';
 
   const links = [
     { to: '/catalog', label: 'Catalog', show: true },
     { to: '/export', label: 'Export', show: canExport },
+    { to: '/import', label: 'Import', show: isDealer },
     { to: '/admin', label: 'Admin', show: canAdmin },
   ].filter(l => l.show);
 

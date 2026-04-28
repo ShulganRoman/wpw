@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { validateImport, executeImport, downloadImportTemplate, validatePhotos, importPhotos, validateArchive, importArchive, getUsers, createUser, updateUser, deleteUser, getRoles, getOperations, createApplicationTag, updateApplicationTag, deleteApplicationTag } from '../api/api';
 import { useToast } from '../components/ToastContext';
 import AdminCatalogTree from '../components/AdminCatalogTree';
+import DealersTab from '../components/DealersTab';
+import AdminSkuMappingPanel from '../components/AdminSkuMappingPanel';
 
 function parseMarkdown(text) {
   // Minimal markdown rendering: headings, bold, code, tables, lists
@@ -1446,6 +1448,7 @@ function ApplicationTagsTab() {
 
 export default function AdminPage() {
   const [tab, setTab] = useState('excel');
+  const [skuMappingDealer, setSkuMappingDealer] = useState(null);
   const userRole = localStorage.getItem('userRole');
 
   return (
@@ -1460,6 +1463,7 @@ export default function AdminPage() {
         <button className={`btn ${tab === 'photos' ? 'btn-primary' : ''}`} onClick={() => setTab('photos')}>Photo Import</button>
         <button className={`btn ${tab === 'catalog' ? 'btn-primary' : ''}`} onClick={() => setTab('catalog')}>Catalog Tree</button>
         <button className={`btn ${tab === 'tags' ? 'btn-primary' : ''}`} onClick={() => setTab('tags')}>Application Tags</button>
+        <button className={`btn ${tab === 'dealers' ? 'btn-primary' : ''}`} onClick={() => setTab('dealers')}>Dealers</button>
         {userRole === 'admin' && (
           <button className={`btn ${tab === 'users' ? 'btn-primary' : ''}`} onClick={() => setTab('users')}>Users</button>
         )}
@@ -1469,7 +1473,15 @@ export default function AdminPage() {
       {tab === 'photos' && <PhotoImportTab />}
       {tab === 'catalog' && <AdminCatalogTree />}
       {tab === 'tags' && <ApplicationTagsTab />}
+      {tab === 'dealers' && <DealersTab onSkuMapping={dealer => setSkuMappingDealer(dealer)} />}
       {tab === 'users' && <UsersTab />}
+
+      {skuMappingDealer && (
+        <AdminSkuMappingPanel
+          dealer={skuMappingDealer}
+          onClose={() => setSkuMappingDealer(null)}
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import CatalogPage from './pages/CatalogPage';
 import ProductPage from './pages/ProductPage';
 import ExportPage from './pages/ExportPage';
 import AdminPage from './pages/AdminPage';
+import DealerImportPage from './pages/DealerImportPage';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/LandingPage';
 
@@ -76,6 +77,7 @@ function AppInner() {
           children: [
             { path: 'export', element: <ExportPage locale={locale} /> },
             { path: 'admin', element: <AdminPage /> },
+            { path: 'import', element: <DealerImportPage /> },
           ],
         },
       ],

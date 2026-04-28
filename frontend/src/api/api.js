@@ -388,3 +388,24 @@ export function deleteProduct(id) {
 export function getProductImages(productId) {
   return request(`/products/${productId}/images`);
 }
+
+// Admin dealers
+export function getDealers() {
+  return request('/admin/dealers');
+}
+
+export function createDealer(data) {
+  return request('/admin/dealers', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function updateDealer(id, data) {
+  return request(`/admin/dealers/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deleteDealer(id) {
+  return request(`/admin/dealers/${id}`, { method: 'DELETE' });
+}
+
+export function resetDealerPassword(id) {
+  return request(`/admin/dealers/${id}/reset-password`, { method: 'POST' });
+}

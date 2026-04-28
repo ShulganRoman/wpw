@@ -7,7 +7,9 @@ import com.wpw.pim.config.SecurityConfig;
 import com.wpw.pim.domain.dealer.Dealer;
 import com.wpw.pim.security.ApiKeyAuthProvider;
 import com.wpw.pim.security.DealerPrincipal;
+import com.wpw.pim.repository.dealer.DealerRepository;
 import com.wpw.pim.service.dealer.DealerService;
+import com.wpw.pim.service.dealer.SkuMappingService;
 import com.wpw.pim.web.dto.dealer.PriceListDto;
 import com.wpw.pim.web.dto.dealer.SkuMappingCreateRequest;
 import com.wpw.pim.web.dto.dealer.SkuMappingDto;
@@ -29,7 +31,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Import(SecurityConfig.class)
@@ -40,6 +42,8 @@ class DealerControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockitoBean private DealerService dealerService;
+    @MockitoBean private SkuMappingService skuMappingService;
+    @MockitoBean private DealerRepository dealerRepository;
     @MockitoBean private JwtService jwtService;
     @MockitoBean private PimUserDetailsService pimUserDetailsService;
     @MockitoBean private ApiKeyAuthProvider apiKeyAuthProvider;
@@ -57,14 +61,13 @@ class DealerControllerTest {
     @DisplayName("GET /api/v1/dealer/sku-mapping -- returns SKU mappings for dealer")
     void getSkuMapping_returnsList() throws Exception {
         DealerPrincipal principal = dealerPrincipal();
-        UUID productId = UUID.randomUUID();
-        SkuMappingDto dto = new SkuMappingDto(productId, "WPW-001", "DEALER-SKU-1");
+        SkuMappingDto dto = new SkuMappingDto("WPW-001", "DEALER-SKU-1", null);
         when(dealerService.getSkuMapping(principal.getDealer().getId())).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/v1/dealer/sku-mapping")
                         .with(user(principal)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].toolNo").value("WPW-001"))
+                .andExpect(jsonPath("$[0].wpwSku").value("WPW-001"))
                 .andExpect(jsonPath("$[0].dealerSku").value("DEALER-SKU-1"));
     }
 
@@ -72,13 +75,12 @@ class DealerControllerTest {
     @DisplayName("POST /api/v1/dealer/sku-mapping -- creates new SKU mapping")
     void addSkuMapping_returnsCreatedMapping() throws Exception {
         DealerPrincipal principal = dealerPrincipal();
-        UUID productId = UUID.randomUUID();
-        SkuMappingCreateRequest request = new SkuMappingCreateRequest(productId, "MY-SKU");
-        SkuMappingDto result = new SkuMappingDto(productId, "WPW-001", "MY-SKU");
+        SkuMappingCreateRequest request = new SkuMappingCreateRequest("WPW-001", "MY-SKU", "BrandX");
+        SkuMappingDto result = new SkuMappingDto("WPW-001", "MY-SKU", "BrandX");
 
         when(dealerService.saveSkuMapping(eq(principal.getDealer().getId()), any(), any())).thenReturn(result);
 
-        mockMvc.perform(post("/api/v1/dealer/sku-mapping")
+        mockMvc.perform(put("/api/v1/dealer/sku-mapping")
                         .with(user(principal))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -91,7 +93,7 @@ class DealerControllerTest {
     void getPriceList_returnsPriceList() throws Exception {
         DealerPrincipal principal = dealerPrincipal();
         PriceListDto priceList = new PriceListDto(
-                UUID.randomUUID(), "Standard", "EUR", "\u20ac",
+                UUID.randomUUID(), "Standard", "EUR", "€",
                 List.of(new PriceListDto.PriceItemDto(UUID.randomUUID(), "WPW-001", BigDecimal.valueOf(25.50), 1))
         );
         when(dealerService.getPriceList(any(Dealer.class))).thenReturn(priceList);
