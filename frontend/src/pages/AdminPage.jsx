@@ -4,6 +4,8 @@ import { useToast } from '../components/ToastContext';
 import AdminCatalogTree from '../components/AdminCatalogTree';
 import DealersTab from '../components/DealersTab';
 import AdminSkuMappingPanel from '../components/AdminSkuMappingPanel';
+import StockPricePanel from '../components/StockPricePanel';
+import AdminDealerPricePanel from '../components/AdminDealerPricePanel';
 
 function parseMarkdown(text) {
   // Minimal markdown rendering: headings, bold, code, tables, lists
@@ -1449,6 +1451,7 @@ function ApplicationTagsTab() {
 export default function AdminPage() {
   const [tab, setTab] = useState('excel');
   const [skuMappingDealer, setSkuMappingDealer] = useState(null);
+  const [priceListDealer, setPriceListDealer] = useState(null);
   const userRole = localStorage.getItem('userRole');
 
   return (
@@ -1464,6 +1467,7 @@ export default function AdminPage() {
         <button className={`btn ${tab === 'catalog' ? 'btn-primary' : ''}`} onClick={() => setTab('catalog')}>Catalog Tree</button>
         <button className={`btn ${tab === 'tags' ? 'btn-primary' : ''}`} onClick={() => setTab('tags')}>Application Tags</button>
         <button className={`btn ${tab === 'dealers' ? 'btn-primary' : ''}`} onClick={() => setTab('dealers')}>Dealers</button>
+        <button className={`btn ${tab === 'prices' ? 'btn-primary' : ''}`} onClick={() => setTab('prices')}>Prices</button>
         {userRole === 'admin' && (
           <button className={`btn ${tab === 'users' ? 'btn-primary' : ''}`} onClick={() => setTab('users')}>Users</button>
         )}
@@ -1473,13 +1477,25 @@ export default function AdminPage() {
       {tab === 'photos' && <PhotoImportTab />}
       {tab === 'catalog' && <AdminCatalogTree />}
       {tab === 'tags' && <ApplicationTagsTab />}
-      {tab === 'dealers' && <DealersTab onSkuMapping={dealer => setSkuMappingDealer(dealer)} />}
+      {tab === 'dealers' && (
+        <DealersTab
+          onSkuMapping={dealer => setSkuMappingDealer(dealer)}
+          onPriceList={dealer => setPriceListDealer(dealer)}
+        />
+      )}
+      {tab === 'prices' && <StockPricePanel />}
       {tab === 'users' && <UsersTab />}
 
       {skuMappingDealer && (
         <AdminSkuMappingPanel
           dealer={skuMappingDealer}
           onClose={() => setSkuMappingDealer(null)}
+        />
+      )}
+      {priceListDealer && (
+        <AdminDealerPricePanel
+          dealer={priceListDealer}
+          onClose={() => setPriceListDealer(null)}
         />
       )}
     </div>

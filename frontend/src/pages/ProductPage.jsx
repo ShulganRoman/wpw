@@ -226,6 +226,32 @@ function Gallery({ images, editing, productId, imageData, onUpload, onDeleteImag
   );
 }
 
+function PriceBlock({ price }) {
+  if (!price || !price.tiers || price.tiers.length === 0) return null;
+  const { currencySymbol, tiers, expired, validTo } = price;
+  return (
+    <div style={{ margin: '14px 0', padding: '12px 14px', background: expired ? '#fff8e1' : '#f0f7ff', borderRadius: 8, border: `1px solid ${expired ? '#ffe082' : '#bbdefb'}` }}>
+      {expired && (
+        <div style={{ color: '#e65100', fontWeight: 600, fontSize: 13, marginBottom: 8 }}>
+          ⚠ Prices expired {validTo}. Contact administrator to update.
+        </div>
+      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+        {tiers.map((tier, i) => (
+          <div key={i} style={{ textAlign: 'center', padding: '6px 12px', background: '#fff', borderRadius: 6, border: '1px solid #e0e0e0', minWidth: 80 }}>
+            <div style={{ fontSize: 11, color: 'var(--wpw-gray)', marginBottom: 2 }}>
+              {tier.minQty === 1 ? '1 pc' : `≥${tier.minQty} pcs`}
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: expired ? '#e65100' : 'var(--wpw-primary)' }}>
+              {currencySymbol}{Number(tier.price).toFixed(2)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function formatValue(val) {
   if (val === null || val === undefined) return null;
   if (typeof val === 'boolean') return val ? 'Yes' : 'No';
@@ -667,6 +693,7 @@ export default function ProductPage({ locale }) {
 
   const name = editing ? editData.name : (product.name || product.toolNo || toolNo);
   const toolNoDisplay = product.toolNo || toolNo;
+  const dealerSku = product.dealerSku || null;
   const description = editing ? editData.shortDescription : (product.shortDescription || product.longDescription || '');
   const stockKey = product.attributes?.stockStatus || 'out_of_stock';
   const images = product.mediaUrls || [];
@@ -718,7 +745,10 @@ export default function ProductPage({ locale }) {
         />
 
         <div className="product-info">
-          <div className="product-toolno">{toolNoDisplay}</div>
+          <div className="product-toolno">
+            {toolNoDisplay}
+            {dealerSku && <span className="product-dealer-sku">Your SKU: {dealerSku}</span>}
+          </div>
 
           {editing ? (
             <div className="edit-field">
@@ -743,6 +773,8 @@ export default function ProductPage({ locale }) {
               <span className="orderable-badge">Orderable</span>
             )}
           </div>
+
+          {product.price && <PriceBlock price={product.price} />}
 
           {editing ? (
             <>

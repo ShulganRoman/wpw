@@ -380,7 +380,8 @@ public class ProductService {
             a != null ? a.getCuttingType() : null,
             a != null ? a.getStockStatus() : null,
             mediaFallback.getThumbnail(media),
-            locale, "he".equals(locale)
+            locale, "he".equals(locale),
+            null, null
         );
     }
 
@@ -427,7 +428,8 @@ public class ProductService {
             media.stream().map(MediaFile::getUrl).toList(),
             mediaFallback.getThumbnail(media),
             jsonLd,
-            groupName, categoryName, sectionName
+            groupName, categoryName, sectionName,
+            null, null
         );
     }
 

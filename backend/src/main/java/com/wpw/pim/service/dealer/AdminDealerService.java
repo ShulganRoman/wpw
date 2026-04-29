@@ -38,8 +38,8 @@ public class AdminDealerService {
     @Transactional(readOnly = true)
     public List<DealerDto> listAll() {
         return dealerRepo.findAll().stream()
-            .map(d -> toDto(d, contactRepo.findByDealerId(d.getId()).stream().map(this::toContactDto).toList()))
-            .toList();
+                .map(d -> toDto(d, contactRepo.findByDealerId(d.getId()).stream().map(this::toContactDto).toList()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -53,12 +53,12 @@ public class AdminDealerService {
         String username = req.dealerCode().trim().toLowerCase().replaceAll("[^a-z0-9_-]", "_");
         if (userRepo.existsByUsername(username)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                "Пользователь с именем '" + username + "' уже существует. Измените код дилера.");
+                    "Пользователь с именем '" + username + "' уже существует. Измените код дилера.");
         }
 
         String rawPassword = generatePassword();
         Role dealerRole = roleRepo.findByName(DEALER_ROLE_NAME)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Роль 'dealer' не найдена"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Роль 'dealer' не найдена"));
 
         User user = new User(username, passwordEncoder.encode(rawPassword), dealerRole);
         userRepo.save(user);
@@ -129,8 +129,8 @@ public class AdminDealerService {
     @Transactional
     public DealerContactDto updateContact(UUID dealerId, UUID contactId, DealerContactSaveRequest req) {
         DealerContact contact = contactRepo.findById(contactId)
-            .filter(c -> c.getDealer().getId().equals(dealerId))
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Contact not found"));
+                .filter(c -> c.getDealer().getId().equals(dealerId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Contact not found"));
         contact.setContactName(req.contactName());
         contact.setRole(req.role());
         contact.setEmail(req.email());
@@ -143,8 +143,8 @@ public class AdminDealerService {
     @Transactional
     public void deleteContact(UUID dealerId, UUID contactId) {
         DealerContact contact = contactRepo.findById(contactId)
-            .filter(c -> c.getDealer().getId().equals(dealerId))
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Contact not found"));
+                .filter(c -> c.getDealer().getId().equals(dealerId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Contact not found"));
         contactRepo.delete(contact);
     }
 
@@ -152,7 +152,7 @@ public class AdminDealerService {
 
     private Dealer find(UUID id) {
         return dealerRepo.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dealer not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dealer not found"));
     }
 
     private String generatePassword() {
@@ -185,8 +185,12 @@ public class AdminDealerService {
     private List<DealerContact> saveContacts(Dealer dealer, List<DealerContactSaveRequest> requests) {
         if (requests == null || requests.isEmpty()) return List.of();
         return requests.stream()
-            .map(r -> { DealerContact c = buildContact(dealer, r); contactRepo.save(c); return c; })
-            .toList();
+                .map(r -> {
+                    DealerContact c = buildContact(dealer, r);
+                    contactRepo.save(c);
+                    return c;
+                })
+                .toList();
     }
 
     private DealerContact buildContact(Dealer dealer, DealerContactSaveRequest req) {
@@ -202,19 +206,19 @@ public class AdminDealerService {
 
     private DealerContactDto toContactDto(DealerContact c) {
         return new DealerContactDto(c.getId(), c.getContactName(), c.getRole(),
-            c.getEmail(), c.getPhone(), c.isPrimary());
+                c.getEmail(), c.getPhone(), c.isPrimary());
     }
 
     private DealerDto toDto(Dealer d, List<DealerContactDto> contacts) {
         String priceListId = d.getPriceList() != null ? d.getPriceList().getId().toString() : null;
         String username = d.getUser() != null ? d.getUser().getUsername() : null;
         return new DealerDto(
-            d.getId(), d.getDealerCode(), d.getCompanyName(), d.getBrandName(),
-            d.getDealerType(), d.getPrivateLabelBrand(), d.getCountry(), d.getRegion(),
-            d.getCity(), d.getAddress(), d.getPostalCode(), d.getWebsite(),
-            d.isHasEcommerce(), d.getShopUrl(), d.getLogo(), priceListId,
-            d.getCurrency(), d.getDiscountTier(), d.getNotes(), d.isActive(),
-            username, d.getCreatedAt(), d.getUpdatedAt(), contacts
+                d.getId(), d.getDealerCode(), d.getCompanyName(), d.getBrandName(),
+                d.getDealerType(), d.getPrivateLabelBrand(), d.getCountry(), d.getRegion(),
+                d.getCity(), d.getAddress(), d.getPostalCode(), d.getWebsite(),
+                d.isHasEcommerce(), d.getShopUrl(), d.getLogo(), priceListId,
+                d.getCurrency(), d.getDiscountTier(), d.getNotes(), d.isActive(),
+                username, d.getCreatedAt(), d.getUpdatedAt(), contacts
         );
     }
 }

@@ -57,7 +57,7 @@ class ProductFilterSpecTest {
     @DisplayName("toPredicate — пустой фильтр добавляет только status=active")
     void toPredicate_emptyFilter_onlyStatusActive() {
         ProductFilter filter = new ProductFilter("en", null, null, null, null,
-            null, null, null, null, null, null, null, null, null, null, null, 1, 48);
+            null, null, null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
         ProductFilterSpec spec = new ProductFilterSpec(filter);
         spec.toPredicate(root, query, cb);
@@ -84,7 +84,7 @@ class ProductFilterSpecTest {
         void toPredicate_dMmRange_joinsAttributesAndAddsPredicate() {
             ProductFilter filter = new ProductFilter("en", null, null, null, null,
                 null, null, null, null, null,
-                new BigDecimal("10"), new BigDecimal("20"), null, null, null, null, 1, 48);
+                new BigDecimal("10"), new BigDecimal("20"), null, null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -97,7 +97,7 @@ class ProductFilterSpecTest {
         void toPredicate_shankMm_addsPredicate() {
             ProductFilter filter = new ProductFilter("en", null, null, null, null,
                 null, null, null, null, null,
-                null, null, new BigDecimal("8"), null, null, null, 1, 48);
+                null, null, new BigDecimal("8"), null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -108,7 +108,7 @@ class ProductFilterSpecTest {
         void toPredicate_hasBallBearing_addsPredicate() {
             ProductFilter filter = new ProductFilter("en", null, null, null, null,
                 null, null, null, null, null,
-                null, null, null, true, null, null, 1, 48);
+                null, null, null, true, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -119,7 +119,7 @@ class ProductFilterSpecTest {
         void toPredicate_inStock_addsStockStatusPredicate() {
             ProductFilter filter = new ProductFilter("en", null, null, null, null,
                 null, null, null, null, null,
-                null, null, null, null, null, true, 1, 48);
+                null, null, null, null, null, true, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -132,7 +132,7 @@ class ProductFilterSpecTest {
 
             ProductFilter filter = new ProductFilter("en", null, null, null, null,
                 null, null, null, null, List.of("straight", "compression"),
-                null, null, null, null, null, null, 1, 48);
+                null, null, null, null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -150,7 +150,7 @@ class ProductFilterSpecTest {
         void toPredicate_groupId_addsGroupFilter() {
             UUID groupId = UUID.randomUUID();
             ProductFilter filter = new ProductFilter("en", null, null, groupId, null,
-                null, null, null, null, null, null, null, null, null, null, null, 1, 48);
+                null, null, null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -161,7 +161,7 @@ class ProductFilterSpecTest {
         void toPredicate_categoryId_addsCategoryFilter() {
             UUID categoryId = UUID.randomUUID();
             ProductFilter filter = new ProductFilter("en", null, categoryId, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, 1, 48);
+                null, null, null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -172,7 +172,7 @@ class ProductFilterSpecTest {
         void toPredicate_sectionId_addsSectionFilter() {
             UUID sectionId = UUID.randomUUID();
             ProductFilter filter = new ProductFilter("en", sectionId, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, 1, 48);
+                null, null, null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -186,7 +186,7 @@ class ProductFilterSpecTest {
     @DisplayName("toPredicate — productType=main добавляет фильтр")
     void toPredicate_productType_addsPredicate() {
         ProductFilter filter = new ProductFilter("en", null, null, null, null,
-            null, null, null, null, null, null, null, null, null, "main", null, 1, 48);
+            null, null, null, null, null, null, null, null, null, "main", null, 1, 48, null, null, null);
 
         new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -197,7 +197,7 @@ class ProductFilterSpecTest {
     @DisplayName("toPredicate — invalid productType игнорируется")
     void toPredicate_invalidProductType_ignored() {
         ProductFilter filter = new ProductFilter("en", null, null, null, null,
-            null, null, null, null, null, null, null, null, null, "invalid_type", null, 1, 48);
+            null, null, null, null, null, null, null, null, null, "invalid_type", null, 1, 48, null, null, null);
 
         // Should not throw, just ignore
         new ProductFilterSpec(filter).toPredicate(root, query, cb);
@@ -227,7 +227,7 @@ class ProductFilterSpecTest {
         @Test
         void toPredicate_toolMaterial_addsSubquery() {
             ProductFilter filter = new ProductFilter("en", null, null, null, null,
-                List.of("carbide"), null, null, null, null, null, null, null, null, null, null, 1, 48);
+                List.of("carbide"), null, null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -237,7 +237,7 @@ class ProductFilterSpecTest {
         @Test
         void toPredicate_workpieceMaterial_addsSubquery() {
             ProductFilter filter = new ProductFilter("en", null, null, null, null,
-                null, List.of("wood"), null, null, null, null, null, null, null, null, null, 1, 48);
+                null, List.of("wood"), null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -247,7 +247,7 @@ class ProductFilterSpecTest {
         @Test
         void toPredicate_machineType_addsSubquery() {
             ProductFilter filter = new ProductFilter("en", null, null, null, null,
-                null, null, List.of("cnc_router"), null, null, null, null, null, null, null, null, 1, 48);
+                null, null, List.of("cnc_router"), null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -257,7 +257,7 @@ class ProductFilterSpecTest {
         @Test
         void toPredicate_machineBrand_addsSubquery() {
             ProductFilter filter = new ProductFilter("en", null, null, null, null,
-                null, null, null, List.of("biesse"), null, null, null, null, null, null, null, 1, 48);
+                null, null, null, List.of("biesse"), null, null, null, null, null, null, null, 1, 48, null, null, null);
 
             new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -280,7 +280,7 @@ class ProductFilterSpecTest {
         when(cb.equal(any(), anyString())).thenReturn(predicate);
 
         ProductFilter filter = new ProductFilter("en", null, null, null, "routing",
-            null, null, null, null, null, null, null, null, null, null, null, 1, 48);
+            null, null, null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
         new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -295,7 +295,7 @@ class ProductFilterSpecTest {
         when(query.getResultType()).thenReturn((Class) Product.class);
 
         ProductFilter filter = new ProductFilter("en", null, null, null, null,
-            null, null, null, null, null, null, null, null, null, null, null, 1, 48);
+            null, null, null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
         new ProductFilterSpec(filter).toPredicate(root, query, cb);
 
@@ -308,7 +308,7 @@ class ProductFilterSpecTest {
         when(query.getResultType()).thenReturn((Class) Long.class);
 
         ProductFilter filter = new ProductFilter("en", null, null, null, null,
-            null, null, null, null, null, null, null, null, null, null, null, 1, 48);
+            null, null, null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
 
         new ProductFilterSpec(filter).toPredicate(root, query, cb);
 

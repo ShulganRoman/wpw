@@ -3,6 +3,7 @@ package com.wpw.pim.repository.pricing;
 import com.wpw.pim.domain.pricing.PriceListItem;
 import com.wpw.pim.domain.pricing.PriceListItemId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -22,4 +23,11 @@ public interface PriceListItemRepository extends JpaRepository<PriceListItem, Pr
         LIMIT 1
         """)
     Optional<PriceListItem> findBestPrice(UUID priceListId, UUID productId, int qty);
+
+    @Modifying
+    @Query("DELETE FROM PriceListItem i WHERE i.priceList.id = :priceListId")
+    void deleteByPriceListId(UUID priceListId);
+
+    @Query("SELECT i FROM PriceListItem i WHERE i.priceList.id = :priceListId AND i.product.id = :productId ORDER BY i.id.minQty ASC")
+    List<PriceListItem> findByPriceListIdAndProductId(UUID priceListId, UUID productId);
 }

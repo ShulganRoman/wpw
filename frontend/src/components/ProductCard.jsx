@@ -26,6 +26,7 @@ export default function ProductCard({ product }) {
   const imageUrl = product.thumbnailUrl || product.thumbnail_url || product.imageUrl || product.image_url || product.mainImageUrl;
   const name = product.name || product.productName || product.product_name || '';
   const toolNo = product.toolNo || product.tool_no || '';
+  const dealerSku = product.dealerSku || product.dealer_sku || null;
 
   return (
     <div className="product-card" onClick={handleClick} role="button" tabIndex={0}
@@ -45,12 +46,21 @@ export default function ProductCard({ product }) {
         </div>
       </div>
       <div className="product-card-body">
-        <div className="product-card-toolno">{toolNo}</div>
+        <div className="product-card-toolno">
+          {toolNo}
+          {dealerSku && <span className="product-dealer-sku">Your SKU: {dealerSku}</span>}
+        </div>
         <div className="product-card-name">{name}</div>
         <div className="product-card-footer">
           <span className={`stock-badge ${stockKey}`}>
             {STOCK_LABELS[stockKey] || stockKey}
           </span>
+          {product.price?.tiers?.length > 0 && (
+            <span className={`stock-badge ${product.price.expired ? 'price-expired' : 'price-active'}`}>
+              {product.price.currencySymbol}{Number(product.price.tiers[0].price).toFixed(2)}
+              {product.price.tiers.length > 1 && ' +'}
+            </span>
+          )}
         </div>
       </div>
     </div>

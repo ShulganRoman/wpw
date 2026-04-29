@@ -73,7 +73,7 @@ class ExportServiceTest {
 
     private ProductFilter defaultFilter() {
         return new ProductFilter("en", null, null, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, 1, 48);
+            null, null, null, null, null, null, null, 1, 48, null, null, null);
     }
 
     private void mockRepos(List<Product> products) {

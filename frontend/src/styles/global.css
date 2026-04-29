@@ -9,6 +9,7 @@
   --wpw-light-gray: #eceff1;
   --wpw-off-white: #f5f7fa;
   --wpw-border: #dde3eb;
+  --wpw-accent: #1565c0;
   --wpw-font: "Roboto", -apple-system, sans-serif;
   --wpw-font-mono: "Roboto Mono", monospace;
   --wpw-text-base: 13px;
@@ -359,6 +360,15 @@ ol {
   font-weight: 500;
 }
 
+.product-dealer-sku {
+  display: block;
+  font-family: var(--wpw-font-mono);
+  font-size: 12px;
+  color: var(--wpw-blue);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
 .product-card-name {
   font-size: 13px;
   font-weight: 500;
@@ -395,6 +405,14 @@ ol {
 .stock-badge.out_of_stock {
   background: #ffebee;
   color: #c62828;
+}
+.stock-badge.price-active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.stock-badge.price-expired {
+  background: #fff8e1;
+  color: #f57f17;
 }
 
 /* ===== Pagination ===== */

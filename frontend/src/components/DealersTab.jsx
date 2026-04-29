@@ -375,7 +375,7 @@ function CredentialsModal({ username, password, onClose }) {
   );
 }
 
-export default function DealersTab({ onSkuMapping }) {
+export default function DealersTab({ onSkuMapping, onPriceList }) {
   const [dealers, setDealers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
@@ -501,6 +501,7 @@ export default function DealersTab({ onSkuMapping }) {
                       <span style={{ display: 'flex', gap: 6 }}>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setModal({ dealer: d })}>Изменить</button>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--wpw-blue)' }} onClick={() => onSkuMapping?.(d)}>SKU</button>
+                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: '#2e7d32' }} onClick={() => onPriceList?.(d)}>Price</button>
                         {d.username && (
                           <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--wpw-blue)' }} onClick={() => handleResetPassword(d.id)} title="Сбросить пароль">↺ Пароль</button>
                         )}

@@ -94,6 +94,8 @@ function FiltersPanel({filters, filterOptions, onChange, onClear}) {
     }
 
     const hasActive = Object.values(filters).some(v => v !== '');
+    const role = localStorage.getItem('userRole');
+    const hasPrices = role === 'admin' || role === 'dealer';
 
     return (
         <div className="filters-panel">
@@ -154,6 +156,7 @@ function FiltersPanel({filters, filterOptions, onChange, onClear}) {
                             className="form-control"
                             type="number"
                             placeholder="Min"
+                            min="0"
                             value={filters.dMmMin || ''}
                             onChange={e => handleChange('dMmMin', e.target.value)}
                         />
@@ -161,11 +164,36 @@ function FiltersPanel({filters, filterOptions, onChange, onClear}) {
                             className="form-control"
                             type="number"
                             placeholder="Max"
+                            min="0"
                             value={filters.dMmMax || ''}
                             onChange={e => handleChange('dMmMax', e.target.value)}
                         />
                     </div>
                 </div>
+
+                {hasPrices && (
+                    <div className="form-group">
+                        <label className="form-label">Price</label>
+                        <div className="filter-range">
+                            <input
+                                className="form-control"
+                                type="number"
+                                placeholder="Min"
+                                min="0"
+                                value={filters.priceMin || ''}
+                                onChange={e => handleChange('priceMin', e.target.value)}
+                            />
+                            <input
+                                className="form-control"
+                                type="number"
+                                placeholder="Max"
+                                min="0"
+                                value={filters.priceMax || ''}
+                                onChange={e => handleChange('priceMax', e.target.value)}
+                            />
+                        </div>
+                    </div>
+                )}
 
                 <div className="form-group">
                     <label className="form-label">Availability</label>
@@ -214,7 +242,7 @@ function FiltersPanel({filters, filterOptions, onChange, onClear}) {
 const EMPTY_FILTERS = {
     toolMaterial: '', workpieceMaterial: '', machineType: '', machineBrand: '',
     cuttingType: '', dMmMin: '', dMmMax: '', shankMm: '', hasBallBearing: '',
-    productType: '', inStock: '',
+    productType: '', inStock: '', priceMin: '', priceMax: '',
 };
 
 function normalizeTree(sections) {

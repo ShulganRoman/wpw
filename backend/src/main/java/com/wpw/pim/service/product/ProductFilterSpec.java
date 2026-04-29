@@ -3,6 +3,7 @@ package com.wpw.pim.service.product;
 import com.wpw.pim.domain.enums.ProductStatus;
 import com.wpw.pim.domain.enums.ProductType;
 import com.wpw.pim.domain.enums.StockStatus;
+import com.wpw.pim.domain.pricing.PriceListItem;
 import com.wpw.pim.domain.product.Product;
 import com.wpw.pim.web.dto.product.ProductFilter;
 import jakarta.persistence.criteria.*;
@@ -129,6 +130,24 @@ public class ProductFilterSpec implements Specification<Product> {
             Join<?, ?> op = subRoot.join("operationCodes");
             sub.select(cb.count(op)).where(cb.equal(op, filter.operation()));
             predicates.add(cb.greaterThan(sub, 0L));
+        }
+
+        // price range (only for authenticated users with a price list)
+        if (filter.priceListId() != null && (filter.priceMin() != null || filter.priceMax() != null)) {
+            Subquery<Integer> priceSub = query.subquery(Integer.class);
+            Root<PriceListItem> pliRoot = priceSub.from(PriceListItem.class);
+            priceSub.select(cb.literal(1));
+            List<Predicate> pp = new ArrayList<>();
+            pp.add(cb.equal(pliRoot.get("id").get("productId"), root.get("id")));
+            pp.add(cb.equal(pliRoot.get("id").get("priceListId"), filter.priceListId()));
+            if (filter.priceMin() != null) {
+                pp.add(cb.greaterThanOrEqualTo(pliRoot.get("price"), filter.priceMin()));
+            }
+            if (filter.priceMax() != null) {
+                pp.add(cb.lessThanOrEqualTo(pliRoot.get("price"), filter.priceMax()));
+            }
+            priceSub.where(pp.toArray(new Predicate[0]));
+            predicates.add(cb.exists(priceSub));
         }
 
         // distinct только для content-запроса, не для count-запроса

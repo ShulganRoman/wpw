@@ -7,6 +7,7 @@ import com.wpw.pim.domain.enums.StockStatus;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+
 public record ProductSummaryDto(
     UUID id,
     String toolNo,
@@ -22,5 +23,7 @@ public record ProductSummaryDto(
     StockStatus stockStatus,
     String thumbnailUrl,
     String locale,
-    boolean isRtl
+    boolean isRtl,
+    PriceInfoDto price,
+    String dealerSku
 ) {}

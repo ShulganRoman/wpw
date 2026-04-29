@@ -5,10 +5,13 @@ import com.wpw.pim.auth.domain.Role;
 import com.wpw.pim.auth.domain.User;
 import com.wpw.pim.auth.repository.RoleRepository;
 import com.wpw.pim.auth.repository.UserRepository;
+import com.wpw.pim.domain.pricing.Currency;
+import com.wpw.pim.repository.pricing.CurrencyRepository;
+import com.wpw.pim.repository.pricing.PriceListRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,6 +34,18 @@ class AdminInitializerTest {
     @Mock private RoleRepository roleRepository;
     @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private PriceListRepository priceListRepository;
+    @Mock private CurrencyRepository currencyRepository;
+
+    @BeforeEach
+    void stubPriceList() {
+        Currency usd = new Currency();
+        usd.setCode("USD");
+        usd.setSymbol("$");
+        when(currencyRepository.getReferenceById("USD")).thenReturn(usd);
+        when(priceListRepository.findFirstByType("stock")).thenReturn(Optional.empty());
+        when(priceListRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    }
 
     @InjectMocks private AdminInitializer adminInitializer;
 

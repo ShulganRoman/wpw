@@ -6,7 +6,9 @@ import com.wpw.pim.auth.service.PimUserDetailsService;
 import com.wpw.pim.domain.enums.ProductStatus;
 import com.wpw.pim.domain.enums.ProductType;
 import com.wpw.pim.security.ApiKeyAuthProvider;
+import com.wpw.pim.service.dealer.DealerSkuResolverService;
 import com.wpw.pim.service.media.ProductMediaService;
+import com.wpw.pim.service.pricing.PriceResolverService;
 import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.web.dto.product.*;
@@ -44,6 +46,8 @@ class ProductControllerTest {
 
     @MockitoBean private ProductService productService;
     @MockitoBean private ProductMediaService productMediaService;
+    @MockitoBean private PriceResolverService priceResolverService;
+    @MockitoBean private DealerSkuResolverService dealerSkuResolverService;
     @MockitoBean private JwtService jwtService;
     @MockitoBean private PimUserDetailsService pimUserDetailsService;
     @MockitoBean private ApiKeyAuthProvider apiKeyAuthProvider;
@@ -179,7 +183,7 @@ class ProductControllerTest {
                 "Test Product", null, null, null, null, null, false,
                 "en", false, null,
                 Set.of(), Set.of(), Set.of(), Set.of(), Set.of(),
-                List.of(), null, null, null, null, null
+                List.of(), null, null, null, null, null, null, null
         );
     }
 }

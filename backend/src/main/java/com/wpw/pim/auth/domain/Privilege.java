@@ -12,5 +12,6 @@ public enum Privilege {
     MODIFY_PRODUCTS,
     BULK_EXPORT,
     MANAGE_CATALOG,
-    MANAGE_DEALERS
+    MANAGE_DEALERS,
+    MANAGE_PRICES
 }

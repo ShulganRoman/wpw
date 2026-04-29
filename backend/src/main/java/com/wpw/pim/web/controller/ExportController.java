@@ -46,7 +46,7 @@ public class ExportController {
     ) {
         ProductFilter filter = new ProductFilter(locale, sectionId, categoryId, groupId, operation,
             toolMaterial, workpieceMaterial, machineType, machineBrand, cuttingType,
-            dMmMin, dMmMax, shankMm, hasBallBearing, productType, inStock, page, perPage);
+            dMmMin, dMmMax, shankMm, hasBallBearing, productType, inStock, page, perPage, null, null, null);
         return productService.findAll(filter);
     }
 
@@ -72,7 +72,7 @@ public class ExportController {
     ) {
         ProductFilter filter = new ProductFilter(locale, sectionId, categoryId, groupId, operation,
             toolMaterial, workpieceMaterial, machineType, machineBrand, cuttingType,
-            dMmMin, dMmMax, shankMm, hasBallBearing, productType, inStock, 1, 10_000);
+            dMmMin, dMmMax, shankMm, hasBallBearing, productType, inStock, 1, 10_000, null, null, null);
 
         byte[] data = exportService.export(format, locale, filter);
 

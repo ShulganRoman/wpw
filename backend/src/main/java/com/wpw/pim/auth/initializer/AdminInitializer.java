@@ -5,6 +5,9 @@ import com.wpw.pim.auth.domain.Role;
 import com.wpw.pim.auth.domain.User;
 import com.wpw.pim.auth.repository.RoleRepository;
 import com.wpw.pim.auth.repository.UserRepository;
+import com.wpw.pim.domain.pricing.PriceList;
+import com.wpw.pim.repository.pricing.CurrencyRepository;
+import com.wpw.pim.repository.pricing.PriceListRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -27,6 +30,8 @@ public class AdminInitializer implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PriceListRepository priceListRepository;
+    private final CurrencyRepository currencyRepository;
 
     @Override
     @Transactional
@@ -49,6 +54,16 @@ public class AdminInitializer implements CommandLineRunner {
 
         // --- user role: catalog only, no export or product editing ---
         ensureRole("user", Set.of());
+
+        // --- stock price list ---
+        if (priceListRepository.findFirstByType("stock").isEmpty()) {
+            log.info("Creating stock price list in USD");
+            PriceList stock = new PriceList();
+            stock.setName("Stock");
+            stock.setType("stock");
+            stock.setCurrency(currencyRepository.getReferenceById("USD"));
+            priceListRepository.save(stock);
+        }
 
         // --- default admin user ---
         if (!userRepository.existsByUsername(ADMIN_USERNAME)) {

@@ -1,6 +1,8 @@
 package com.wpw.pim.web.controller;
 
+import com.wpw.pim.service.dealer.DealerSkuResolverService;
 import com.wpw.pim.service.media.ProductMediaService;
+import com.wpw.pim.service.pricing.PriceResolverService;
 import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.web.dto.media.MediaImageDto;
@@ -9,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -24,6 +28,8 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductMediaService productMediaService;
+    private final PriceResolverService priceResolverService;
+    private final DealerSkuResolverService dealerSkuResolverService;
 
     @GetMapping("/filter-options")
     public Map<String, List<String>> getFilterOptions() {
@@ -49,20 +55,56 @@ public class ProductController {
         @RequestParam(required = false) String productType,
         @RequestParam(required = false) Boolean inStock,
         @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "48") int perPage
+        @RequestParam(defaultValue = "48") int perPage,
+        @RequestParam(required = false) BigDecimal priceMin,
+        @RequestParam(required = false) BigDecimal priceMax,
+        Authentication auth
     ) {
+        UUID priceListId = priceResolverService.resolvePriceListId(auth);
         ProductFilter filter = new ProductFilter(locale, sectionId, categoryId, groupId, operation, toolMaterial, workpieceMaterial,
             machineType, machineBrand, cuttingType, dMmMin, dMmMax, shankMm, hasBallBearing,
-            productType, inStock, page, perPage);
-        return productService.findAll(filter);
+            productType, inStock, page, perPage, priceMin, priceMax, priceListId);
+        PagedResponse<ProductSummaryDto> result = productService.findAll(filter);
+        if (auth == null || !auth.isAuthenticated() || result.items().isEmpty()) return result;
+
+        List<UUID> ids = result.items().stream().map(ProductSummaryDto::id).toList();
+        List<String> toolNos = result.items().stream().map(ProductSummaryDto::toolNo).toList();
+        Map<UUID, PriceInfoDto> prices = priceResolverService.resolveBatch(ids, auth);
+        Map<String, String> dealerSkus = dealerSkuResolverService.resolveBatch(toolNos, auth);
+
+        if (prices.isEmpty() && dealerSkus.isEmpty()) return result;
+
+        List<ProductSummaryDto> enriched = result.items().stream()
+            .map(p -> new ProductSummaryDto(
+                p.id(), p.toolNo(), p.altToolNo(), p.name(), p.shortDescription(),
+                p.productType(), p.status(), p.isOrderable(), p.dMm(), p.shankMm(),
+                p.cuttingType(), p.stockStatus(), p.thumbnailUrl(), p.locale(), p.isRtl(),
+                prices.getOrDefault(p.id(), p.price()),
+                dealerSkus.getOrDefault(p.toolNo(), p.dealerSku())))
+            .toList();
+        return new PagedResponse<>(enriched, result.total(), result.page(), result.perPage(), result.totalPages());
     }
 
     @GetMapping("/{toolNo}")
     public ProductDetailDto getByToolNo(
         @PathVariable String toolNo,
-        @RequestParam(defaultValue = "en") String locale
+        @RequestParam(defaultValue = "en") String locale,
+        Authentication auth
     ) {
-        return productService.findByToolNo(toolNo, locale);
+        ProductDetailDto dto = productService.findByToolNo(toolNo, locale);
+        PriceInfoDto price = priceResolverService.resolve(toolNo, auth);
+        String dealerSku = dealerSkuResolverService.resolve(toolNo, auth);
+        if (price == null && dealerSku == null) return dto;
+        return new ProductDetailDto(
+            dto.id(), dto.toolNo(), dto.altToolNo(), dto.productType(), dto.status(),
+            dto.isOrderable(), dto.catalogPage(), dto.name(), dto.shortDescription(),
+            dto.longDescription(), dto.seoTitle(), dto.seoDescription(), dto.applications(),
+            dto.aiGenerated(), dto.locale(), dto.isRtl(), dto.attributes(),
+            dto.toolMaterials(), dto.workpieceMaterials(), dto.machineTypes(),
+            dto.machineBrands(), dto.operationCodes(), dto.mediaUrls(), dto.thumbnailUrl(),
+            dto.jsonLd(), dto.groupName(), dto.categoryName(), dto.sectionName(),
+            price != null ? price : dto.price(), dealerSku
+        );
     }
 
     @GetMapping("/{id}/spare-parts")

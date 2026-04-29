@@ -22,6 +22,9 @@ public class PriceList {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(nullable = false, length = 10)
+    private String type = "dealer";
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "currency_code", nullable = false)
     private Currency currency;

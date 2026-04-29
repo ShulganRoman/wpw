@@ -108,7 +108,7 @@ class ProductServiceTest {
             when(mediaFallback.getThumbnail(anyList())).thenReturn(null);
 
             ProductFilter filter = new ProductFilter("en", null, null, null, null, null, null, null, null, null,
-                    null, null, null, null, null, null, 1, 48);
+                    null, null, null, null, null, null, 1, 48, null, null, null);
             PagedResponse<ProductSummaryDto> response = productService.findAll(filter);
 
             assertThat(response.items()).hasSize(1);
@@ -135,7 +135,7 @@ class ProductServiceTest {
             when(mediaFallback.getThumbnail(anyList())).thenReturn("/thumb.webp");
 
             ProductFilter filter = new ProductFilter("en", null, null, null, null, null, null, null, null, null,
-                    null, null, null, null, null, null, 1, 48);
+                    null, null, null, null, null, null, 1, 48, null, null, null);
             PagedResponse<ProductSummaryDto> response = productService.findAll(filter);
 
             assertThat(response.items()).hasSize(1);
@@ -157,7 +157,7 @@ class ProductServiceTest {
             when(mediaFallback.getThumbnail(anyList())).thenReturn(null);
 
             ProductFilter filter = new ProductFilter("he", null, null, null, null, null, null, null, null, null,
-                    null, null, null, null, null, null, 1, 48);
+                    null, null, null, null, null, null, 1, 48, null, null, null);
             PagedResponse<ProductSummaryDto> response = productService.findAll(filter);
 
             assertThat(response.items().get(0).isRtl()).isTrue();

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+// price is nullable — null for public/unauthenticated users
+
 public record ProductDetailDto(
     UUID id,
     String toolNo,
@@ -35,5 +37,7 @@ public record ProductDetailDto(
     String jsonLd,
     String groupName,
     String categoryName,
-    String sectionName
+    String sectionName,
+    PriceInfoDto price,
+    String dealerSku
 ) {}

@@ -22,7 +22,10 @@ public record ProductFilter(
     String productType,
     Boolean inStock,
     int page,
-    int perPage
+    int perPage,
+    BigDecimal priceMin,
+    BigDecimal priceMax,
+    UUID priceListId   // resolved from auth in controller, not sent by client
 ) {
     public ProductFilter {
         if (locale == null) locale = "en";

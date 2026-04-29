@@ -102,6 +102,8 @@ export function getProducts(filters = {}) {
     hasBallBearing: filters.hasBallBearing || '',
     productType: filters.productType || '',
     inStock: filters.inStock || '',
+    priceMin: filters.priceMin || '',
+    priceMax: filters.priceMax || '',
   };
   return request(`/products?${buildQuery(params)}`);
 }
@@ -409,3 +411,75 @@ export function deleteDealer(id) {
 export function resetDealerPassword(id) {
   return request(`/admin/dealers/${id}/reset-password`, { method: 'POST' });
 }
+
+// Stock price list
+export function getStockPrices() { return request('/admin/price/stock'); }
+export function upsertStockPrice(data) { return request('/admin/price/stock', { method: 'PUT', body: JSON.stringify(data) }); }
+export function deleteStockPrice(toolNo, minQty) { return request(`/admin/price/stock/${encodeURIComponent(toolNo)}/${minQty}`, { method: 'DELETE' }); }
+
+export async function importStockPrices(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE}/admin/price/stock/import`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: form,
+  });
+  if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function downloadStockPrices() {
+  const res = await fetch(`${BASE}/admin/price/stock/export`, { headers: { ...getAuthHeaders() } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res;
+}
+
+export async function downloadStockPriceTemplate() {
+  const res = await fetch(`${BASE}/admin/price/stock/template`, { headers: { ...getAuthHeaders() } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res;
+}
+
+// Dealer price list
+export async function getDealerPriceList(dealerId) {
+  const res = await fetch(`${BASE}/admin/dealers/${dealerId}/price-list`, {
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (res.status === 204) return null;
+  if (res.status === 401) { localStorage.removeItem('authToken'); throw new Error('Session expired'); }
+  if (!res.ok) { const text = await res.text(); throw new Error(text || `HTTP ${res.status}`); }
+  return res.json();
+}
+
+export async function importDealerPriceList(dealerId, file, currencyCode, validTo) {
+  const form = new FormData();
+  form.append('file', file);
+  const params = new URLSearchParams({ currencyCode });
+  if (validTo) params.append('validTo', validTo);
+  const res = await fetch(`${BASE}/admin/dealers/${dealerId}/price-list/import?${params}`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: form,
+  });
+  if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+  return res.json();
+}
+
+export function deleteDealerPriceList(dealerId) {
+  return request(`/admin/dealers/${dealerId}/price-list`, { method: 'DELETE' });
+}
+
+export async function downloadDealerPriceList(dealerId) {
+  const res = await fetch(`${BASE}/admin/dealers/${dealerId}/price-list/export`, { headers: { ...getAuthHeaders() } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res;
+}
+
+export async function downloadDealerPriceTemplate() {
+  const res = await fetch(`${BASE}/admin/dealers/0/price-list/template`, { headers: { ...getAuthHeaders() } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res;
+}
+
+export function getCurrencies() { return request('/admin/price/stock/currencies'); }
