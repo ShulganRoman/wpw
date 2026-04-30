@@ -41,6 +41,9 @@ public class ProductGroup {
     @Column(name = "is_active")
     private boolean isActive = true;
 
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt = OffsetDateTime.now();
 }

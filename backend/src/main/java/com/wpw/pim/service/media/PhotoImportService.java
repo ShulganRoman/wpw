@@ -39,6 +39,7 @@ public class PhotoImportService {
     private String mediaBaseUrl;
 
     private static final Pattern TOOL_NO_PATTERN = Pattern.compile("^(.+?)(?:_\\d+)?\\.[a-zA-Z]+$");
+    private static final Pattern VARIANT_ORDER_PATTERN = Pattern.compile("^.+?(?:_(\\d+))?\\.\\w+$");
 
     @PostConstruct
     void ensureMediaDirectory() {
@@ -137,7 +138,11 @@ public class PhotoImportService {
             // Find next available variant number
             int nextVariant = getNextVariant(toolDir);
 
-            for (MultipartFile file : toolFiles) {
+            List<MultipartFile> sorted = toolFiles.stream()
+                .sorted(Comparator.comparingInt(f -> extractVariantOrder(f.getOriginalFilename() != null ? f.getOriginalFilename() : "")))
+                .collect(Collectors.toList());
+
+            for (MultipartFile file : sorted) {
                 String ext = getExtension(file.getOriginalFilename()).toLowerCase();
                 if (!isImageFile(ext)) {
                     skipped++;
@@ -189,6 +194,42 @@ public class PhotoImportService {
             report.put("errorDetails", errorDetails);
         }
         return report;
+    }
+
+    /**
+     * Delete all product media: removes every MediaFile record and all product image directories from disk.
+     * The catalog/ subdirectory (catalog node images) is preserved.
+     */
+    @Transactional
+    public Map<String, Object> deleteAllProductMedia() throws IOException {
+        long dbCount = mediaFileRepository.count();
+        mediaFileRepository.deleteAll();
+
+        Path mediaDir = Paths.get(mediaBasePath);
+        int dirsDeleted = 0;
+        if (Files.isDirectory(mediaDir)) {
+            try (Stream<Path> entries = Files.list(mediaDir)) {
+                for (Path entry : entries.toList()) {
+                    if (Files.isDirectory(entry) && !entry.getFileName().toString().equals("catalog")) {
+                        deleteDirectoryRecursively(entry);
+                        dirsDeleted++;
+                    }
+                }
+            }
+        }
+
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("deletedRecords", dbCount);
+        report.put("deletedDirectories", dirsDeleted);
+        return report;
+    }
+
+    private void deleteDirectoryRecursively(Path dir) throws IOException {
+        try (Stream<Path> files = Files.walk(dir)) {
+            for (Path p : files.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(p);
+            }
+        }
     }
 
     /**
@@ -358,7 +399,11 @@ public class PhotoImportService {
 
                 int nextVariant = getNextVariant(toolDir);
 
-                for (ExtractedFile ef : toolFiles) {
+                List<ExtractedFile> sorted = toolFiles.stream()
+                    .sorted(Comparator.comparingInt(ef -> extractVariantOrder(ef.originalName())))
+                    .collect(Collectors.toList());
+
+                for (ExtractedFile ef : sorted) {
                     try {
                         String webpName = nextVariant + ".webp";
                         Path webpPath = toolDir.resolve(webpName);
@@ -449,6 +494,13 @@ public class PhotoImportService {
     private Map<String, Product> getProductMap() {
         return productRepository.findAll().stream()
             .collect(Collectors.toMap(p -> p.getToolNo().toUpperCase(), p -> p, (a, b) -> a));
+    }
+
+    // -1 for no suffix (main image), otherwise the numeric suffix value
+    int extractVariantOrder(String filename) {
+        Matcher m = VARIANT_ORDER_PATTERN.matcher(filename);
+        if (m.matches() && m.group(1) != null) return Integer.parseInt(m.group(1));
+        return -1;
     }
 
     private String extractToolNo(String filename) {

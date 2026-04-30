@@ -253,15 +253,15 @@ public class CatalogService {
     }
 
     private SectionDto toSectionDto(Section s, String locale, List<CategoryDto> categories) {
-        return new SectionDto(s.getId(), s.getSlug(), translate(s.getTranslations(), locale), s.getSortOrder(), categories);
+        return new SectionDto(s.getId(), s.getSlug(), translate(s.getTranslations(), locale), s.getSortOrder(), s.getImageUrl(), categories);
     }
 
     private CategoryDto toCategoryDto(Category c, String locale, List<ProductGroupDto> groups) {
-        return new CategoryDto(c.getId(), c.getSlug(), translate(c.getTranslations(), locale), c.getSortOrder(), groups);
+        return new CategoryDto(c.getId(), c.getSlug(), translate(c.getTranslations(), locale), c.getSortOrder(), c.getImageUrl(), groups);
     }
 
     private ProductGroupDto toGroupDto(ProductGroup g, String locale) {
         long count = productRepository.countByGroupId(g.getId());
-        return new ProductGroupDto(g.getId(), g.getSlug(), g.getGroupCode(), translate(g.getTranslations(), locale), g.getSortOrder(), count);
+        return new ProductGroupDto(g.getId(), g.getSlug(), g.getGroupCode(), translate(g.getTranslations(), locale), g.getSortOrder(), g.getImageUrl(), count);
     }
 }

@@ -7,6 +7,8 @@ import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.web.dto.media.MediaImageDto;
 import com.wpw.pim.web.dto.product.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
+@Tag(name = "Products", description = "Каталог товаров: фильтрация, детальная карточка, управление изображениями")
 public class ProductController {
 
     private final ProductService productService;
@@ -32,11 +35,13 @@ public class ProductController {
     private final DealerSkuResolverService dealerSkuResolverService;
 
     @GetMapping("/filter-options")
+    @Operation(summary = "Опции фильтрации", description = "Возвращает все доступные значения для фильтров (материалы, типы станков и т.д.).")
     public Map<String, List<String>> getFilterOptions() {
         return productService.getFilterOptions();
     }
 
     @GetMapping
+    @Operation(summary = "Список товаров с фильтрами", description = "Фильтрация по каталогу, атрибутам, цене (для авторизованных). Поддерживает пагинацию.")
     public PagedResponse<ProductSummaryDto> list(
         @RequestParam(defaultValue = "en") String locale,
         @RequestParam(required = false) UUID sectionId,
@@ -86,6 +91,7 @@ public class ProductController {
     }
 
     @GetMapping("/{toolNo}")
+    @Operation(summary = "Карточка товара", description = "Детальная информация о товаре по артикулу. Дилер видит свой SKU и цену.")
     public ProductDetailDto getByToolNo(
         @PathVariable String toolNo,
         @RequestParam(defaultValue = "en") String locale,
@@ -108,6 +114,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}/spare-parts")
+    @Operation(summary = "Запасные части", description = "Список запасных частей для указанного товара.")
     public List<SparePartDto> getSpareParts(
         @PathVariable UUID id,
         @RequestParam(defaultValue = "en") String locale
@@ -116,6 +123,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}/compatible-tools")
+    @Operation(summary = "Совместимые инструменты", description = "Список инструментов, совместимых с указанным товаром.")
     public List<SparePartDto> getCompatibleTools(
         @PathVariable UUID id,
         @RequestParam(defaultValue = "en") String locale
@@ -175,6 +183,7 @@ public class ProductController {
      * @return список {@link MediaImageDto}
      */
     @GetMapping("/{id}/images")
+    @Operation(summary = "Изображения товара", description = "Список всех медиафайлов товара, отсортированных по sort_order.")
     public List<MediaImageDto> getImages(@PathVariable UUID id) {
         return productMediaService.getImages(id);
     }
@@ -188,6 +197,7 @@ public class ProductController {
      */
     @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @PostMapping("/{id}/images")
+    @Operation(summary = "Добавить изображения", description = "Загружает и конвертирует изображения в WebP. Требует MODIFY_PRODUCTS.")
     public List<MediaImageDto> addImages(
         @PathVariable UUID id,
         @RequestParam("files") MultipartFile[] files
@@ -204,6 +214,7 @@ public class ProductController {
      */
     @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @DeleteMapping("/{id}/images/{imageId}")
+    @Operation(summary = "Удалить изображение товара", description = "Удаляет медиафайл с диска и из БД. Требует MODIFY_PRODUCTS.")
     public List<MediaImageDto> deleteImage(
         @PathVariable UUID id,
         @PathVariable UUID imageId

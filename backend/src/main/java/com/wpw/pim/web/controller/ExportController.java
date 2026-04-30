@@ -5,6 +5,8 @@ import com.wpw.pim.web.dto.product.ProductFilter;
 import com.wpw.pim.web.dto.product.ProductSummaryDto;
 import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.service.product.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,12 +20,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/export")
 @RequiredArgsConstructor
+@Tag(name = "Export", description = "Экспорт каталога товаров в CSV, XLSX, XML")
 public class ExportController {
 
     private final ExportService exportService;
     private final ProductService productService;
 
     @GetMapping("/preview")
+    @Operation(summary = "Превью экспорта", description = "Предварительный просмотр товаров с применёнными фильтрами перед экспортом.")
     public PagedResponse<ProductSummaryDto> preview(
         @RequestParam(defaultValue = "en") String locale,
         @RequestParam(required = false) UUID sectionId,
@@ -51,6 +55,7 @@ public class ExportController {
     }
 
     @GetMapping
+    @Operation(summary = "Скачать экспорт", description = "Экспорт каталога. Параметр format: csv (по умолчанию), xlsx, xml.")
     public ResponseEntity<byte[]> export(
         @RequestParam(defaultValue = "csv") String format,
         @RequestParam(defaultValue = "en") String locale,

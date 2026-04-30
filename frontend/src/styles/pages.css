@@ -246,6 +246,16 @@
   color: var(--wpw-blue);
 }
 
+.category-tree-thumb {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-right: 6px;
+  border: 1px solid var(--wpw-border);
+}
+
 .category-chevron-btn {
   display: flex;
   align-items: center;

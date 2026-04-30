@@ -320,6 +320,21 @@ export function deleteProductGroup(id) {
 export function reorderProductGroups(items) {
   return request('/admin/catalog/product-groups/reorder', { method: 'PUT', body: JSON.stringify({ items }) });
 }
+export async function uploadCatalogNodeImage(nodeType, nodeId, file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE}/admin/catalog/${nodeType}/${nodeId}/image`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: form,
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t || `HTTP ${res.status}`); }
+  return res.json();
+}
+export function deleteCatalogNodeImage(nodeType, nodeId) {
+  return request(`/admin/catalog/${nodeType}/${nodeId}/image`, { method: 'DELETE' });
+}
+
 export function getChildrenCount(type, id) {
   return request(`/admin/catalog/${type}/${id}/children-count`);
 }

@@ -111,4 +111,135 @@ class DealerControllerTest {
         mockMvc.perform(get("/api/v1/dealer/sku-mapping"))
                 .andExpect(status().is4xxClientError());
     }
+
+    @Test
+    @DisplayName("DELETE /api/v1/dealer/sku-mapping/{wpwSku} -- 204")
+    void deleteSkuMapping_returns204() throws Exception {
+        DealerPrincipal principal = dealerPrincipal();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .delete("/api/v1/dealer/sku-mapping/WPW-001")
+                        .with(user(principal)))
+                .andExpect(status().isNoContent());
+
+        org.mockito.Mockito.verify(dealerService).deleteSkuMapping(principal.getDealer().getId(), "WPW-001");
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/dealer/sku-mapping/validate -- returns validation report")
+    void validate_returnsReport() throws Exception {
+        DealerPrincipal principal = dealerPrincipal();
+        SkuMappingService.ValidationReport report = new SkuMappingService.ValidationReport(
+                10, java.util.List.of(), java.util.List.of(), java.util.List.of());
+        when(skuMappingService.validate(any())).thenReturn(report);
+
+        org.springframework.mock.web.MockMultipartFile file =
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file", "mapping.xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        new byte[]{1, 2, 3});
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .multipart("/api/v1/dealer/sku-mapping/validate")
+                        .file(file)
+                        .with(user(principal)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(10));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/dealer/sku-mapping/execute -- imports SKU mapping")
+    void execute_importsSkuMapping() throws Exception {
+        DealerPrincipal principal = dealerPrincipal();
+        SkuMappingService.SkuMappingImportResult result = new SkuMappingService.SkuMappingImportResult(
+                10, 8, 2, 0, java.util.List.of());
+        when(skuMappingService.execute(eq(principal.getDealer().getId()), any(), eq(false))).thenReturn(result);
+
+        org.springframework.mock.web.MockMultipartFile file =
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file", "mapping.xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        new byte[]{1, 2, 3});
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .multipart("/api/v1/dealer/sku-mapping/execute")
+                        .file(file)
+                        .with(user(principal)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("POST execute с skipGhosts=true передаётся в сервис")
+    void execute_withSkipGhosts_passesParam() throws Exception {
+        DealerPrincipal principal = dealerPrincipal();
+        SkuMappingService.SkuMappingImportResult result = new SkuMappingService.SkuMappingImportResult(
+                5, 5, 0, 0, java.util.List.of());
+        when(skuMappingService.execute(eq(principal.getDealer().getId()), any(), eq(true))).thenReturn(result);
+
+        org.springframework.mock.web.MockMultipartFile file =
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file", "m.xlsx", "application/octet-stream", new byte[]{1});
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .multipart("/api/v1/dealer/sku-mapping/execute")
+                        .file(file)
+                        .param("skipGhosts", "true")
+                        .with(user(principal)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/dealer/sku-mapping/export -- returns xlsx bytes")
+    void export_returnsXlsx() throws Exception {
+        DealerPrincipal principal = dealerPrincipal();
+        byte[] xlsx = new byte[]{0x50, 0x4B, 0x03, 0x04};
+        when(skuMappingService.export(principal.getDealer().getId())).thenReturn(xlsx);
+
+        mockMvc.perform(get("/api/v1/dealer/sku-mapping/export").with(user(principal)))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        "attachment; filename=\"my-sku-mapping.xlsx\""));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/dealer/sku-mapping/template -- returns template xlsx")
+    void template_returnsXlsx() throws Exception {
+        DealerPrincipal principal = dealerPrincipal();
+        byte[] xlsx = new byte[]{0x50, 0x4B};
+        when(skuMappingService.template()).thenReturn(xlsx);
+
+        mockMvc.perform(get("/api/v1/dealer/sku-mapping/template").with(user(principal)))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        "attachment; filename=\"sku-mapping-template.xlsx\""));
+    }
+
+    @Test
+    @DisplayName("Не-DealerPrincipal user — DealerRepository вызывается")
+    void resolveDealer_nonDealerPrincipal_usesRepository() throws Exception {
+        Dealer dealer = new Dealer();
+        dealer.setId(UUID.randomUUID());
+        dealer.setName("Lookup");
+        dealer.setApiKeyHash("$2a$hash");
+        dealer.setActive(true);
+
+        when(dealerRepository.findByUserUsername("john"))
+                .thenReturn(java.util.Optional.of(dealer));
+        when(dealerService.getSkuMapping(dealer.getId())).thenReturn(java.util.List.of());
+
+        mockMvc.perform(get("/api/v1/dealer/sku-mapping")
+                        .with(user("john").roles("DEALER")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Не-DealerPrincipal user без записи Dealer — 404")
+    void resolveDealer_dealerProfileNotFound_returns404() throws Exception {
+        when(dealerRepository.findByUserUsername("ghost"))
+                .thenReturn(java.util.Optional.empty());
+
+        mockMvc.perform(get("/api/v1/dealer/sku-mapping")
+                        .with(user("ghost").roles("DEALER")))
+                .andExpect(status().isNotFound());
+    }
 }

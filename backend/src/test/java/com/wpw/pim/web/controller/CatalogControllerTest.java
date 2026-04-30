@@ -41,9 +41,9 @@ class CatalogControllerTest {
     @Test
     @DisplayName("GET /api/v1/categories -- возвращает дерево каталога")
     void getTree_returnsTreeStructure() throws Exception {
-        ProductGroupDto group = new ProductGroupDto(UUID.randomUUID(), "straight", "GRP-001", "Straight Bits", 0, 0L);
-        CategoryDto category = new CategoryDto(UUID.randomUUID(), "router-bits", "Router Bits", 0, List.of(group));
-        SectionDto section = new SectionDto(UUID.randomUUID(), "tools", "Tools", 0, List.of(category));
+        ProductGroupDto group = new ProductGroupDto(UUID.randomUUID(), "straight", "GRP-001", "Straight Bits", 0, null, 0L);
+        CategoryDto category = new CategoryDto(UUID.randomUUID(), "router-bits", "Router Bits", 0, null, List.of(group));
+        SectionDto section = new SectionDto(UUID.randomUUID(), "tools", "Tools", 0, null, List.of(category));
 
         when(catalogService.getSectionTree("en")).thenReturn(List.of(section));
 

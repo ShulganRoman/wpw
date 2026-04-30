@@ -5,7 +5,7 @@ import {
   createSection, updateSection, deleteSection, reorderSections,
   createCategory, updateCategory, deleteCategory, reorderCategories,
   createProductGroup, updateProductGroup, deleteProductGroup, reorderProductGroups,
-  getChildrenCount
+  getChildrenCount, uploadCatalogNodeImage, deleteCatalogNodeImage
 } from '../api/api';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import { useToast } from './ToastContext';
@@ -16,7 +16,7 @@ function slugify(s) {
   return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-function EditForm({ node, onSave, onCancel }) {
+function EditForm({ node, onSave, onCancel, onImageChanged }) {
   const isNew = !node?.id;
   const [slug, setSlug] = useState(node?.slug || '');
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(!isNew);
@@ -28,6 +28,40 @@ function EditForm({ node, onSave, onCancel }) {
   const [isActive, setIsActive] = useState(node?.isActive !== false);
   const [groupCode, setGroupCode] = useState(node?.groupCode || '');
   const [saving, setSaving] = useState(false);
+  const [imageUrl, setImageUrl] = useState(node?.imageUrl || null);
+  const [imgUploading, setImgUploading] = useState(false);
+
+  const nodeTypeMap = { section: 'sections', category: 'categories', group: 'product-groups' };
+
+  async function handleImageChange(e) {
+    const file = e.target.files?.[0];
+    if (!file || !node?.id) return;
+    setImgUploading(true);
+    try {
+      const res = await uploadCatalogNodeImage(nodeTypeMap[node.type], node.id, file);
+      setImageUrl(res.imageUrl);
+      onImageChanged?.();
+    } catch (err) {
+      alert('Image upload failed: ' + err.message);
+    } finally {
+      setImgUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  async function handleImageDelete() {
+    if (!node?.id || !imageUrl) return;
+    setImgUploading(true);
+    try {
+      await deleteCatalogNodeImage(nodeTypeMap[node.type], node.id);
+      setImageUrl(null);
+      onImageChanged?.();
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    } finally {
+      setImgUploading(false);
+    }
+  }
 
   function handleEnNameChange(value) {
     setTranslations(prev => ({ ...prev, en: value }));
@@ -80,6 +114,24 @@ function EditForm({ node, onSave, onCancel }) {
           {' '}Active
         </label>
       </div>
+      {!isNew && (
+        <div className="form-row" style={{ flexDirection: 'column', gap: 6 }}>
+          <label>Image (square)</label>
+          {imageUrl && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <img src={imageUrl} alt="node" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--wpw-border)' }} />
+              <button type="button" className="btn btn-sm" style={{ color: '#c62828' }} onClick={handleImageDelete} disabled={imgUploading}>
+                Remove
+              </button>
+            </div>
+          )}
+          <label className="btn btn-sm" style={{ cursor: 'pointer', display: 'inline-block', width: 'fit-content' }}>
+            {imgUploading ? 'Uploading…' : imageUrl ? 'Replace' : 'Upload image'}
+            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} disabled={imgUploading} />
+          </label>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 8 }}>
         <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
@@ -316,6 +368,7 @@ export default function AdminCatalogTree({ locale = 'en' }) {
             node={{ ...node, translations: node.translations || {} }}
             onSave={data => handleSave(node.type, node.id, null, data)}
             onCancel={() => setEditing(null)}
+            onImageChanged={fetchTree}
           />
         )}
 

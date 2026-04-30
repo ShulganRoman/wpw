@@ -26,8 +26,11 @@ function CategoryTree({categories, selected, onSelect}) {
                 <div className={`category-tree-row${isSelected ? ' active' : ''}`}>
                     <button
                         className="category-tree-select"
-                        onClick={() => onSelect(isSelected ? null : {type: node.type, id: node.id})}
+                        onClick={() => onSelect(isSelected ? null : {type: node.type, id: node.id, imageUrl: node.imageUrl})}
                     >
+                        {node.imageUrl && (
+                            <img src={node.imageUrl} alt="" className="category-tree-thumb" />
+                        )}
                         <span className="category-tree-text">{label}</span>
                     </button>
                     {hasChildren ? (

@@ -495,6 +495,105 @@ class ArchiveExtractorServiceTest {
         return baos.toByteArray();
     }
 
+    // ========================= 7Z =========================
+
+    @Nested
+    @DisplayName("extractImages — 7Z")
+    class ExtractImages7Z {
+
+        @Test
+        void extractImages_sevenZ_extractsAll() throws IOException {
+            byte[] sevenZBytes = createSevenZArchive(
+                "photo.jpg", "img-data",
+                "readme.txt", "text",
+                "__MACOSX/._photo.jpg", "junk"
+            );
+            MockMultipartFile file = new MockMultipartFile(
+                "archive", "test.7z", "application/x-7z-compressed", sevenZBytes);
+
+            ExtractionResult result = service.extractImages(file);
+            try {
+                assertThat(result.imageEntries()).isEqualTo(1);
+                assertThat(result.totalEntries()).isEqualTo(3);
+                assertThat(result.skippedEntries()).hasSize(2);
+                assertThat(result.extractedFiles().get(0).originalName()).isEqualTo("photo.jpg");
+            } finally {
+                service.cleanup(result);
+            }
+        }
+
+        @Test
+        void scanImageNames_sevenZ_returnsNames() throws IOException {
+            byte[] sevenZBytes = createSevenZArchive("img.png", "data", "doc.pdf", "text");
+            MockMultipartFile file = new MockMultipartFile(
+                "archive", "test.7z", "application/x-7z-compressed", sevenZBytes);
+
+            ScanResult result = service.scanImageNames(file);
+
+            assertThat(result.imageFileNames()).containsExactly("img.png");
+            assertThat(result.skippedEntries()).containsExactly("doc.pdf");
+        }
+
+        @Test
+        void extractImages_sevenZWithNestedDirs() throws IOException {
+            byte[] sevenZBytes = createSevenZArchive("dir/sub/nested.png", "data");
+            MockMultipartFile file = new MockMultipartFile(
+                "archive", "nested.7z", "application/x-7z-compressed", sevenZBytes);
+
+            ExtractionResult result = service.extractImages(file);
+            try {
+                assertThat(result.imageEntries()).isEqualTo(1);
+                assertThat(result.extractedFiles().get(0).originalName()).isEqualTo("nested.png");
+            } finally {
+                service.cleanup(result);
+            }
+        }
+    }
+
+    // ========================= corrupt archives =========================
+
+    @Nested
+    @DisplayName("extractImages — повреждённые архивы")
+    class CorruptArchives {
+
+        @Test
+        void extractImages_corrupt7z_throws() {
+            // 7z с битыми байтами — должно бросить IOException
+            MockMultipartFile file = new MockMultipartFile(
+                "archive", "broken.7z", "application/x-7z-compressed",
+                new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9});
+
+            assertThatThrownBy(() -> service.extractImages(file))
+                .isInstanceOf(IOException.class);
+        }
+    }
+
+    /**
+     * Создаёт 7Z-архив в памяти из пар (имя_файла, содержимое).
+     */
+    private byte[] createSevenZArchive(String... nameContentPairs) throws IOException {
+        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("test-7z-", ".7z");
+        try {
+            try (org.apache.commons.compress.archivers.sevenz.SevenZOutputFile szOut =
+                    new org.apache.commons.compress.archivers.sevenz.SevenZOutputFile(tempFile.toFile())) {
+                for (int i = 0; i < nameContentPairs.length; i += 2) {
+                    String name = nameContentPairs[i];
+                    byte[] content = nameContentPairs[i + 1].getBytes();
+                    org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry entry =
+                        new org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry();
+                    entry.setName(name);
+                    entry.setSize(content.length);
+                    szOut.putArchiveEntry(entry);
+                    szOut.write(content);
+                    szOut.closeArchiveEntry();
+                }
+            }
+            return java.nio.file.Files.readAllBytes(tempFile);
+        } finally {
+            java.nio.file.Files.deleteIfExists(tempFile);
+        }
+    }
+
     /**
      * Создаёт TAR.GZ архив в памяти из пар (имя_файла, содержимое).
      */
