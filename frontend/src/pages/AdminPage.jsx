@@ -6,6 +6,7 @@ import DealersTab from '../components/DealersTab';
 import AdminSkuMappingPanel from '../components/AdminSkuMappingPanel';
 import StockPricePanel from '../components/StockPricePanel';
 import AdminDealerPricePanel from '../components/AdminDealerPricePanel';
+import SettingsTab from '../components/SettingsTab';
 
 function parseMarkdown(text) {
   // Minimal markdown rendering: headings, bold, code, tables, lists
@@ -1471,6 +1472,7 @@ export default function AdminPage() {
         {userRole === 'admin' && (
           <button className={`btn ${tab === 'users' ? 'btn-primary' : ''}`} onClick={() => setTab('users')}>Users</button>
         )}
+        <button className={`btn ${tab === 'settings' ? 'btn-primary' : ''}`} onClick={() => setTab('settings')}>Settings</button>
       </div>
 
       {tab === 'excel' && <ExcelImportTab />}
@@ -1485,6 +1487,7 @@ export default function AdminPage() {
       )}
       {tab === 'prices' && <StockPricePanel />}
       {tab === 'users' && <UsersTab />}
+      {tab === 'settings' && <SettingsTab />}
 
       {skuMappingDealer && (
         <AdminSkuMappingPanel

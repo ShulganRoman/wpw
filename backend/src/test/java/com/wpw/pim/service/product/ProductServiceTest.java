@@ -18,6 +18,7 @@ import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.repository.product.ProductSparePartRepository;
 import com.wpw.pim.repository.product.ProductTranslationRepository;
 import com.wpw.pim.service.jsonld.JsonLdService;
+import com.wpw.pim.service.settings.SystemSettingsService;
 import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.web.dto.product.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,6 +61,7 @@ class ProductServiceTest {
     @Mock private MediaFallbackService mediaFallback;
     @Mock private JsonLdService jsonLdService;
     @Mock private ProductGroupRepository productGroupRepo;
+    @Mock private SystemSettingsService systemSettings;
 
     @InjectMocks
     private ProductService productService;
@@ -68,6 +70,7 @@ class ProductServiceTest {
     void setUp() {
         ReflectionTestUtils.setField(productService, "mediaBasePath", "/tmp/test-media");
         ReflectionTestUtils.setField(productService, "mediaBaseUrl", "/media/products");
+        when(systemSettings.shouldRequireImages(any())).thenReturn(false);
     }
 
     @Nested

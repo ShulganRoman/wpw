@@ -1,5 +1,6 @@
 package com.wpw.pim.service.search;
 
+import com.wpw.pim.service.settings.SystemSettingsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,11 +32,15 @@ class SearchServiceTest {
     @Mock
     private JdbcTemplate jdbcTemplate;
 
+    @Mock
+    private SystemSettingsService systemSettings;
+
     private SearchService searchService;
 
     @BeforeEach
     void setUp() {
-        searchService = new SearchService(jdbcTemplate);
+        when(systemSettings.shouldRequireImages(any())).thenReturn(false);
+        searchService = new SearchService(jdbcTemplate, systemSettings);
     }
 
     @Nested

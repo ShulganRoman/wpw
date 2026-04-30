@@ -1,6 +1,7 @@
 package com.wpw.pim.service.product;
 
 import com.wpw.pim.domain.catalog.ProductGroup;
+import com.wpw.pim.domain.enums.FileType;
 import com.wpw.pim.domain.media.MediaFile;
 import com.wpw.pim.domain.product.Product;
 import com.wpw.pim.domain.product.ProductAttributes;
@@ -13,6 +14,7 @@ import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.repository.product.ProductSparePartRepository;
 import com.wpw.pim.repository.product.ProductTranslationRepository;
 import com.wpw.pim.service.jsonld.JsonLdService;
+import com.wpw.pim.service.settings.SystemSettingsService;
 import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.web.dto.product.*;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -52,6 +59,7 @@ public class ProductService {
     private final MediaFallbackService mediaFallback;
     private final JsonLdService jsonLdService;
     private final ProductGroupRepository productGroupRepo;
+    private final SystemSettingsService systemSettings;
 
     @Value("${pim.media.base-path:/media/products}")
     private String mediaBasePath;
@@ -76,7 +84,12 @@ public class ProductService {
     @Transactional(readOnly = true)
     public PagedResponse<ProductSummaryDto> findAll(ProductFilter filter) {
         PageRequest pageable = PageRequest.of(filter.page() - 1, filter.perPage());
-        Page<Product> page = productRepo.findAll(new ProductFilterSpec(filter), pageable);
+        Specification<Product> spec = new ProductFilterSpec(filter);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (systemSettings.shouldRequireImages(auth)) {
+            spec = spec.and(hasOwnMedia());
+        }
+        Page<Product> page = productRepo.findAll(spec, pageable);
 
         List<UUID> ids = page.map(Product::getId).toList();
         Map<UUID, ProductTranslation> translations = translationRepo
@@ -365,6 +378,19 @@ public class ProductService {
         if (source == null) return;
         target.clear();
         target.addAll(source);
+    }
+
+    private static Specification<Product> hasOwnMedia() {
+        return (root, query, cb) -> {
+            Subquery<Integer> sub = query.subquery(Integer.class);
+            Root<MediaFile> mf = sub.from(MediaFile.class);
+            sub.select(cb.literal(1))
+               .where(cb.and(
+                   cb.equal(mf.get("product"), root),
+                   cb.equal(mf.get("fileType"), FileType.image)
+               ));
+            return cb.exists(sub);
+        };
     }
 
     private ProductSummaryDto toSummary(Product p, ProductTranslation t, String locale) {

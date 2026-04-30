@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,29 +34,55 @@ public class CatalogService {
     private final ProductRepository productRepository;
     private final ProductService productService;
 
-    @Cacheable("categories")
+    @Cacheable(value = "categories", key = "#locale + ':' + #hideEmpty + ':' + #requireImages")
     @Transactional(readOnly = true)
-    public List<SectionDto> getSectionTree(String locale) {
+    public List<SectionDto> getSectionTree(String locale, boolean hideEmpty, boolean requireImages) {
         List<Section> sections = sectionRepository.findAllByIsActiveTrueOrderBySortOrder();
         List<Category> categories = categoryRepository.findAllActiveWithSection();
         List<ProductGroup> groups = productGroupRepository.findAllActiveWithCategory();
 
-        Map<UUID, List<ProductGroupDto>> groupsByCategory = groups.stream()
-            .collect(Collectors.groupingBy(
-                g -> g.getCategory().getId(),
-                Collectors.mapping(g -> toGroupDto(g, locale), Collectors.toList())
-            ));
+        List<UUID> groupIds = groups.stream().map(ProductGroup::getId).toList();
+        Map<UUID, Long> countByGroup = groupIds.isEmpty()
+            ? Map.of()
+            : buildCountMap(groupIds, requireImages);
 
-        Map<UUID, List<CategoryDto>> categoriesBySection = categories.stream()
-            .collect(Collectors.groupingBy(
-                c -> c.getSection().getId(),
-                Collectors.mapping(c -> toCategoryDto(c, locale, groupsByCategory.getOrDefault(c.getId(), List.of())),
-                    Collectors.toList())
-            ));
+        Map<UUID, List<ProductGroupDto>> groupsByCategory = new HashMap<>();
+        for (ProductGroup g : groups) {
+            long count = countByGroup.getOrDefault(g.getId(), 0L);
+            if (hideEmpty && count == 0) continue;
+            groupsByCategory
+                .computeIfAbsent(g.getCategory().getId(), k -> new ArrayList<>())
+                .add(toGroupDto(g, locale, count));
+        }
+
+        Map<UUID, List<CategoryDto>> categoriesBySection = new HashMap<>();
+        for (Category c : categories) {
+            List<ProductGroupDto> catGroups = groupsByCategory.getOrDefault(c.getId(), List.of());
+            if (hideEmpty && catGroups.isEmpty()) continue;
+            categoriesBySection
+                .computeIfAbsent(c.getSection().getId(), k -> new ArrayList<>())
+                .add(toCategoryDto(c, locale, catGroups));
+        }
 
         return sections.stream()
-            .map(s -> toSectionDto(s, locale, categoriesBySection.getOrDefault(s.getId(), List.of())))
+            .map(s -> {
+                List<CategoryDto> cats = categoriesBySection.getOrDefault(s.getId(), List.of());
+                if (hideEmpty && cats.isEmpty()) return null;
+                return toSectionDto(s, locale, cats);
+            })
+            .filter(s -> s != null)
             .toList();
+    }
+
+    private Map<UUID, Long> buildCountMap(List<UUID> groupIds, boolean requireImages) {
+        List<Object[]> rows = requireImages
+            ? productRepository.countActiveWithMediaByGroupIds(groupIds)
+            : productRepository.countActiveByGroupIds(groupIds);
+        Map<UUID, Long> result = new HashMap<>();
+        for (Object[] row : rows) {
+            result.put((UUID) row[0], (Long) row[1]);
+        }
+        return result;
     }
 
     // --- Sections ---
@@ -195,7 +222,7 @@ public class CatalogService {
         g.setSortOrder(req.sortOrder());
         g.setActive(req.isActive());
         g = productGroupRepository.save(g);
-        return toGroupDto(g, locale);
+        return toGroupDto(g, locale, productRepository.countByGroupId(g.getId()));
     }
 
     @CacheEvict(value = "categories", allEntries = true)
@@ -209,7 +236,7 @@ public class CatalogService {
         if (req.sortOrder() != null) g.setSortOrder(req.sortOrder());
         if (req.isActive() != null) g.setActive(req.isActive());
         g = productGroupRepository.save(g);
-        return toGroupDto(g, locale);
+        return toGroupDto(g, locale, productRepository.countByGroupId(g.getId()));
     }
 
     @CacheEvict(value = "categories", allEntries = true)
@@ -260,8 +287,7 @@ public class CatalogService {
         return new CategoryDto(c.getId(), c.getSlug(), translate(c.getTranslations(), locale), c.getSortOrder(), c.getImageUrl(), groups);
     }
 
-    private ProductGroupDto toGroupDto(ProductGroup g, String locale) {
-        long count = productRepository.countByGroupId(g.getId());
+    private ProductGroupDto toGroupDto(ProductGroup g, String locale, long count) {
         return new ProductGroupDto(g.getId(), g.getSlug(), g.getGroupCode(), translate(g.getTranslations(), locale), g.getSortOrder(), g.getImageUrl(), count);
     }
 }

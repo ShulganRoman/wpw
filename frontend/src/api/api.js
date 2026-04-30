@@ -498,3 +498,13 @@ export async function downloadDealerPriceTemplate() {
 }
 
 export function getCurrencies() { return request('/admin/price/stock/currencies'); }
+
+
+export function getSystemSettings() { return request('/admin/settings'); }
+export function updateSystemSettings(dto) {
+  return request('/admin/settings', { method: 'PUT', body: JSON.stringify(dto) });
+}
+export function getSystemStats() { return request('/admin/settings/stats'); }
+export function deleteAllProductMedia() {
+  return request('/admin/photos/all', { method: 'DELETE' });
+}

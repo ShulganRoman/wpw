@@ -47,7 +47,7 @@ class CatalogServiceTest {
     class GetSectionTree {
 
         @Test
-        @DisplayName("строит дерево секций с категориями и группами")
+        @DisplayName("строит дерево секций с категориями и группами (admin view)")
         void getSectionTree_returnsFullTree() {
             Section section = createSection("tools", Map.of("en", "Tools", "ru", "Инструменты"));
             Category category = createCategory(section, "router-bits", Map.of("en", "Router Bits"));
@@ -56,8 +56,11 @@ class CatalogServiceTest {
             when(sectionRepository.findAllByIsActiveTrueOrderBySortOrder()).thenReturn(List.of(section));
             when(categoryRepository.findAllActiveWithSection()).thenReturn(List.of(category));
             when(productGroupRepository.findAllActiveWithCategory()).thenReturn(List.of(group));
+            List<Object[]> countRows = new ArrayList<>();
+            countRows.add(new Object[]{group.getId(), 5L});
+            when(productRepository.countActiveByGroupIds(List.of(group.getId()))).thenReturn(countRows);
 
-            List<SectionDto> tree = catalogService.getSectionTree("en");
+            List<SectionDto> tree = catalogService.getSectionTree("en", false, false);
 
             assertThat(tree).hasSize(1);
             assertThat(tree.get(0).name()).isEqualTo("Tools");
@@ -75,7 +78,7 @@ class CatalogServiceTest {
             when(categoryRepository.findAllActiveWithSection()).thenReturn(List.of());
             when(productGroupRepository.findAllActiveWithCategory()).thenReturn(List.of());
 
-            List<SectionDto> tree = catalogService.getSectionTree("fr");
+            List<SectionDto> tree = catalogService.getSectionTree("fr", false, false);
 
             assertThat(tree.get(0).name()).isEqualTo("Tools");
         }
@@ -87,7 +90,49 @@ class CatalogServiceTest {
             when(categoryRepository.findAllActiveWithSection()).thenReturn(List.of());
             when(productGroupRepository.findAllActiveWithCategory()).thenReturn(List.of());
 
-            assertThat(catalogService.getSectionTree("en")).isEmpty();
+            assertThat(catalogService.getSectionTree("en", false, false)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("hideEmpty=true скрывает группы без товаров")
+        void getSectionTree_hideEmpty_filtersEmptyGroups() {
+            Section section = createSection("tools", Map.of("en", "Tools"));
+            Category category = createCategory(section, "bits", Map.of("en", "Bits"));
+            ProductGroup emptyGroup = createGroup(category, "empty", "E1", Map.of("en", "Empty"));
+            ProductGroup nonEmptyGroup = createGroup(category, "full", "F1", Map.of("en", "Full"));
+
+            when(sectionRepository.findAllByIsActiveTrueOrderBySortOrder()).thenReturn(List.of(section));
+            when(categoryRepository.findAllActiveWithSection()).thenReturn(List.of(category));
+            when(productGroupRepository.findAllActiveWithCategory()).thenReturn(List.of(emptyGroup, nonEmptyGroup));
+            List<Object[]> countRows2 = new ArrayList<>();
+            countRows2.add(new Object[]{nonEmptyGroup.getId(), 3L});
+            when(productRepository.countActiveByGroupIds(any())).thenReturn(countRows2);
+
+            List<SectionDto> tree = catalogService.getSectionTree("en", true, false);
+
+            assertThat(tree.get(0).categories().get(0).groups()).hasSize(1);
+            assertThat(tree.get(0).categories().get(0).groups().get(0).slug()).isEqualTo("full");
+        }
+
+        @Test
+        @DisplayName("hideEmpty=true скрывает категории без видимых групп")
+        void getSectionTree_hideEmpty_filtersEmptyCategories() {
+            Section section = createSection("tools", Map.of("en", "Tools"));
+            Category emptyCategory = createCategory(section, "empty-cat", Map.of("en", "Empty Cat"));
+            Category fullCategory = createCategory(section, "full-cat", Map.of("en", "Full Cat"));
+            ProductGroup group = createGroup(fullCategory, "g1", "G1", Map.of("en", "G1"));
+
+            when(sectionRepository.findAllByIsActiveTrueOrderBySortOrder()).thenReturn(List.of(section));
+            when(categoryRepository.findAllActiveWithSection()).thenReturn(List.of(emptyCategory, fullCategory));
+            when(productGroupRepository.findAllActiveWithCategory()).thenReturn(List.of(group));
+            List<Object[]> countRows3 = new ArrayList<>();
+            countRows3.add(new Object[]{group.getId(), 2L});
+            when(productRepository.countActiveByGroupIds(any())).thenReturn(countRows3);
+
+            List<SectionDto> tree = catalogService.getSectionTree("en", true, false);
+
+            assertThat(tree.get(0).categories()).hasSize(1);
+            assertThat(tree.get(0).categories().get(0).slug()).isEqualTo("full-cat");
         }
     }
 

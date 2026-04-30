@@ -27,6 +27,28 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
 
     long countByGroupId(UUID groupId);
 
+    @Query("""
+        SELECT p.group.id, COUNT(p)
+        FROM Product p
+        WHERE p.group.id IN :groupIds
+          AND p.status = com.wpw.pim.domain.enums.ProductStatus.active
+        GROUP BY p.group.id
+        """)
+    List<Object[]> countActiveByGroupIds(@Param("groupIds") List<UUID> groupIds);
+
+    @Query("""
+        SELECT p.group.id, COUNT(p)
+        FROM Product p
+        WHERE p.group.id IN :groupIds
+          AND p.status = com.wpw.pim.domain.enums.ProductStatus.active
+          AND EXISTS (
+            SELECT 1 FROM MediaFile m
+            WHERE m.product = p AND m.fileType = com.wpw.pim.domain.enums.FileType.image
+          )
+        GROUP BY p.group.id
+        """)
+    List<Object[]> countActiveWithMediaByGroupIds(@Param("groupIds") List<UUID> groupIds);
+
     @Modifying
     @Query("DELETE FROM Product p WHERE p.id IN :ids")
     void deleteByIdIn(@Param("ids") Collection<UUID> ids);

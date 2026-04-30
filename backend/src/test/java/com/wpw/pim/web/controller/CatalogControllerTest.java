@@ -4,6 +4,7 @@ import com.wpw.pim.auth.service.JwtService;
 import com.wpw.pim.auth.service.PimUserDetailsService;
 import com.wpw.pim.security.ApiKeyAuthProvider;
 import com.wpw.pim.service.catalog.CatalogService;
+import com.wpw.pim.service.settings.SystemSettingsService;
 import com.wpw.pim.web.dto.catalog.CategoryDto;
 import com.wpw.pim.web.dto.catalog.ProductGroupDto;
 import com.wpw.pim.web.dto.catalog.SectionDto;
@@ -19,6 +20,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -34,6 +38,7 @@ class CatalogControllerTest {
     @Autowired private MockMvc mockMvc;
 
     @MockitoBean private CatalogService catalogService;
+    @MockitoBean private SystemSettingsService systemSettingsService;
     @MockitoBean private JwtService jwtService;
     @MockitoBean private PimUserDetailsService pimUserDetailsService;
     @MockitoBean private ApiKeyAuthProvider apiKeyAuthProvider;
@@ -45,7 +50,7 @@ class CatalogControllerTest {
         CategoryDto category = new CategoryDto(UUID.randomUUID(), "router-bits", "Router Bits", 0, null, List.of(group));
         SectionDto section = new SectionDto(UUID.randomUUID(), "tools", "Tools", 0, null, List.of(category));
 
-        when(catalogService.getSectionTree("en")).thenReturn(List.of(section));
+        when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean())).thenReturn(List.of(section));
 
         mockMvc.perform(get("/api/v1/categories"))
                 .andExpect(status().isOk())
@@ -58,7 +63,7 @@ class CatalogControllerTest {
     @Test
     @DisplayName("GET /api/v1/categories?locale=ru -- передаёт locale в сервис")
     void getTree_withLocale_passesLocale() throws Exception {
-        when(catalogService.getSectionTree("ru")).thenReturn(List.of());
+        when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/categories").param("locale", "ru"))
                 .andExpect(status().isOk())
@@ -68,7 +73,7 @@ class CatalogControllerTest {
     @Test
     @DisplayName("GET /api/v1/categories -- пустой каталог возвращает пустой массив")
     void getTree_empty_returnsEmptyArray() throws Exception {
-        when(catalogService.getSectionTree("en")).thenReturn(List.of());
+        when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/categories"))
                 .andExpect(status().isOk())
