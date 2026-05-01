@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import { ToastProvider } from './components/Toast';
+import { SessionProvider } from './contexts/SessionContext';
 import CatalogPage from './pages/CatalogPage';
 import ProductPage from './pages/ProductPage';
 import ExportPage from './pages/ExportPage';
 import AdminPage from './pages/AdminPage';
 import DealerImportPage from './pages/DealerImportPage';
+import DealerPage from './pages/DealerPage';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/LandingPage';
 
@@ -64,7 +66,6 @@ function AppInner() {
         { path: 'product/:toolNo', element: <ProductPage locale={locale} /> },
         { path: 'search', element: <Navigate to="/catalog" replace /> },
         { path: 'operations', element: <Navigate to="/catalog" replace /> },
-        { path: 'dealer', element: <Navigate to="/catalog" replace /> },
         { path: '*', element: <Navigate to="/catalog" replace /> },
       ],
     },
@@ -78,6 +79,7 @@ function AppInner() {
             { path: 'export', element: <ExportPage locale={locale} /> },
             { path: 'admin', element: <AdminPage /> },
             { path: 'import', element: <DealerImportPage /> },
+            { path: 'dealer', element: <DealerPage /> },
           ],
         },
       ],
@@ -90,7 +92,9 @@ function AppInner() {
 export default function App() {
   return (
     <ToastProvider>
-      <AppInner />
+      <SessionProvider>
+        <AppInner />
+      </SessionProvider>
     </ToastProvider>
   );
 }

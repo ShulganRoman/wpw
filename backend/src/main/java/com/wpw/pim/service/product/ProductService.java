@@ -84,11 +84,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public PagedResponse<ProductSummaryDto> findAll(ProductFilter filter) {
         PageRequest pageable = PageRequest.of(filter.page() - 1, filter.perPage());
-        Specification<Product> spec = new ProductFilterSpec(filter);
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (systemSettings.shouldRequireImages(auth)) {
-            spec = spec.and(hasOwnMedia());
-        }
+        Specification<Product> spec = buildSpec(filter);
         Page<Product> page = productRepo.findAll(spec, pageable);
 
         List<UUID> ids = page.map(Product::getId).toList();
@@ -380,6 +376,25 @@ public class ProductService {
         target.addAll(source);
     }
 
+    @Transactional(readOnly = true)
+    public List<UUID> findAllIdsByFilter(ProductFilter filter) {
+        Specification<Product> spec = buildSpec(filter);
+        return productRepo.findAll(spec).stream().map(Product::getId).toList();
+    }
+
+    private Specification<Product> buildSpec(ProductFilter filter) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Specification<Product> spec = new ProductFilterSpec(filter);
+        if (systemSettings.shouldRequireImages(auth)) {
+            spec = spec.and(hasOwnMedia());
+        }
+        if (systemSettings.shouldRequirePrice(auth)) {
+            UUID priceListId = systemSettings.getDealerPriceListId(auth);
+            spec = spec.and(hasPrice(priceListId));
+        }
+        return spec;
+    }
+
     private static Specification<Product> hasOwnMedia() {
         return (root, query, cb) -> {
             Subquery<Integer> sub = query.subquery(Integer.class);
@@ -389,6 +404,24 @@ public class ProductService {
                    cb.equal(mf.get("product"), root),
                    cb.equal(mf.get("fileType"), FileType.image)
                ));
+            return cb.exists(sub);
+        };
+    }
+
+    private static Specification<Product> hasPrice(UUID priceListId) {
+        return (root, query, cb) -> {
+            Subquery<Integer> sub = query.subquery(Integer.class);
+            Root<com.wpw.pim.domain.pricing.PriceListItem> pli =
+                sub.from(com.wpw.pim.domain.pricing.PriceListItem.class);
+            sub.select(cb.literal(1));
+            if (priceListId != null) {
+                sub.where(cb.and(
+                    cb.equal(pli.get("product"), root),
+                    cb.equal(pli.get("priceList").get("id"), priceListId)
+                ));
+            } else {
+                sub.where(cb.equal(pli.get("product"), root));
+            }
             return cb.exists(sub);
         };
     }

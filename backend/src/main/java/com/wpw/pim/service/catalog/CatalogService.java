@@ -34,17 +34,18 @@ public class CatalogService {
     private final ProductRepository productRepository;
     private final ProductService productService;
 
-    @Cacheable(value = "categories", key = "#locale + ':' + #hideEmpty + ':' + #requireImages")
+    @Cacheable(value = "categories", key = "#locale + ':' + #hideEmpty + ':' + #requireImages + ':' + #priceListId")
     @Transactional(readOnly = true)
-    public List<SectionDto> getSectionTree(String locale, boolean hideEmpty, boolean requireImages) {
+    public List<SectionDto> getSectionTree(String locale, boolean hideEmpty, boolean requireImages, UUID priceListId) {
         List<Section> sections = sectionRepository.findAllByIsActiveTrueOrderBySortOrder();
         List<Category> categories = categoryRepository.findAllActiveWithSection();
         List<ProductGroup> groups = productGroupRepository.findAllActiveWithCategory();
 
         List<UUID> groupIds = groups.stream().map(ProductGroup::getId).toList();
+        boolean requirePrice = priceListId != null;
         Map<UUID, Long> countByGroup = groupIds.isEmpty()
             ? Map.of()
-            : buildCountMap(groupIds, requireImages);
+            : buildCountMap(groupIds, requireImages, requirePrice, priceListId);
 
         Map<UUID, List<ProductGroupDto>> groupsByCategory = new HashMap<>();
         for (ProductGroup g : groups) {
@@ -74,10 +75,17 @@ public class CatalogService {
             .toList();
     }
 
-    private Map<UUID, Long> buildCountMap(List<UUID> groupIds, boolean requireImages) {
-        List<Object[]> rows = requireImages
-            ? productRepository.countActiveWithMediaByGroupIds(groupIds)
-            : productRepository.countActiveByGroupIds(groupIds);
+    private Map<UUID, Long> buildCountMap(List<UUID> groupIds, boolean requireImages, boolean requirePrice, UUID priceListId) {
+        List<Object[]> rows;
+        if (requireImages && requirePrice && priceListId != null) {
+            rows = productRepository.countActiveWithMediaAndPriceByGroupIds(groupIds, priceListId);
+        } else if (requireImages) {
+            rows = productRepository.countActiveWithMediaByGroupIds(groupIds);
+        } else if (requirePrice && priceListId != null) {
+            rows = productRepository.countActiveWithPriceByGroupIds(groupIds, priceListId);
+        } else {
+            rows = productRepository.countActiveByGroupIds(groupIds);
+        }
         Map<UUID, Long> result = new HashMap<>();
         for (Object[] row : rows) {
             result.put((UUID) row[0], (Long) row[1]);

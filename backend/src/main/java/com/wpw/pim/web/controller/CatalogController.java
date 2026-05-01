@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/categories")
@@ -29,7 +30,10 @@ public class CatalogController {
     public List<SectionDto> getTree(@RequestParam(defaultValue = "en") String locale) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = systemSettings.isAdminRole(auth);
-        boolean requireImages = isAdmin ? false : systemSettings.shouldRequireImages(auth);
-        return catalogService.getSectionTree(locale, !isAdmin, requireImages);
+        boolean requireImages = !isAdmin && systemSettings.shouldRequireImages(auth);
+        UUID priceListId = (!isAdmin && systemSettings.shouldRequirePrice(auth))
+            ? systemSettings.getDealerPriceListId(auth)
+            : null;
+        return catalogService.getSectionTree(locale, !isAdmin, requireImages, priceListId);
     }
 }

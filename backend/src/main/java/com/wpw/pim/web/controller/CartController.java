@@ -1,0 +1,105 @@
+package com.wpw.pim.web.controller;
+
+import com.wpw.pim.domain.dealer.Dealer;
+import com.wpw.pim.repository.dealer.DealerRepository;
+import com.wpw.pim.security.DealerPrincipal;
+import com.wpw.pim.service.cart.CartService;
+import com.wpw.pim.service.product.ProductService;
+import com.wpw.pim.web.dto.cart.AddToCartRequest;
+import com.wpw.pim.web.dto.cart.CartDto;
+import com.wpw.pim.web.dto.product.ProductFilter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/dealer/cart")
+@PreAuthorize("hasRole('DEALER')")
+@RequiredArgsConstructor
+@Tag(name = "Cart", description = "Корзина дилера: добавление, управление, оформление заказа")
+public class CartController {
+
+    private final CartService cartService;
+    private final ProductService productService;
+    private final DealerRepository dealerRepository;
+
+    @GetMapping
+    @Operation(summary = "Получить корзину")
+    public CartDto getCart(@AuthenticationPrincipal UserDetails principal) {
+        return cartService.getCart(resolveDealerId(principal));
+    }
+
+    @PostMapping("/items")
+    @Operation(summary = "Добавить товары в корзину")
+    public CartDto addItems(
+        @AuthenticationPrincipal UserDetails principal,
+        @RequestBody AddToCartRequest request
+    ) {
+        return cartService.addItems(resolveDealerId(principal), request.productIds());
+    }
+
+    @PostMapping("/items/by-filter")
+    @Operation(summary = "Добавить все товары по текущему фильтру")
+    public CartDto addByFilter(
+        @AuthenticationPrincipal UserDetails principal,
+        @ModelAttribute ProductFilter filter
+    ) {
+        List<UUID> ids = productService.findAllIdsByFilter(filter);
+        return cartService.addByFilter(resolveDealerId(principal), ids);
+    }
+
+    @PatchMapping("/items/{productId}")
+    @Operation(summary = "Обновить количество товара в корзине")
+    public CartDto updateQty(
+        @AuthenticationPrincipal UserDetails principal,
+        @PathVariable UUID productId,
+        @RequestParam int qty
+    ) {
+        return cartService.updateQty(resolveDealerId(principal), productId, qty);
+    }
+
+    @DeleteMapping("/items/{productId}")
+    @Operation(summary = "Удалить товар из корзины")
+    public CartDto removeItem(
+        @AuthenticationPrincipal UserDetails principal,
+        @PathVariable UUID productId
+    ) {
+        return cartService.removeItem(resolveDealerId(principal), productId);
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Очистить корзину")
+    public void clearCart(@AuthenticationPrincipal UserDetails principal) {
+        cartService.clearCart(resolveDealerId(principal));
+    }
+
+    @PostMapping("/checkout")
+    @Operation(summary = "Оформить заказ (заглушка)")
+    public CheckoutResponse checkout(@AuthenticationPrincipal UserDetails principal) {
+        CartDto cart = cartService.getCart(resolveDealerId(principal));
+        if (cart.items().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart is empty");
+        }
+        return new CheckoutResponse("ORDER-STUB-" + System.currentTimeMillis(), "Order submitted successfully (stub)");
+    }
+
+    private UUID resolveDealerId(UserDetails principal) {
+        if (principal instanceof DealerPrincipal dp) return dp.getDealer().getId();
+        Dealer dealer = dealerRepository.findByUserUsername(principal.getUsername())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Dealer profile not found for: " + principal.getUsername()));
+        return dealer.getId();
+    }
+
+    public record CheckoutResponse(String orderId, String message) {}
+}

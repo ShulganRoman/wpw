@@ -157,6 +157,38 @@ export default function SettingsTab() {
         </div>
       </Section>
 
+      {/* --- Price visibility --- */}
+      <Section title="Видимость по цене">
+        <p style={{ fontSize: 13, color: 'var(--wpw-text-muted)', margin: '0 0 16px' }}>
+          Когда тумблер включён — скрываются товары, у которых нет цены в прайс-листе.
+          Для дилеров проверяется их персональный прайс-лист. Для публичного доступа — любой прайс-лист.
+          Пустые узлы дерева каталога также скрываются.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Toggle
+            label="Только с ценой — для администраторов"
+            description="Применяется к панели администратора и API с правами ADMIN/MANAGE_*"
+            checked={settings?.requirePriceAdmin ?? false}
+            onChange={v => handleToggle('requirePriceAdmin', v)}
+            disabled={!settings || saving}
+          />
+          <Toggle
+            label="Только с ценой — для дилеров"
+            description="Скрывает товары без цены из персонального прайс-листа дилера"
+            checked={settings?.requirePriceDealer ?? false}
+            onChange={v => handleToggle('requirePriceDealer', v)}
+            disabled={!settings || saving}
+          />
+          <Toggle
+            label="Только с ценой — для пользователей"
+            description="Применяется к публичному каталогу и поиску"
+            checked={settings?.requirePricePublic ?? false}
+            onChange={v => handleToggle('requirePricePublic', v)}
+            disabled={!settings || saving}
+          />
+        </div>
+      </Section>
+
       {/* --- Statistics --- */}
       <Section title="Статистика системы">
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>

@@ -21,15 +21,15 @@ public record ProductFilter(
     Boolean hasBallBearing,
     String productType,
     Boolean inStock,
-    int page,
-    int perPage,
+    Integer page,
+    Integer perPage,
     BigDecimal priceMin,
     BigDecimal priceMax,
     UUID priceListId   // resolved from auth in controller, not sent by client
 ) {
     public ProductFilter {
         if (locale == null) locale = "en";
-        if (page <= 0) page = 1;
-        if (perPage <= 0) perPage = 48;
+        if (page == null || page <= 0) page = 1;
+        if (perPage == null || perPage <= 0) perPage = 48;
     }
 }

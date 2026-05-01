@@ -60,7 +60,7 @@ class CatalogServiceTest {
             countRows.add(new Object[]{group.getId(), 5L});
             when(productRepository.countActiveByGroupIds(List.of(group.getId()))).thenReturn(countRows);
 
-            List<SectionDto> tree = catalogService.getSectionTree("en", false, false);
+            List<SectionDto> tree = catalogService.getSectionTree("en", false, false, null);
 
             assertThat(tree).hasSize(1);
             assertThat(tree.get(0).name()).isEqualTo("Tools");
@@ -78,7 +78,7 @@ class CatalogServiceTest {
             when(categoryRepository.findAllActiveWithSection()).thenReturn(List.of());
             when(productGroupRepository.findAllActiveWithCategory()).thenReturn(List.of());
 
-            List<SectionDto> tree = catalogService.getSectionTree("fr", false, false);
+            List<SectionDto> tree = catalogService.getSectionTree("fr", false, false, null);
 
             assertThat(tree.get(0).name()).isEqualTo("Tools");
         }
@@ -90,7 +90,7 @@ class CatalogServiceTest {
             when(categoryRepository.findAllActiveWithSection()).thenReturn(List.of());
             when(productGroupRepository.findAllActiveWithCategory()).thenReturn(List.of());
 
-            assertThat(catalogService.getSectionTree("en", false, false)).isEmpty();
+            assertThat(catalogService.getSectionTree("en", false, false, null)).isEmpty();
         }
 
         @Test
@@ -108,7 +108,7 @@ class CatalogServiceTest {
             countRows2.add(new Object[]{nonEmptyGroup.getId(), 3L});
             when(productRepository.countActiveByGroupIds(any())).thenReturn(countRows2);
 
-            List<SectionDto> tree = catalogService.getSectionTree("en", true, false);
+            List<SectionDto> tree = catalogService.getSectionTree("en", true, false, null);
 
             assertThat(tree.get(0).categories().get(0).groups()).hasSize(1);
             assertThat(tree.get(0).categories().get(0).groups().get(0).slug()).isEqualTo("full");
@@ -129,7 +129,7 @@ class CatalogServiceTest {
             countRows3.add(new Object[]{group.getId(), 2L});
             when(productRepository.countActiveByGroupIds(any())).thenReturn(countRows3);
 
-            List<SectionDto> tree = catalogService.getSectionTree("en", true, false);
+            List<SectionDto> tree = catalogService.getSectionTree("en", true, false, null);
 
             assertThat(tree.get(0).categories()).hasSize(1);
             assertThat(tree.get(0).categories().get(0).slug()).isEqualTo("full-cat");

@@ -352,17 +352,16 @@ export function updateRole(id, data) { return request(`/roles/${id}`, { method: 
 export function deleteRole(id) { return request(`/roles/${id}`, { method: 'DELETE' }); }
 
 export function getPriceList(apiKey) {
-  return request('/dealer/price-list', { headers: { 'X-Api-Key': apiKey } });
+  return dealerRequest('/dealer/price-list', apiKey);
 }
 
 export function getSkuMapping(apiKey) {
-  return request('/dealer/sku-mapping', { headers: { 'X-Api-Key': apiKey } });
+  return dealerRequest('/dealer/sku-mapping', apiKey);
 }
 
 export async function addSkuMapping(apiKey, toolNo, dealerSku, note = '') {
-  return request('/dealer/sku-mapping', {
+  return dealerRequest('/dealer/sku-mapping', apiKey, {
     method: 'POST',
-    headers: { 'X-Api-Key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({ toolNo, dealerSku, note }),
   });
 }
@@ -507,4 +506,117 @@ export function updateSystemSettings(dto) {
 export function getSystemStats() { return request('/admin/settings/stats'); }
 export function deleteAllProductMedia() {
   return request('/admin/photos/all', { method: 'DELETE' });
+}
+
+// Dealer catalog (with API key)
+async function dealerRequest(path, apiKey, options = {}) {
+  // если apiKey не задан — используем JWT из localStorage (стандартный request)
+  if (!apiKey) return request(path, options);
+
+  const { headers: optHeaders, ...rest } = options;
+  const res = await fetch(`/api/v1${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': apiKey,
+      ...(optHeaders || {}),
+    },
+    ...rest,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  const ct = res.headers.get('content-type') || '';
+  if (ct.includes('application/json')) return res.json();
+  return res;
+}
+
+export function getDealerCategories(apiKey, locale = 'en') {
+  return dealerRequest(`/categories?locale=${locale}`, apiKey);
+}
+
+export function getDealerProducts(apiKey, filters = {}) {
+  const params = {
+    locale: filters.locale || 'en',
+    page: filters.page || 1,
+    perPage: filters.perPage || 48,
+    sectionId: filters.sectionId || '',
+    categoryId: filters.categoryId || '',
+    groupId: filters.groupId || '',
+    operation: filters.operation || '',
+    toolMaterial: filters.toolMaterial || '',
+    workpieceMaterial: filters.workpieceMaterial || '',
+    machineType: filters.machineType || '',
+    machineBrand: filters.machineBrand || '',
+    cuttingType: filters.cuttingType || '',
+    dMmMin: filters.dMmMin || '',
+    dMmMax: filters.dMmMax || '',
+    shankMm: filters.shankMm || '',
+    hasBallBearing: filters.hasBallBearing || '',
+    productType: filters.productType || '',
+    inStock: filters.inStock || '',
+    priceMin: filters.priceMin || '',
+    priceMax: filters.priceMax || '',
+  };
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
+  }
+  return dealerRequest(`/products?${q}`, apiKey);
+}
+
+// Cart (dealer, JWT-only)
+export function getCart() {
+  return request('/dealer/cart');
+}
+
+export function addToCart(productIds) {
+  return request('/dealer/cart/items', {
+    method: 'POST',
+    body: JSON.stringify({ productIds }),
+  });
+}
+
+export function addToCartByFilter(filters = {}) {
+  const params = {
+    locale: filters.locale || 'en',
+    sectionId: filters.sectionId || '',
+    categoryId: filters.categoryId || '',
+    groupId: filters.groupId || '',
+    operation: filters.operation || '',
+    toolMaterial: filters.toolMaterial || '',
+    workpieceMaterial: filters.workpieceMaterial || '',
+    machineType: filters.machineType || '',
+    machineBrand: filters.machineBrand || '',
+    cuttingType: filters.cuttingType || '',
+    dMmMin: filters.dMmMin || '',
+    dMmMax: filters.dMmMax || '',
+    shankMm: filters.shankMm || '',
+    hasBallBearing: filters.hasBallBearing || '',
+    productType: filters.productType || '',
+    inStock: filters.inStock || '',
+    priceMin: filters.priceMin || '',
+    priceMax: filters.priceMax || '',
+  };
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
+  }
+  return request(`/dealer/cart/items/by-filter?${q}`, { method: 'POST' });
+}
+
+export function updateCartQty(productId, qty) {
+  return request(`/dealer/cart/items/${productId}?qty=${qty}`, { method: 'PATCH' });
+}
+
+export function removeFromCart(productId) {
+  return request(`/dealer/cart/items/${productId}`, { method: 'DELETE' });
+}
+
+export function clearCart() {
+  return request('/dealer/cart', { method: 'DELETE' });
+}
+
+export function checkout() {
+  return request('/dealer/cart/checkout', { method: 'POST' });
 }

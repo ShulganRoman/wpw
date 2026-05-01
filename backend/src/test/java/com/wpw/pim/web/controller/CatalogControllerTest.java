@@ -50,7 +50,7 @@ class CatalogControllerTest {
         CategoryDto category = new CategoryDto(UUID.randomUUID(), "router-bits", "Router Bits", 0, null, List.of(group));
         SectionDto section = new SectionDto(UUID.randomUUID(), "tools", "Tools", 0, null, List.of(category));
 
-        when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean())).thenReturn(List.of(section));
+        when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean(), any())).thenReturn(List.of(section));
 
         mockMvc.perform(get("/api/v1/categories"))
                 .andExpect(status().isOk())
@@ -63,7 +63,7 @@ class CatalogControllerTest {
     @Test
     @DisplayName("GET /api/v1/categories?locale=ru -- передаёт locale в сервис")
     void getTree_withLocale_passesLocale() throws Exception {
-        when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean())).thenReturn(List.of());
+        when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean(), any())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/categories").param("locale", "ru"))
                 .andExpect(status().isOk())
@@ -73,7 +73,7 @@ class CatalogControllerTest {
     @Test
     @DisplayName("GET /api/v1/categories -- пустой каталог возвращает пустой массив")
     void getTree_empty_returnsEmptyArray() throws Exception {
-        when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean())).thenReturn(List.of());
+        when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean(), any())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/categories"))
                 .andExpect(status().isOk())

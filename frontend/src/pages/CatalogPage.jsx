@@ -1,9 +1,11 @@
 import {useState, useEffect, useCallback, useRef} from 'react';
-import {getCategories, getProducts, getOperations, search, getFilterOptions} from '../api/api';
+import {getCategories, getProducts, getOperations, search, getFilterOptions, getCart, addToCart, addToCartByFilter} from '../api/api';
 import ProductCard from '../components/ProductCard';
+import CartSidebar from '../components/CartSidebar';
 import Pagination from '../components/Pagination';
 import {SkeletonGrid, ErrorState} from '../components/LoadingState';
 import {useToast} from '../components/ToastContext';
+import {useCatalogSession} from '../contexts/SessionContext';
 
 const PER_PAGE = 50;
 
@@ -267,32 +269,129 @@ function normalizeTree(sections) {
 
 export default function CatalogPage({locale}) {
     const toast = useToast();
+    const isDealer = localStorage.getItem('userRole') === 'dealer';
+
+    // Persistent session state (survives navigation)
+    const {
+        selected, setSelected,
+        filters, setFilters,
+        selectedNode, setSelectedNode,
+        selectedOperation, setSelectedOperation,
+        page, setPage,
+        searchQuery, setSearchQuery,
+        searchPage, setSearchPage,
+        searchResults, setSearchResults,
+        searchTotal, setSearchTotal,
+    } = useCatalogSession();
+
+    // Local state (server data / transient UI)
     const [categories, setCategories] = useState([]);
-    const [selectedNode, setSelectedNode] = useState(null);
-    const [filters, setFilters] = useState(EMPTY_FILTERS);
     const [products, setProducts] = useState([]);
     const [total, setTotal] = useState(0);
-    const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [catLoading, setCatLoading] = useState(true);
     const [operations, setOperations] = useState([]);
-    const [selectedOperation, setSelectedOperation] = useState(null);
     const [filterOptions, setFilterOptions] = useState({});
-
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
-    // Search state
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState(null);
-    const [searchTotal, setSearchTotal] = useState(0);
-    const [searchPage, setSearchPage] = useState(1);
     const [searchLoading, setSearchLoading] = useState(false);
+
+    // Cart state (dealer only)
+    const [cartOpen, setCartOpen] = useState(false);
+    const [cartData, setCartData] = useState(null);
+    const [addingToCart, setAddingToCart] = useState(false);
+
+    // Drag-to-select
+    const dragRef = useRef({ active: false, action: 'add' });
     const inputRef = useRef(null);
+
+    useEffect(() => {
+        function onMouseUp() { dragRef.current.active = false; }
+        document.addEventListener('mouseup', onMouseUp);
+        return () => document.removeEventListener('mouseup', onMouseUp);
+    }, []);
+
+    function handleDragStart(id, isSelected) {
+        dragRef.current.active = true;
+        dragRef.current.action = isSelected ? 'remove' : 'add';
+        setSelected(prev => {
+            const next = new Set(prev);
+            if (dragRef.current.action === 'add') next.add(id); else next.delete(id);
+            return next;
+        });
+    }
+
+    function handleDragMove(id) {
+        if (!dragRef.current.active) return;
+        setSelected(prev => {
+            const next = new Set(prev);
+            if (dragRef.current.action === 'add') next.add(id); else next.delete(id);
+            return next;
+        });
+    }
 
     useEffect(() => {
         getFilterOptions().then(setFilterOptions).catch(() => {});
     }, []);
+
+    useEffect(() => {
+        if (!isDealer) return;
+        getCart().then(setCartData).catch(() => {});
+    }, [isDealer]);
+
+    async function handleAddToCart(productIds) {
+        if (!productIds.length) return;
+        setAddingToCart(true);
+        try {
+            const cart = await addToCart(productIds);
+            setCartData(cart);
+            setSelected(new Set());
+            toast(`Added ${productIds.length} item(s) to cart`, 'success');
+        } catch (err) {
+            toast(err.message, 'error');
+        } finally {
+            setAddingToCart(false);
+        }
+    }
+
+    async function handleAddAllByFilter() {
+        setAddingToCart(true);
+        try {
+            const params = {...filters, locale};
+            if (selectedNode) {
+                if (selectedNode.type === 'section') params.sectionId = selectedNode.id;
+                else if (selectedNode.type === 'category') params.categoryId = selectedNode.id;
+                else if (selectedNode.type === 'group') params.groupId = selectedNode.id;
+            }
+            if (selectedOperation) params.operation = selectedOperation;
+            const cart = await addToCartByFilter(params);
+            setCartData(cart);
+            toast(`Added all ${total} matching products to cart`, 'success');
+        } catch (err) {
+            toast(err.message, 'error');
+        } finally {
+            setAddingToCart(false);
+        }
+    }
+
+    function toggleSelect(id) {
+        setSelected(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    }
+
+    function toggleSelectAll() {
+        const pageItems = searchResults !== null ? (searchResults || []) : products;
+        const allPageSelected = pageItems.length > 0 && pageItems.every(p => selected.has(p.id));
+        setSelected(prev => {
+            const next = new Set(prev);
+            if (allPageSelected) pageItems.forEach(p => next.delete(p.id));
+            else pageItems.forEach(p => next.add(p.id));
+            return next;
+        });
+    }
 
     useEffect(() => {
         setCatLoading(true);
@@ -352,6 +451,7 @@ export default function CatalogPage({locale}) {
     function handleCategorySelect(node) {
         setSelectedNode(node);
         setPage(1);
+        setSelected(new Set());
     }
 
     function handleClearFilters() {
@@ -400,12 +500,38 @@ export default function CatalogPage({locale}) {
     }
 
     const isSearchMode = searchResults !== null;
+    const displayProducts = isSearchMode ? (searchResults || []) : products;
+    const displayTotal    = isSearchMode ? searchTotal : total;
+    const displayPage     = isSearchMode ? searchPage  : page;
+    const displayLoading  = isSearchMode ? searchLoading : loading;
+    const handleDisplayPageChange = isSearchMode ? handleSearchPageChange : handlePageChange;
+
+    const cartItemCount = cartData?.totalItems || cartData?.items?.length || 0;
+    const cartProductIds = new Set((cartData?.items || []).map(it => it.productId));
 
     return (
         <div>
-            <div className="page-header">
-                <h1 className="page-title">Product Catalog</h1>
-                <p className="page-subtitle">Browse and filter our complete product range</p>
+            <div className="page-header" style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12}}>
+                <div>
+                    <h1 className="page-title">Product Catalog</h1>
+                    <p className="page-subtitle">Browse and filter our complete product range</p>
+                </div>
+                {isDealer && (
+                    <button
+                        className="btn btn-secondary"
+                        style={{position: 'relative', flexShrink: 0}}
+                        onClick={() => setCartOpen(true)}
+                    >
+                        🛒 Cart
+                        {cartItemCount > 0 && (
+                            <span style={{
+                                position: 'absolute', top: -6, right: -6,
+                                background: 'var(--wpw-accent)', color: '#fff',
+                                borderRadius: 10, fontSize: 10, padding: '1px 6px', fontWeight: 700,
+                            }}>{cartItemCount}</span>
+                        )}
+                    </button>
+                )}
             </div>
 
             <div className="catalog-search-bar">
@@ -425,136 +551,190 @@ export default function CatalogPage({locale}) {
                 </form>
             </div>
 
-            {isSearchMode ? (
-                <div className="catalog-search-results">
-                    <div className="catalog-search-results-header">
-            <span style={{fontSize: 13, color: 'var(--wpw-mid-gray)'}}>
-              Found <strong style={{color: 'var(--wpw-navy)'}}>{searchTotal}</strong> results for "{searchQuery}"
-            </span>
-                        <button className="filters-clear-btn" onClick={clearSearch}>Back to catalog</button>
+            {!isSearchMode && operations.length > 0 && (
+                <div className="operation-bar">
+                    {operations.map(op => {
+                        const code = op.code || op.id;
+                        const label = op.name || op.label || op.code || '';
+                        const isActive = selectedOperation === code;
+                        return (
+                            <button
+                                key={code}
+                                className={`operation-chip${isActive ? ' active' : ''}`}
+                                onClick={() => setSelectedOperation(isActive ? null : code)}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            <div className="catalog-layout">
+                {mobileFiltersOpen && (
+                    <div className="mobile-filters-backdrop" onClick={() => setMobileFiltersOpen(false)}/>
+                )}
+
+                <aside className={`catalog-sidebar${mobileFiltersOpen ? ' mobile-open' : ''}`}>
+                    <div className="mobile-filters-header">
+                        <span>Filters & Categories</span>
+                        <button className="mobile-filters-close" onClick={() => setMobileFiltersOpen(false)}>✕</button>
+                    </div>
+                    {!catLoading && (
+                        <CategoryTree
+                            categories={categories}
+                            selected={selectedNode}
+                            onSelect={node => {
+                                handleCategorySelect(node);
+                                setMobileFiltersOpen(false);
+                            }}
+                        />
+                    )}
+                    <FiltersPanel
+                        filters={filters}
+                        filterOptions={filterOptions}
+                        onChange={setFilters}
+                        onClear={handleClearFilters}
+                    />
+                </aside>
+
+                <main className="catalog-main">
+                    {/* Search mode banner */}
+                    {isSearchMode && (
+                        <div style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '6px 10px', marginBottom: 8,
+                            background: '#e8f0fe', borderRadius: 6,
+                            border: '1px solid #c5d4f6', fontSize: 13,
+                        }}>
+                            <span>
+                                Found <strong>{searchTotal}</strong> results for &ldquo;{searchQuery}&rdquo;
+                            </span>
+                            <button className="filters-clear-btn" onClick={clearSearch}>✕ Clear search</button>
+                        </div>
+                    )}
+
+                    <div className="catalog-toolbar">
+                        <div className="catalog-count">
+                            {!displayLoading && (
+                                <span>
+                                    Showing <strong>{displayProducts.length}</strong> of <strong>{displayTotal}</strong> products
+                                </span>
+                            )}
+                        </div>
+                        <div style={{display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap'}}>
+                            {isDealer && selected.size > 0 && (
+                                <button
+                                    className="btn btn-primary"
+                                    style={{fontSize: 13, padding: '6px 12px'}}
+                                    disabled={addingToCart}
+                                    onClick={() => handleAddToCart([...selected])}
+                                >
+                                    {addingToCart ? 'Adding…' : `🛒 Add selected (${selected.size})`}
+                                </button>
+                            )}
+                            {isDealer && !isSearchMode && displayTotal > 0 && (
+                                <button
+                                    className="btn btn-secondary"
+                                    style={{fontSize: 13, padding: '6px 12px'}}
+                                    disabled={addingToCart}
+                                    onClick={handleAddAllByFilter}
+                                >
+                                    {addingToCart ? 'Adding…' : `🛒 Add all (${displayTotal})`}
+                                </button>
+                            )}
+                            <button
+                                className="catalog-filters-toggle-btn"
+                                onClick={() => setMobileFiltersOpen(true)}
+                            >
+                                Filters
+                            </button>
+                        </div>
                     </div>
 
-                    {searchLoading ? (
+                    {isDealer && displayProducts.length > 0 && !displayLoading && (
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '6px 10px', marginBottom: 8,
+                            background: 'var(--wpw-surface)', borderRadius: 6,
+                            border: '1px solid var(--wpw-border)',
+                        }}>
+                            <input
+                                type="checkbox"
+                                checked={displayProducts.every(p => selected.has(p.id))}
+                                onChange={toggleSelectAll}
+                                style={{cursor: 'pointer'}}
+                            />
+                            <span style={{fontSize: 13, color: 'var(--wpw-text-secondary)'}}>
+                                {selected.size > 0
+                                    ? `${selected.size} selected (this page: ${displayProducts.filter(p => selected.has(p.id)).length})`
+                                    : `Select all on this page (${displayProducts.length})`}
+                            </span>
+                            {selected.size > 0 && (
+                                <button
+                                    style={{
+                                        marginLeft: 'auto', fontSize: 12,
+                                        background: 'none', border: 'none',
+                                        color: 'var(--wpw-text-secondary)', cursor: 'pointer',
+                                    }}
+                                    onClick={() => setSelected(new Set())}
+                                >
+                                    Clear selection
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {!isSearchMode && error && !displayLoading && (
+                        <ErrorState message={error} onRetry={() => fetchProducts(page)}/>
+                    )}
+
+                    {displayLoading ? (
                         <SkeletonGrid count={12}/>
-                    ) : searchResults.length === 0 ? (
+                    ) : displayProducts.length === 0 ? (
                         <div className="empty-state">
-                            <h3>No results found</h3>
-                            <p>No products matched "{searchQuery}". Try a different search term.</p>
+                            <div className="empty-state-icon">📦</div>
+                            <h3>{isSearchMode ? 'No results found' : 'No products found'}</h3>
+                            <p>{isSearchMode
+                                ? `No products matched "${searchQuery}". Try a different search term.`
+                                : 'Try adjusting your filters or selecting a different category.'
+                            }</p>
                         </div>
                     ) : (
                         <>
-                            <div className="product-grid">
-                                {searchResults.map(p => (
-                                    <ProductCard key={p.id || p.toolNo || p.tool_no} product={p}/>
+                            <div className="product-grid" style={{userSelect: 'none'}}>
+                                {displayProducts.map(p => (
+                                    <ProductCard
+                                        key={p.id || p.toolNo || p.tool_no}
+                                        product={p}
+                                        selectable={isDealer}
+                                        selected={isDealer && selected.has(p.id)}
+                                        inCart={isDealer && cartProductIds.has(p.id)}
+                                        onSelect={() => toggleSelect(p.id)}
+                                        onAddToCart={isDealer ? prod => handleAddToCart([prod.id]) : undefined}
+                                        onDragStart={isDealer ? (isSelected) => handleDragStart(p.id, isSelected) : undefined}
+                                        onDragMove={isDealer ? () => handleDragMove(p.id) : undefined}
+                                    />
                                 ))}
                             </div>
                             <Pagination
-                                page={searchPage}
-                                total={searchTotal}
+                                page={displayPage}
+                                total={displayTotal}
                                 perPage={PER_PAGE}
-                                onChange={handleSearchPageChange}
+                                onChange={handleDisplayPageChange}
                             />
                         </>
                     )}
-                </div>
-            ) : (
-                <>
-                    {operations.length > 0 && (
-                        <div className="operation-bar">
-                            {operations.map(op => {
-                                const code = op.code || op.id;
-                                const label = op.name || op.label || op.code || '';
-                                const isActive = selectedOperation === code;
-                                return (
-                                    <button
-                                        key={code}
-                                        className={`operation-chip${isActive ? ' active' : ''}`}
-                                        onClick={() => setSelectedOperation(isActive ? null : code)}
-                                    >
-                                        {label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
+                </main>
+            </div>
 
-                    <div className="catalog-layout">
-                        {/* Mobile filter overlay backdrop */}
-                        {mobileFiltersOpen && (
-                            <div className="mobile-filters-backdrop" onClick={() => setMobileFiltersOpen(false)}/>
-                        )}
-
-                        <aside className={`catalog-sidebar${mobileFiltersOpen ? ' mobile-open' : ''}`}>
-                            <div className="mobile-filters-header">
-                                <span>Filters & Categories</span>
-                                <button className="mobile-filters-close" onClick={() => setMobileFiltersOpen(false)}>✕
-                                </button>
-                            </div>
-                            {!catLoading && (
-                                <CategoryTree
-                                    categories={categories}
-                                    selected={selectedNode}
-                                    onSelect={node => {
-                                        handleCategorySelect(node);
-                                        setMobileFiltersOpen(false);
-                                    }}
-                                />
-                            )}
-                            <FiltersPanel
-                                filters={filters}
-                                filterOptions={filterOptions}
-                                onChange={setFilters}
-                                onClear={handleClearFilters}
-                            />
-                        </aside>
-
-                        <main className="catalog-main">
-                            <div className="catalog-toolbar">
-                                <div className="catalog-count">
-                                    {!loading && (
-                                        <span>
-                      Showing <strong>{products.length}</strong> of <strong>{total}</strong> products
-                    </span>
-                                    )}
-                                </div>
-                                <button
-                                    className="catalog-filters-toggle-btn"
-                                    onClick={() => setMobileFiltersOpen(true)}
-                                >
-                                    Filters
-                                </button>
-                            </div>
-
-                            {error && !loading && (
-                                <ErrorState message={error} onRetry={() => fetchProducts(page)}/>
-                            )}
-
-                            {loading ? (
-                                <SkeletonGrid count={12}/>
-                            ) : products.length === 0 && !error ? (
-                                <div className="empty-state">
-                                    <div className="empty-state-icon">📦</div>
-                                    <h3>No products found</h3>
-                                    <p>Try adjusting your filters or selecting a different category.</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="product-grid">
-                                        {products.map(p => (
-                                            <ProductCard key={p.id || p.toolNo || p.tool_no} product={p}/>
-                                        ))}
-                                    </div>
-                                    <Pagination
-                                        page={page}
-                                        total={total}
-                                        perPage={PER_PAGE}
-                                        onChange={handlePageChange}
-                                    />
-                                </>
-                            )}
-                        </main>
-                    </div>
-                </>
+            {isDealer && (
+                <CartSidebar
+                    open={cartOpen}
+                    onClose={() => setCartOpen(false)}
+                    cartData={cartData}
+                    onCartUpdate={setCartData}
+                />
             )}
         </div>
     );

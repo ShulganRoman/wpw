@@ -30,4 +30,7 @@ public interface PriceListItemRepository extends JpaRepository<PriceListItem, Pr
 
     @Query("SELECT i FROM PriceListItem i WHERE i.priceList.id = :priceListId AND i.product.id = :productId ORDER BY i.id.minQty ASC")
     List<PriceListItem> findByPriceListIdAndProductId(UUID priceListId, UUID productId);
+
+    @Query("SELECT i FROM PriceListItem i WHERE i.priceList.id = :priceListId AND i.product.id IN :productIds ORDER BY i.product.id ASC, i.id.minQty ASC")
+    List<PriceListItem> findByPriceListIdAndProductIds(UUID priceListId, List<UUID> productIds);
 }

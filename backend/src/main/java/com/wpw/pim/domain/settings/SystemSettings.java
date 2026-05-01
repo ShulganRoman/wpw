@@ -21,4 +21,13 @@ public class SystemSettings {
 
     @Column(name = "require_images_public", nullable = false)
     private boolean requireImagesPublic = false;
+
+    @Column(name = "require_price_admin", nullable = false)
+    private boolean requirePriceAdmin = false;
+
+    @Column(name = "require_price_dealer", nullable = false)
+    private boolean requirePriceDealer = false;
+
+    @Column(name = "require_price_public", nullable = false)
+    private boolean requirePricePublic = false;
 }

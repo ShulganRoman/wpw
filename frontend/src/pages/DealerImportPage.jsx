@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../components/ToastContext';
+import { useImportSession } from '../contexts/SessionContext';
 
 const BASE = '/api/v1';
 
@@ -57,11 +58,9 @@ const thS = { padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 
 const tdS = { padding: '9px 12px', fontSize: 13 };
 
 // ── Import panel (validate → report → execute) ────────────────────────────────
-function ImportPanel({ onImported }) {
+function ImportPanel({ file, setFile, report, setReport, onImported }) {
   const toast = useToast();
   const fileRef = useRef();
-  const [file, setFile] = useState(null);
-  const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
 
   async function handleValidate() {
@@ -90,8 +89,9 @@ function ImportPanel({ onImported }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <input ref={fileRef} type="file" accept=".xlsx,.xls"
-          onChange={e => { setFile(e.target.files[0] || null); setReport(null); }}
+          onChange={e => { setFile(e.target.files[0] || null); }}
           style={{ fontSize: 13 }} />
+        {file && <span style={{ fontSize: 12, color: 'var(--wpw-text-secondary)' }}>{file.name}</span>}
         <button className="btn btn-primary" onClick={handleValidate} disabled={loading || !file}>
           {loading ? 'Обработка…' : 'Проверить файл'}
         </button>
@@ -268,7 +268,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function DealerImportPage() {
   const toast = useToast();
-  const [tab, setTab] = useState('mapping');
+  const { tab, setTab, file, setFile, report, setReport } = useImportSession();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -328,7 +328,11 @@ export default function DealerImportPage() {
       )}
 
       {tab === 'import' && (
-        <ImportPanel onImported={loadMapping} />
+        <ImportPanel
+          file={file} setFile={setFile}
+          report={report} setReport={setReport}
+          onImported={loadMapping}
+        />
       )}
     </div>
   );

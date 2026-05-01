@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import LocaleSwitcher from './LocaleSwitcher';
+import { getCart } from '../api/api';
 
 const ADMIN_PRIVILEGES = new Set([
   'BULK_IMPORT',
@@ -25,6 +26,7 @@ function isLoggedIn() {
 export default function Navbar({ locale, onLocaleChange }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   async function handleLogout() {
     try {
@@ -42,6 +44,11 @@ export default function Navbar({ locale, onLocaleChange }) {
   const loggedIn = isLoggedIn();
   const privileges = loggedIn ? getPrivileges() : new Set();
 
+  useEffect(() => {
+    if (localStorage.getItem('userRole') !== 'dealer' || !loggedIn) return;
+    getCart().then(c => setCartCount(c?.totalItems || c?.items?.length || 0)).catch(() => {});
+  }, [loggedIn]);
+
   const canExport = privileges.has('BULK_EXPORT');
   const canAdmin = [...ADMIN_PRIVILEGES].some(p => privileges.has(p));
   const isDealer = localStorage.getItem('userRole') === 'dealer';
@@ -49,6 +56,7 @@ export default function Navbar({ locale, onLocaleChange }) {
   const links = [
     { to: '/catalog', label: 'Catalog', show: true },
     { to: '/export', label: 'Export', show: canExport },
+    { to: '/dealer', label: 'My Orders', show: isDealer },
     { to: '/import', label: 'Import', show: isDealer },
     { to: '/admin', label: 'Admin', show: canAdmin },
   ].filter(l => l.show);
@@ -68,8 +76,16 @@ export default function Navbar({ locale, onLocaleChange }) {
               key={link.to}
               to={link.to}
               className={({ isActive }) => `navbar-link${isActive ? ' active' : ''}`}
+              style={{ position: 'relative' }}
             >
               {link.label}
+              {link.to === '/dealer' && cartCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: -6, right: -10,
+                  background: 'var(--wpw-accent)', color: '#fff',
+                  borderRadius: 10, fontSize: 10, padding: '1px 5px', fontWeight: 700,
+                }}>{cartCount}</span>
+              )}
             </NavLink>
           ))}
         </div>

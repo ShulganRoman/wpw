@@ -49,6 +49,36 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
         """)
     List<Object[]> countActiveWithMediaByGroupIds(@Param("groupIds") List<UUID> groupIds);
 
+    @Query("""
+        SELECT p.group.id, COUNT(p)
+        FROM Product p
+        WHERE p.group.id IN :groupIds
+          AND p.status = com.wpw.pim.domain.enums.ProductStatus.active
+          AND EXISTS (
+            SELECT 1 FROM com.wpw.pim.domain.pricing.PriceListItem pli
+            WHERE pli.product = p AND pli.priceList.id = :priceListId
+          )
+        GROUP BY p.group.id
+        """)
+    List<Object[]> countActiveWithPriceByGroupIds(@Param("groupIds") List<UUID> groupIds, @Param("priceListId") UUID priceListId);
+
+    @Query("""
+        SELECT p.group.id, COUNT(p)
+        FROM Product p
+        WHERE p.group.id IN :groupIds
+          AND p.status = com.wpw.pim.domain.enums.ProductStatus.active
+          AND EXISTS (
+            SELECT 1 FROM MediaFile m
+            WHERE m.product = p AND m.fileType = com.wpw.pim.domain.enums.FileType.image
+          )
+          AND EXISTS (
+            SELECT 1 FROM com.wpw.pim.domain.pricing.PriceListItem pli
+            WHERE pli.product = p AND pli.priceList.id = :priceListId
+          )
+        GROUP BY p.group.id
+        """)
+    List<Object[]> countActiveWithMediaAndPriceByGroupIds(@Param("groupIds") List<UUID> groupIds, @Param("priceListId") UUID priceListId);
+
     @Modifying
     @Query("DELETE FROM Product p WHERE p.id IN :ids")
     void deleteByIdIn(@Param("ids") Collection<UUID> ids);

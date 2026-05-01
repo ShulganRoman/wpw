@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +20,12 @@ public class SearchService {
 
     private static final String HAS_OWN_MEDIA_CLAUSE =
         "AND EXISTS (SELECT 1 FROM media_files mf WHERE mf.product_id = p.id AND mf.file_type = 'image')";
+
+    private static final String HAS_PRICE_ANY_CLAUSE =
+        "AND EXISTS (SELECT 1 FROM price_list_items pli WHERE pli.product_id = p.id)";
+
+    private static final String HAS_PRICE_LIST_CLAUSE =
+        "AND EXISTS (SELECT 1 FROM price_list_items pli WHERE pli.product_id = p.id AND pli.price_list_id = '%s'::uuid)";
 
     private static final String TRANSLATION_JOIN = """
             LEFT JOIN product_translations pt  ON pt.product_id = p.id AND pt.locale = ?
@@ -35,6 +42,7 @@ public class SearchService {
     public List<Map<String, Object>> search(String query, String locale, int page, int perPage) {
         int offset = (page - 1) * perPage;
         String mediaClause = requireImagesClause();
+        String priceClause = requirePriceClause();
 
         String ftsSql = """
             SELECT p.id, p.tool_no, %s AS name, %s AS short_description, p.status,
@@ -47,12 +55,13 @@ public class SearchService {
             %s
             WHERE p.status = 'active'
               %s
+              %s
               AND to_tsvector('simple', %s || ' ' || %s || ' ' || p.tool_no)
                   @@ plainto_tsquery('simple', ?)
             ORDER BY rank DESC, p.tool_no
             LIMIT ? OFFSET ?
             """.formatted(NAME_EXPR, DESC_EXPR, THUMBNAIL_SUBQUERY, NAME_EXPR, DESC_EXPR,
-                          TRANSLATION_JOIN, mediaClause, NAME_EXPR, DESC_EXPR);
+                          TRANSLATION_JOIN, mediaClause, priceClause, NAME_EXPR, DESC_EXPR);
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(ftsSql, query, locale, query, perPage, offset);
         if (!results.isEmpty()) return results;
@@ -64,6 +73,7 @@ public class SearchService {
             %s
             WHERE p.status = 'active'
               %s
+              %s
               AND (
                   p.tool_no ILIKE ?
                   OR %s ILIKE ?
@@ -72,7 +82,7 @@ public class SearchService {
             ORDER BY p.tool_no
             LIMIT ? OFFSET ?
             """.formatted(NAME_EXPR, DESC_EXPR, THUMBNAIL_SUBQUERY, TRANSLATION_JOIN,
-                          mediaClause, NAME_EXPR, DESC_EXPR);
+                          mediaClause, priceClause, NAME_EXPR, DESC_EXPR);
 
         String pattern = "%" + query.replace("%", "\\%") + "%";
         return jdbcTemplate.queryForList(likeSql, locale, pattern, pattern, pattern, perPage, offset);
@@ -80,6 +90,7 @@ public class SearchService {
 
     public long countSearch(String query, String locale) {
         String mediaClause = requireImagesClause();
+        String priceClause = requirePriceClause();
 
         String ftsSql = """
             SELECT COUNT(*)
@@ -87,9 +98,10 @@ public class SearchService {
             %s
             WHERE p.status = 'active'
               %s
+              %s
               AND to_tsvector('simple', %s || ' ' || %s || ' ' || p.tool_no)
                   @@ plainto_tsquery('simple', ?)
-            """.formatted(TRANSLATION_JOIN, mediaClause, NAME_EXPR, DESC_EXPR);
+            """.formatted(TRANSLATION_JOIN, mediaClause, priceClause, NAME_EXPR, DESC_EXPR);
         Long count = jdbcTemplate.queryForObject(ftsSql, Long.class, locale, query);
         if (count != null && count > 0) return count;
 
@@ -99,12 +111,13 @@ public class SearchService {
             %s
             WHERE p.status = 'active'
               %s
+              %s
               AND (
                   p.tool_no ILIKE ?
                   OR %s ILIKE ?
                   OR %s ILIKE ?
               )
-            """.formatted(TRANSLATION_JOIN, mediaClause, NAME_EXPR, DESC_EXPR);
+            """.formatted(TRANSLATION_JOIN, mediaClause, priceClause, NAME_EXPR, DESC_EXPR);
         String pattern = "%" + query.replace("%", "\\%") + "%";
         Long likeCount = jdbcTemplate.queryForObject(likeSql, Long.class, locale, pattern, pattern, pattern);
         return likeCount != null ? likeCount : 0;
@@ -113,5 +126,15 @@ public class SearchService {
     private String requireImagesClause() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return systemSettings.shouldRequireImages(auth) ? HAS_OWN_MEDIA_CLAUSE : "";
+    }
+
+    private String requirePriceClause() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!systemSettings.shouldRequirePrice(auth)) return "";
+        UUID priceListId = systemSettings.getDealerPriceListId(auth);
+        if (priceListId != null) {
+            return HAS_PRICE_LIST_CLAUSE.formatted(priceListId);
+        }
+        return HAS_PRICE_ANY_CLAUSE;
     }
 }
