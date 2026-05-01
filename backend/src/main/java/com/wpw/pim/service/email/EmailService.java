@@ -1,0 +1,86 @@
+package com.wpw.pim.service.email;
+
+import com.wpw.pim.domain.order.Order;
+import com.wpw.pim.domain.order.OrderStatus;
+import com.wpw.pim.repository.notification.NotificationEmailRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class EmailService {
+
+    private final JavaMailSender mailSender;
+    private final NotificationEmailRepository notificationEmailRepository;
+
+    @Value("${spring.mail.username}")
+    private String fromAddress;
+
+    @Async
+    public void sendOrderSubmittedToAdmins(Order order) {
+        List<String> recipients = notificationEmailRepository.findByActiveTrue()
+            .stream().map(e -> e.getEmail()).toList();
+        if (recipients.isEmpty()) return;
+
+        String dealerName = order.getDealer().getName();
+        String subject = "Новый заказ от дилера: " + dealerName;
+        String body = String.format(
+            "Дилер \"%s\" оформил заказ #%s на сумму %s %s.%n%n" +
+            "Позиций: %d%n" +
+            "Требует обработки в панели администратора.",
+            dealerName,
+            order.getId(),
+            order.getTotal().toPlainString(),
+            order.getCurrency(),
+            order.getItems().size()
+        );
+        send(recipients, subject, body);
+    }
+
+    @Async
+    public void sendStatusChangedToDealer(Order order, String dealerEmail) {
+        if (dealerEmail == null || dealerEmail.isBlank()) return;
+
+        String statusLabel = dealerStatusLabel(order.getStatus());
+        String subject = "Статус вашего заказа изменён: " + statusLabel;
+        String body = String.format(
+            "Статус вашего заказа #%s изменён на: %s.%n%n" +
+            "Сумма заказа: %s %s",
+            order.getId(),
+            statusLabel,
+            order.getTotal().toPlainString(),
+            order.getCurrency()
+        );
+        send(List.of(dealerEmail), subject, body);
+    }
+
+    private void send(List<String> to, String subject, String body) {
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(fromAddress);
+            msg.setTo(to.toArray(String[]::new));
+            msg.setSubject(subject);
+            msg.setText(body);
+            mailSender.send(msg);
+        } catch (Exception e) {
+            log.error("Failed to send email to {}: {}", to, e.getMessage());
+        }
+    }
+
+    private String dealerStatusLabel(OrderStatus status) {
+        return switch (status) {
+            case SUBMITTED    -> "Отправлено";
+            case IN_PROCESSING -> "В обработке";
+            case CONFIRMED    -> "Подтверждён";
+            case REJECTED     -> "Отклонён";
+        };
+    }
+}

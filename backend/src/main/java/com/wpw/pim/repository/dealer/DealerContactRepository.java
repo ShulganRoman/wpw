@@ -12,5 +12,8 @@ public interface DealerContactRepository extends JpaRepository<DealerContact, UU
     @Query("SELECT c FROM DealerContact c WHERE c.dealer.id = :dealerId ORDER BY c.isPrimary DESC, c.createdAt ASC")
     List<DealerContact> findByDealerId(UUID dealerId);
 
+    @Query("SELECT c FROM DealerContact c WHERE c.dealer.id = :dealerId AND c.isPrimary = true ORDER BY c.createdAt ASC")
+    java.util.Optional<DealerContact> findPrimaryByDealerId(UUID dealerId);
+
     void deleteByDealerId(UUID dealerId);
 }

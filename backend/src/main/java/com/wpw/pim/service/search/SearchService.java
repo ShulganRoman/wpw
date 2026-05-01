@@ -135,6 +135,11 @@ public class SearchService {
         if (priceListId != null) {
             return HAS_PRICE_LIST_CLAUSE.formatted(priceListId);
         }
+        boolean isDealerWithoutPriceList = auth != null && auth.isAuthenticated()
+            && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEALER"));
+        if (isDealerWithoutPriceList) {
+            return "AND 1=0"; // dealer without price list sees no products
+        }
         return HAS_PRICE_ANY_CLAUSE;
     }
 }

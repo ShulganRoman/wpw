@@ -206,33 +206,4 @@ class CartControllerTest {
         }
     }
 
-    // ── POST /api/v1/dealer/cart/checkout ─────────────────────────────────────
-
-    @Nested
-    @DisplayName("POST /api/v1/dealer/cart/checkout")
-    class Checkout {
-
-        @Test
-        @DisplayName("оформляет заказ — возвращает orderId и message")
-        void checksOut() throws Exception {
-            UUID productId = UUID.randomUUID();
-            when(cartService.getCart(dealerId)).thenReturn(cartWithItem(productId));
-
-            mockMvc.perform(post("/api/v1/dealer/cart/checkout")
-                    .with(user(dealerPrincipal)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.orderId").exists())
-                .andExpect(jsonPath("$.message").exists());
-        }
-
-        @Test
-        @DisplayName("пустая корзина — 400")
-        void emptyCartReturns400() throws Exception {
-            when(cartService.getCart(dealerId)).thenReturn(emptyCart());
-
-            mockMvc.perform(post("/api/v1/dealer/cart/checkout")
-                    .with(user(dealerPrincipal)))
-                .andExpect(status().isBadRequest());
-        }
-    }
 }

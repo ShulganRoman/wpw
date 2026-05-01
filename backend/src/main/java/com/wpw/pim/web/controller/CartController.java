@@ -83,16 +83,6 @@ public class CartController {
         cartService.clearCart(resolveDealerId(principal));
     }
 
-    @PostMapping("/checkout")
-    @Operation(summary = "Оформить заказ (заглушка)")
-    public CheckoutResponse checkout(@AuthenticationPrincipal UserDetails principal) {
-        CartDto cart = cartService.getCart(resolveDealerId(principal));
-        if (cart.items().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart is empty");
-        }
-        return new CheckoutResponse("ORDER-STUB-" + System.currentTimeMillis(), "Order submitted successfully (stub)");
-    }
-
     private UUID resolveDealerId(UserDetails principal) {
         if (principal instanceof DealerPrincipal dp) return dp.getDealer().getId();
         Dealer dealer = dealerRepository.findByUserUsername(principal.getUsername())
@@ -100,6 +90,4 @@ public class CartController {
                 "Dealer profile not found for: " + principal.getUsername()));
         return dealer.getId();
     }
-
-    public record CheckoutResponse(String orderId, String message) {}
 }

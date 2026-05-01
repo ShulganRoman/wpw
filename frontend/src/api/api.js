@@ -620,3 +620,62 @@ export function clearCart() {
 export function checkout() {
   return request('/dealer/cart/checkout', { method: 'POST' });
 }
+
+// ── Dealer Orders ──────────────────────────────────────────────────────────────
+
+export function getDealerOrders() {
+  return request('/dealer/orders');
+}
+
+export function getDealerOrder(orderId) {
+  return request(`/dealer/orders/${orderId}`);
+}
+
+// ── Admin Orders ───────────────────────────────────────────────────────────────
+
+export function getAdminDealerOrders(dealerId) {
+  return request(`/admin/dealers/${dealerId}/orders`);
+}
+
+export function getAdminOrder(orderId) {
+  return request(`/admin/orders/${orderId}`);
+}
+
+export function changeOrderStatus(orderId, status) {
+  return request(`/admin/orders/${orderId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+
+export function hasDealerPendingOrders(dealerId) {
+  return request(`/admin/dealers/${dealerId}/orders/pending`);
+}
+
+export function getPendingDealerIds() {
+  return request('/admin/orders/pending-dealer-ids');
+}
+
+// ── Notification Emails ────────────────────────────────────────────────────────
+
+export function getNotificationEmails() {
+  return request('/admin/notification-emails');
+}
+
+export function createNotificationEmail(data) {
+  return request('/admin/notification-emails', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateNotificationEmail(id, data) {
+  return request(`/admin/notification-emails/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteNotificationEmail(id) {
+  return request(`/admin/notification-emails/${id}`, { method: 'DELETE' });
+}

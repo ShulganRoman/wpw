@@ -166,7 +166,7 @@ class AdminDealerControllerTest {
         when(service.updateContact(eq(id), eq(contactId), any(DealerContactSaveRequest.class)))
             .thenReturn(dto);
 
-        DealerContactSaveRequest req = new DealerContactSaveRequest("Jane2", null, null, null, false);
+        DealerContactSaveRequest req = new DealerContactSaveRequest("Jane2", null, "jane2@example.com", null, false);
 
         mockMvc.perform(put("/api/v1/admin/dealers/" + id + "/contacts/" + contactId)
                 .contentType(MediaType.APPLICATION_JSON)

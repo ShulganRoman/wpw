@@ -53,12 +53,12 @@ public class AdminDealerService {
         String username = req.dealerCode().trim().toLowerCase().replaceAll("[^a-z0-9_-]", "_");
         if (userRepo.existsByUsername(username)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Пользователь с именем '" + username + "' уже существует. Измените код дилера.");
+                    "User with name '" + username + "' already exists. Change the dealer code.");
         }
 
         String rawPassword = generatePassword();
         Role dealerRole = roleRepo.findByName(DEALER_ROLE_NAME)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Роль 'dealer' не найдена"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Role 'dealer' not found"));
 
         User user = new User(username, passwordEncoder.encode(rawPassword), dealerRole);
         userRepo.save(user);
@@ -110,7 +110,7 @@ public class AdminDealerService {
     public PasswordResetDto resetPassword(UUID id) {
         Dealer dealer = find(id);
         if (dealer.getUser() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "У дилера нет учётной записи");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dealer has no user account");
         }
         String rawPassword = generatePassword();
         dealer.getUser().setPasswordHash(passwordEncoder.encode(rawPassword));

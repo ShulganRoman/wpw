@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getSystemSettings, updateSystemSettings, getSystemStats, deleteAllProductMedia } from '../api/api';
+import { getSystemSettings, updateSystemSettings, getSystemStats, deleteAllProductMedia, getNotificationEmails, createNotificationEmail, updateNotificationEmail, deleteNotificationEmail } from '../api/api';
 import { useToast } from './ToastContext';
 
 function StatCard({ label, value, sub }) {
@@ -68,6 +68,153 @@ function Section({ title, children }) {
 
 function pct(val) {
   return `${val.toFixed(1)}%`;
+}
+
+function NotificationEmailsSection() {
+  const { showToast } = useToast();
+  const [emails, setEmails] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newEmail, setNewEmail] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [editValue, setEditValue] = useState('');
+
+  useEffect(() => {
+    getNotificationEmails()
+      .then(setEmails)
+      .catch(() => showToast('Не удалось загрузить адреса', 'error'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleAdd() {
+    if (!newEmail.trim()) return;
+    setAdding(true);
+    try {
+      const created = await createNotificationEmail({ email: newEmail.trim(), active: true });
+      setEmails(prev => [...prev, created]);
+      setNewEmail('');
+      showToast('Адрес добавлен', 'success');
+    } catch (e) {
+      showToast(e.message || 'Ошибка добавления', 'error');
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleToggleActive(entry) {
+    try {
+      const updated = await updateNotificationEmail(entry.id, { email: entry.email, active: !entry.active });
+      setEmails(prev => prev.map(e => e.id === updated.id ? updated : e));
+    } catch {
+      showToast('Ошибка обновления', 'error');
+    }
+  }
+
+  async function handleSaveEdit(entry) {
+    if (!editValue.trim()) return;
+    try {
+      const updated = await updateNotificationEmail(entry.id, { email: editValue.trim(), active: entry.active });
+      setEmails(prev => prev.map(e => e.id === updated.id ? updated : e));
+      setEditId(null);
+      showToast('Адрес обновлён', 'success');
+    } catch (e) {
+      showToast(e.message || 'Ошибка обновления', 'error');
+    }
+  }
+
+  async function handleDelete(id) {
+    try {
+      await deleteNotificationEmail(id);
+      setEmails(prev => prev.filter(e => e.id !== id));
+      showToast('Адрес удалён', 'success');
+    } catch {
+      showToast('Ошибка удаления', 'error');
+    }
+  }
+
+  return (
+    <div>
+      <p style={{ fontSize: 13, color: 'var(--wpw-text-muted)', margin: '0 0 16px' }}>
+        На эти адреса будут приходить уведомления о новых заказах от дилеров.
+      </p>
+
+      {loading ? (
+        <div style={{ color: '#888', fontSize: 13 }}>Загрузка...</div>
+      ) : (
+        <>
+          {emails.length > 0 && (
+            <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {emails.map(entry => (
+                <div key={entry.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '8px 12px', border: '1px solid var(--wpw-border)',
+                  borderRadius: 6, background: entry.active ? '#fff' : '#fafafa',
+                }}>
+                  {editId === entry.id ? (
+                    <>
+                      <input
+                        className="input"
+                        value={editValue}
+                        onChange={e => setEditValue(e.target.value)}
+                        style={{ flex: 1, padding: '4px 8px', fontSize: 13 }}
+                        onKeyDown={e => { if (e.key === 'Enter') handleSaveEdit(entry); if (e.key === 'Escape') setEditId(null); }}
+                        autoFocus
+                      />
+                      <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => handleSaveEdit(entry)}>Сохранить</button>
+                      <button className="btn" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setEditId(null)}>Отмена</button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ flex: 1, fontSize: 13, color: entry.active ? 'inherit' : '#aaa', textDecoration: entry.active ? 'none' : 'line-through' }}>
+                        {entry.email}
+                      </span>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '2px 8px', fontSize: 11, color: entry.active ? '#2e7d32' : '#888' }}
+                        onClick={() => handleToggleActive(entry)}
+                        title={entry.active ? 'Деактивировать' : 'Активировать'}
+                      >
+                        {entry.active ? 'Активен' : 'Выкл'}
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '2px 8px', fontSize: 11 }}
+                        onClick={() => { setEditId(entry.id); setEditValue(entry.email); }}
+                      >
+                        Изменить
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '2px 8px', fontSize: 11, color: '#c62828' }}
+                        onClick={() => handleDelete(entry.id)}
+                      >
+                        Удалить
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              className="input"
+              type="email"
+              value={newEmail}
+              onChange={e => setNewEmail(e.target.value)}
+              placeholder="email@example.com"
+              style={{ flex: 1, padding: '6px 10px', fontSize: 13 }}
+              onKeyDown={e => e.key === 'Enter' && handleAdd()}
+            />
+            <button className="btn btn-primary" onClick={handleAdd} disabled={adding || !newEmail.trim()} style={{ fontSize: 13 }}>
+              {adding ? 'Добавление...' : 'Добавить'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function SettingsTab() {
@@ -251,6 +398,11 @@ export default function SettingsTab() {
         {statsLoading && !stats && (
           <div style={{ color: 'var(--wpw-text-muted)', fontSize: 14 }}>Загрузка статистики...</div>
         )}
+      </Section>
+
+      {/* --- Notification Emails --- */}
+      <Section title="Email-уведомления о заказах">
+        <NotificationEmailsSection />
       </Section>
 
       {/* --- Danger Zone --- */}

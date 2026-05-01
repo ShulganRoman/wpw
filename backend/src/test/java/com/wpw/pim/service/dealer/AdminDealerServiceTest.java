@@ -76,7 +76,7 @@ class AdminDealerServiceTest {
             "DEAL-02", "Beta Co", "DE",
             null, null, null, null, null, null, null,
             null, false, null, null, null, "EUR", null, null, true,
-            List.of(new DealerContactSaveRequest("John", "manager", "j@x", "+1", true))
+            List.of(new DealerContactSaveRequest("John", "manager", "j@x.com", "+1", true))
         );
     }
 

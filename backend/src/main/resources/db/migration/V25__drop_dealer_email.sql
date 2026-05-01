@@ -1,0 +1,1 @@
+ALTER TABLE dealers DROP COLUMN IF EXISTS email;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getDealers, createDealer, updateDealer, deleteDealer, resetDealerPassword } from '../api/api';
+import { getDealers, createDealer, updateDealer, deleteDealer, resetDealerPassword, getPendingDealerIds } from '../api/api';
 import { useToast } from './ToastContext';
+import AdminDealerOrdersPanel from './AdminDealerOrdersPanel';
 
 const DEALER_TYPES = ['Distributor', 'Reseller', 'Online Store', 'OEM Partner'];
 const CURRENCIES = ['EUR', 'USD', 'ILS', 'GBP', 'AUD', 'PLN', 'CAD', 'CHF'];
@@ -68,7 +69,7 @@ function FSelect({ value, onChange, options, placeholder }) {
       onChange={e => onChange(e.target.value)}
       style={{ width: '100%' }}
     >
-      <option value="">{placeholder || '— выберите —'}</option>
+      <option value="">{placeholder || '— select —'}</option>
       {options.map(o => (
         <option key={o} value={o}>{o}</option>
       ))}
@@ -87,11 +88,19 @@ function FCheck({ label, checked, onChange }) {
 
 function ContactRow({ contact, index, onChange, onRemove }) {
   const upd = (field, val) => onChange(index, { ...contact, [field]: val });
+  const isPrimary = contact.isPrimary;
   return (
-    <div style={{ background: '#f9fbfd', border: '1px solid var(--wpw-border)', borderRadius: 'var(--wpw-radius)', padding: '10px 12px', marginBottom: 8 }}>
+    <div style={{
+      background: isPrimary ? '#f0f7ff' : '#f9fbfd',
+      border: `1px solid ${isPrimary ? '#90caf9' : 'var(--wpw-border)'}`,
+      borderRadius: 'var(--wpw-radius)', padding: '10px 12px', marginBottom: 8,
+    }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wpw-gray)' }}>Контакт {index + 1}</span>
-        <button type="button" className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: 11, color: '#c62828' }} onClick={() => onRemove(index)}>✕ Удалить</button>
+        <span style={{ fontSize: 12, fontWeight: 600, color: isPrimary ? '#1565c0' : 'var(--wpw-gray)' }}>
+          {isPrimary ? 'Primary Contact' : `Contact ${index + 1}`}
+          {isPrimary && <span style={{ marginLeft: 6, fontSize: 10, background: '#1565c0', color: '#fff', borderRadius: 4, padding: '1px 5px' }}>notifications here</span>}
+        </span>
+        <button type="button" className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: 11, color: '#c62828' }} onClick={() => onRemove(index)}>✕ Delete</button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div>
@@ -103,7 +112,10 @@ function ContactRow({ contact, index, onChange, onRemove }) {
           <FSelect value={contact.role} onChange={v => upd('role', v)} options={CONTACT_ROLES} />
         </div>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 3 }}>Email</div>
+          <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 3 }}>
+            Email <span style={{ color: '#c62828' }}>*</span>
+            {isPrimary && <span style={{ fontSize: 10, color: '#1565c0', marginLeft: 4 }}>для уведомлений</span>}
+          </div>
           <FInput value={contact.email} onChange={v => upd('email', v)} placeholder="email@company.com" type="email" />
         </div>
         <div>
@@ -112,7 +124,7 @@ function ContactRow({ contact, index, onChange, onRemove }) {
         </div>
       </div>
       <div style={{ marginTop: 8 }}>
-        <FCheck label="Основной контакт" checked={contact.isPrimary} onChange={v => upd('isPrimary', v)} />
+        <FCheck label="Основной контакт (уведомления о статусах заказа)" checked={isPrimary} onChange={v => upd('isPrimary', v)} />
       </div>
     </div>
   );
@@ -177,6 +189,14 @@ function DealerModal({ dealer, onSave, onClose }) {
     if (!form.dealerCode.trim()) { alert('Введите код дилера'); return; }
     if (!form.companyName.trim()) { alert('Введите название компании'); return; }
     if (!form.country.trim()) { alert('Введите страну'); return; }
+    const primaryContacts = form.contacts.filter(c => c.isPrimary);
+    if (primaryContacts.length === 0) { alert('Укажите хотя бы один основной контакт (отметьте «Основной»)'); return; }
+    const primaryMissingEmail = primaryContacts.some(c => !c.email?.trim());
+    if (primaryMissingEmail) { alert('Основной контакт должен иметь электронную почту'); return; }
+    const invalidContact = form.contacts.find(c => !c.contactName?.trim());
+    if (invalidContact) { alert('У каждого контакта должно быть имя'); return; }
+    const invalidEmail = form.contacts.find(c => c.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim()));
+    if (invalidEmail) { alert(`Некорректный email у контакта: ${invalidEmail.contactName}`); return; }
     setSaving(true);
     try {
       await onSave(form);
@@ -381,6 +401,8 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
   const [modal, setModal] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [credentials, setCredentials] = useState(null); // { username, password }
+  const [pendingDealerIds, setPendingDealerIds] = useState(new Set());
+  const [ordersDealer, setOrdersDealer] = useState(null); // dealer whose orders to show
   const toast = useToast();
 
   useEffect(() => { load(); }, []);
@@ -388,7 +410,12 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
   async function load() {
     setLoading(true);
     try {
-      setDealers(await getDealers());
+      const [dealerList, pendingIds] = await Promise.all([
+        getDealers(),
+        getPendingDealerIds().catch(() => []),
+      ]);
+      setDealers(dealerList);
+      setPendingDealerIds(new Set(pendingIds));
     } catch (err) {
       toast(err.message, 'error');
     } finally {
@@ -476,7 +503,15 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
                     )}
                   </td>
                   <td style={{ ...tdStyle, fontWeight: 600, color: 'var(--wpw-navy)' }}>
-                    {d.companyName || d.name || '—'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {d.companyName || d.name || '—'}
+                      {pendingDealerIds.has(d.id) && (
+                        <span style={{
+                          fontSize: 10, padding: '1px 6px', borderRadius: 8, fontWeight: 700,
+                          background: '#fff3e0', color: '#e65100', border: '1px solid #ffcc80',
+                        }}>Pending</span>
+                      )}
+                    </div>
                     {d.brandName && d.brandName !== d.companyName && (
                       <div style={{ fontSize: 11, fontWeight: 400, color: 'var(--wpw-mid-gray)' }}>{d.brandName}</div>
                     )}
@@ -502,6 +537,20 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setModal({ dealer: d })}>Изменить</button>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--wpw-blue)' }} onClick={() => onSkuMapping?.(d)}>SKU</button>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: '#2e7d32' }} onClick={() => onPriceList?.(d)}>Price</button>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '4px 10px', fontSize: 12, color: '#5c35ab', position: 'relative' }}
+                          onClick={() => setOrdersDealer(d)}
+                        >
+                          Заказы
+                          {pendingDealerIds.has(d.id) && (
+                            <span style={{
+                              position: 'absolute', top: -4, right: -4,
+                              width: 8, height: 8, borderRadius: '50%',
+                              background: '#e65100',
+                            }} />
+                          )}
+                        </button>
                         {d.username && (
                           <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--wpw-blue)' }} onClick={() => handleResetPassword(d.id)} title="Сбросить пароль">↺ Пароль</button>
                         )}
@@ -537,6 +586,31 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
           password={credentials.password}
           onClose={() => setCredentials(null)}
         />
+      )}
+
+      {ordersDealer && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 900,
+        }} onClick={() => setOrdersDealer(null)}>
+          <div style={{
+            background: '#fff', borderRadius: 8, padding: 24, maxWidth: 900, width: '100%',
+            maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>
+                  Заказы: {ordersDealer.companyName || ordersDealer.name}
+                </div>
+                <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+                  История заказов дилера
+                </div>
+              </div>
+              <button onClick={() => setOrdersDealer(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999' }}>×</button>
+            </div>
+            <AdminDealerOrdersPanel dealerId={ordersDealer.id} />
+          </div>
+        </div>
       )}
     </div>
   );

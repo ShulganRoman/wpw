@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCart, updateCartQty, removeFromCart, clearCart, checkout } from '../api/api';
+import { getCart, updateCartQty, removeFromCart, clearCart, checkout, getDealerOrders, getDealerOrder } from '../api/api';
 import { LoadingSpinner } from '../components/LoadingState';
 import { useToast } from '../components/ToastContext';
 
@@ -160,11 +160,151 @@ function exportCSV(items, currency, notes) {
   URL.revokeObjectURL(url);
 }
 
+const DEALER_STATUS_LABELS = {
+  SUBMITTED:     { label: 'Отправлено',  color: '#1565c0', bg: '#e3f2fd' },
+  IN_PROCESSING: { label: 'В обработке', color: '#e65100', bg: '#fff3e0' },
+  CONFIRMED:     { label: 'Подтверждён', color: '#2e7d32', bg: '#e8f5e9' },
+  REJECTED:      { label: 'Отклонён',    color: '#c62828', bg: '#ffebee' },
+};
+
+function DealerStatusBadge({ status }) {
+  const s = DEALER_STATUS_LABELS[status] || { label: status, color: '#555', bg: '#f5f5f5' };
+  return (
+    <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 600, color: s.color, background: s.bg }}>
+      {s.label}
+    </span>
+  );
+}
+
+function OrderDetailDrawer({ orderId, onClose }) {
+  const toast = useToast();
+  const [order, setOrder] = useState(null);
+
+  useEffect(() => {
+    getDealerOrder(orderId)
+      .then(setOrder)
+      .catch(() => toast('Не удалось загрузить заказ', 'error'));
+  }, [orderId]);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={onClose}>
+      <div style={{ background: '#fff', borderRadius: 8, padding: 24, maxWidth: 680, width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ fontSize: 16, fontWeight: 700 }}>
+            Заказ #{order?.id?.slice(0, 8).toUpperCase() || '...'}
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999' }}>×</button>
+        </div>
+        {!order && <div style={{ color: '#888', textAlign: 'center', padding: 40 }}>Загрузка...</div>}
+        {order && (
+          <>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 13 }}>Статус: <DealerStatusBadge status={order.status} /></div>
+              <div style={{ fontSize: 13 }}>Сумма: <strong>{Number(order.total).toFixed(2)} {order.currency}</strong></div>
+              <div style={{ fontSize: 13, color: '#888' }}>{new Date(order.submittedAt).toLocaleString('ru-RU')}</div>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--wpw-border)' }}>
+                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>Артикул</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>Название</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Кол-во</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Цена</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Итого</th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.items.map(item => (
+                  <tr key={item.toolNo} style={{ borderBottom: '1px solid var(--wpw-border)' }}>
+                    <td style={{ padding: '6px 8px', fontFamily: 'monospace' }}>{item.toolNo}</td>
+                    <td style={{ padding: '6px 8px' }}>{item.name}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right' }}>{item.qty}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right' }}>{item.unitPrice != null ? Number(item.unitPrice).toFixed(2) : '—'}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 600 }}>{item.lineTotal != null ? Number(item.lineTotal).toFixed(2) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>Итого:</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>{Number(order.total).toFixed(2)} {order.currency}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OrdersSection() {
+  const toast = useToast();
+  const [orders, setOrders] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState(null);
+
+  useEffect(() => {
+    getDealerOrders()
+      .then(setOrders)
+      .catch(() => toast('Не удалось загрузить историю заказов', 'error'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div style={{ padding: 20, color: '#888', fontSize: 13 }}>Загрузка...</div>;
+  if (!orders || orders.length === 0) return (
+    <div style={{ padding: '40px 0', textAlign: 'center', color: '#888', fontSize: 14 }}>
+      У вас ещё нет заказов
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={{ overflowX: 'auto' }}>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Дата</th>
+              <th>Статус</th>
+              <th style={{ textAlign: 'right' }}>Позиций</th>
+              <th style={{ textAlign: 'right' }}>Сумма</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map(o => (
+              <tr key={o.id}>
+                <td style={{ fontFamily: 'var(--wpw-font-mono)', color: '#888', fontSize: 12 }}>
+                  {o.id.slice(0, 8).toUpperCase()}
+                </td>
+                <td style={{ fontSize: 13 }}>{new Date(o.submittedAt).toLocaleString('ru-RU')}</td>
+                <td><DealerStatusBadge status={o.status} /></td>
+                <td style={{ textAlign: 'right' }}>{o.itemCount}</td>
+                <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                  {Number(o.total).toFixed(2)} {o.currency}
+                </td>
+                <td>
+                  <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setSelectedId(o.id)}>
+                    Открыть
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {selectedId && <OrderDetailDrawer orderId={selectedId} onClose={() => setSelectedId(null)} />}
+    </div>
+  );
+}
+
 export default function DealerPage() {
   const toast = useToast();
   const navigate = useNavigate();
   const isDealer = localStorage.getItem('userRole') === 'dealer';
 
+  const [activeTab, setActiveTab] = useState('cart');
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState(false);
@@ -202,10 +342,11 @@ export default function DealerPage() {
     setCheckingOut(true);
     try {
       const res = await checkout();
-      toast(`${res.message} (${res.orderId})`, 'success');
+      toast(`Заказ оформлен: #${res.orderId?.toString().slice(0, 8).toUpperCase()}`, 'success');
       const fresh = await getCart();
       setCartData(fresh);
       setPage(1);
+      setActiveTab('orders');
     } catch (err) {
       toast(err.message, 'error');
     } finally {
@@ -239,19 +380,32 @@ export default function DealerPage() {
     <div>
       <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 className="page-title">My Order</h1>
-          <p className="page-subtitle">
-            {allItems.length} items
-            {hasTotal ? ` · ${currency} ${Number(total).toFixed(2)}` : ''}
-            {itemsNoPrice.length > 0 && ` · ${itemsNoPrice.length} without price`}
-          </p>
+          <h1 className="page-title">{activeTab === 'cart' ? 'My Order' : 'Order History'}</h1>
+          {activeTab === 'cart' && (
+            <p className="page-subtitle">
+              {allItems.length} items
+              {hasTotal ? ` · ${currency} ${Number(total).toFixed(2)}` : ''}
+              {itemsNoPrice.length > 0 && ` · ${itemsNoPrice.length} without price`}
+            </p>
+          )}
         </div>
         <button className="btn btn-secondary" onClick={() => navigate('/catalog')}>
           ← Back to Catalog
         </button>
       </div>
 
-      {allItems.length === 0 ? (
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button className={`btn ${activeTab === 'cart' ? 'btn-primary' : ''}`} onClick={() => setActiveTab('cart')}>
+          Корзина {allItems.length > 0 && `(${allItems.length})`}
+        </button>
+        <button className={`btn ${activeTab === 'orders' ? 'btn-primary' : ''}`} onClick={() => setActiveTab('orders')}>
+          Мои заказы
+        </button>
+      </div>
+
+      {activeTab === 'orders' && <OrdersSection />}
+
+      {activeTab === 'cart' && (allItems.length === 0 ? (
         <div className="empty-state" style={{ marginTop: 40 }}>
           <div className="empty-state-icon">🛒</div>
           <h3>Your cart is empty</h3>
@@ -380,7 +534,7 @@ export default function DealerPage() {
             </div>
           </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }

@@ -390,7 +390,14 @@ public class ProductService {
         }
         if (systemSettings.shouldRequirePrice(auth)) {
             UUID priceListId = systemSettings.getDealerPriceListId(auth);
-            spec = spec.and(hasPrice(priceListId));
+            boolean isDealerWithoutPriceList = auth != null && auth.isAuthenticated()
+                && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEALER"))
+                && priceListId == null;
+            if (isDealerWithoutPriceList) {
+                spec = spec.and((root, query, cb) -> cb.disjunction()); // no price list → no products
+            } else {
+                spec = spec.and(hasPrice(priceListId));
+            }
         }
         return spec;
     }
