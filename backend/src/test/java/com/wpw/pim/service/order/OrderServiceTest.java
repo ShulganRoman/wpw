@@ -155,7 +155,7 @@ class OrderServiceTest {
             List<OrderSummaryDto> result = service.getDealerOrders(dealerId);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).statusLabel()).isEqualTo("Отправлено");
+            assertThat(result.get(0).statusLabel()).isEqualTo("Submitted");
         }
 
         @Test
@@ -186,7 +186,7 @@ class OrderServiceTest {
             OrderDto dto = service.getDealerOrder(dealerId, orderId);
 
             assertThat(dto.id()).isEqualTo(orderId);
-            assertThat(dto.statusLabel()).isEqualTo("Отправлено");
+            assertThat(dto.statusLabel()).isEqualTo("Submitted");
             assertThat(dto.items()).hasSize(1);
         }
 
@@ -220,7 +220,7 @@ class OrderServiceTest {
             List<OrderSummaryDto> result = service.getAdminDealerOrders(dealerId);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).statusLabel()).isEqualTo("Новый");
+            assertThat(result.get(0).statusLabel()).isEqualTo("New");
         }
 
         @Test
@@ -234,7 +234,7 @@ class OrderServiceTest {
 
             OrderDto dto = service.getAdminOrder(orderId);
 
-            assertThat(dto.statusLabel()).isEqualTo("Новый");
+            assertThat(dto.statusLabel()).isEqualTo("New");
             assertThat(dto.dealerName()).isEqualTo("Acme LLC");
         }
     }
