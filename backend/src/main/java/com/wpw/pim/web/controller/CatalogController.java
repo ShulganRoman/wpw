@@ -19,14 +19,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
-@Tag(name = "Catalog", description = "Дерево каталога: секции → категории → группы товаров")
+@Tag(name = "Catalog", description = "Catalog tree: sections → categories → product groups")
 public class CatalogController {
 
     private final CatalogService catalogService;
     private final SystemSettingsService systemSettings;
 
     @GetMapping
-    @Operation(summary = "Получить дерево каталога", description = "Администратор видит все узлы включая пустые. Дилеры и пользователи видят только узлы с доступными товарами.")
+    @Operation(summary = "Get catalog tree", description = "Admin sees all nodes including empty. Dealers and users see only nodes with available products.")
     public List<SectionDto> getTree(@RequestParam(defaultValue = "en") String locale) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = systemSettings.isAdminRole(auth);

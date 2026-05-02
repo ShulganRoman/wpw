@@ -25,7 +25,7 @@ import java.util.UUID;
 @RequestMapping("/api/v1/dealer/cart")
 @PreAuthorize("hasRole('DEALER')")
 @RequiredArgsConstructor
-@Tag(name = "Cart", description = "Корзина дилера: добавление, управление, оформление заказа")
+@Tag(name = "Cart", description = "Dealer cart: add items, manage, place order")
 public class CartController {
 
     private final CartService cartService;
@@ -33,13 +33,13 @@ public class CartController {
     private final DealerRepository dealerRepository;
 
     @GetMapping
-    @Operation(summary = "Получить корзину")
+    @Operation(summary = "Get cart")
     public CartDto getCart(@AuthenticationPrincipal UserDetails principal) {
         return cartService.getCart(resolveDealerId(principal));
     }
 
     @PostMapping("/items")
-    @Operation(summary = "Добавить товары в корзину")
+    @Operation(summary = "Add items to cart")
     public CartDto addItems(
         @AuthenticationPrincipal UserDetails principal,
         @RequestBody AddToCartRequest request
@@ -48,7 +48,7 @@ public class CartController {
     }
 
     @PostMapping("/items/by-filter")
-    @Operation(summary = "Добавить все товары по текущему фильтру")
+    @Operation(summary = "Add all items matching current filter")
     public CartDto addByFilter(
         @AuthenticationPrincipal UserDetails principal,
         @ModelAttribute ProductFilter filter
@@ -58,7 +58,7 @@ public class CartController {
     }
 
     @PatchMapping("/items/{productId}")
-    @Operation(summary = "Обновить количество товара в корзине")
+    @Operation(summary = "Update item quantity in cart")
     public CartDto updateQty(
         @AuthenticationPrincipal UserDetails principal,
         @PathVariable UUID productId,
@@ -68,7 +68,7 @@ public class CartController {
     }
 
     @DeleteMapping("/items/{productId}")
-    @Operation(summary = "Удалить товар из корзины")
+    @Operation(summary = "Remove item from cart")
     public CartDto removeItem(
         @AuthenticationPrincipal UserDetails principal,
         @PathVariable UUID productId
@@ -78,7 +78,7 @@ public class CartController {
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Очистить корзину")
+    @Operation(summary = "Clear cart")
     public void clearCart(@AuthenticationPrincipal UserDetails principal) {
         cartService.clearCart(resolveDealerId(principal));
     }

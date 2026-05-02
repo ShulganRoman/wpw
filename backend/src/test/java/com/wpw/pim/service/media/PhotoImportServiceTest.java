@@ -543,7 +543,7 @@ class PhotoImportServiceTest {
         @Test
         @DisplayName("invalid jpg byte data — error captured in errorDetails")
         void importPhotos_brokenJpg_errorCaptured() throws Exception {
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp недоступен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp unavailable");
 
             Product p = product("WPW-001");
             when(productRepository.findAll()).thenReturn(List.of(p));
@@ -562,7 +562,7 @@ class PhotoImportServiceTest {
         @Test
         @DisplayName("valid jpg converts successfully via real cwebp")
         void importPhotos_validJpg_realCwebp() throws Exception {
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp недоступен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp unavailable");
 
             Product p = product("WPW-001");
             when(productRepository.findAll()).thenReturn(List.of(p));
@@ -596,7 +596,7 @@ class PhotoImportServiceTest {
         @Test
         @DisplayName("broken jpg in archive — error captured")
         void importArchive_brokenJpg_errorCaptured() throws Exception {
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp недоступен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp unavailable");
 
             Product p = product("WPW-001");
             when(productRepository.findAll()).thenReturn(List.of(p));

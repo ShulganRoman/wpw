@@ -52,7 +52,7 @@ class NotificationEmailControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("GET /api/v1/admin/notification-emails -- список адресов")
+    @DisplayName("GET /api/v1/admin/notification-emails -- list addresses")
     void list() throws Exception {
         when(repository.findAll()).thenReturn(List.of(
             buildEntity(UUID.randomUUID(), "a@x.com", true),
@@ -68,7 +68,7 @@ class NotificationEmailControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("POST /api/v1/admin/notification-emails -- 201 создаёт адрес")
+    @DisplayName("POST /api/v1/admin/notification-emails -- 201 creates address")
     void create() throws Exception {
         UUID newId = UUID.randomUUID();
         when(repository.save(any(NotificationEmail.class))).thenAnswer(inv -> {
@@ -90,7 +90,7 @@ class NotificationEmailControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("PUT /api/v1/admin/notification-emails/{id} -- 200 обновляет")
+    @DisplayName("PUT /api/v1/admin/notification-emails/{id} -- 200 updates")
     void update() throws Exception {
         UUID id = UUID.randomUUID();
         NotificationEmail existing = buildEntity(id, "old@x.com", true);
@@ -109,7 +109,7 @@ class NotificationEmailControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("PUT /api/v1/admin/notification-emails/{id} -- 404 если не найден")
+    @DisplayName("PUT /api/v1/admin/notification-emails/{id} -- 404 if not found")
     void updateNotFound() throws Exception {
         UUID id = UUID.randomUUID();
         when(repository.findById(id)).thenReturn(Optional.empty());
@@ -135,7 +135,7 @@ class NotificationEmailControllerTest {
     }
 
     @Test
-    @DisplayName("без аутентификации -- 4xx")
+    @DisplayName("without authentication -- 4xx")
     void unauthenticated() throws Exception {
         mockMvc.perform(get("/api/v1/admin/notification-emails"))
             .andExpect(status().is4xxClientError());
@@ -143,7 +143,7 @@ class NotificationEmailControllerTest {
 
     @Test
     @WithMockUser(authorities = "OTHER")
-    @DisplayName("без MANAGE_DEALERS -- 403")
+    @DisplayName("without MANAGE_DEALERS -- 403")
     void wrongAuthority() throws Exception {
         mockMvc.perform(get("/api/v1/admin/notification-emails"))
             .andExpect(status().isForbidden());

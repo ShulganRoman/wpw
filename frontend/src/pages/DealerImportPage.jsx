@@ -64,7 +64,7 @@ function ImportPanel({ file, setFile, report, setReport, onImported }) {
   const [loading, setLoading] = useState(false);
 
   async function handleValidate() {
-    if (!file) { toast('Выберите файл', 'warning'); return; }
+    if (!file) { toast('Select a file', 'warning'); return; }
     setLoading(true);
     try {
       const r = await apiUpload('/dealer/sku-mapping/validate', file);
@@ -93,11 +93,11 @@ function ImportPanel({ file, setFile, report, setReport, onImported }) {
           style={{ fontSize: 13 }} />
         {file && <span style={{ fontSize: 12, color: 'var(--wpw-text-secondary)' }}>{file.name}</span>}
         <button className="btn btn-primary" onClick={handleValidate} disabled={loading || !file}>
-          {loading ? 'Обработка…' : 'Проверить файл'}
+          {loading ? 'Processing…' : 'Validate File'}
         </button>
         <button className="btn btn-secondary" onClick={() => downloadFile('/dealer/sku-mapping/template', 'sku-mapping-template.xlsx')}
           style={{ fontSize: 12 }}>
-          ⬇ Шаблон
+          ⬇ Template
         </button>
       </div>
 
@@ -105,17 +105,17 @@ function ImportPanel({ file, setFile, report, setReport, onImported }) {
         <div style={{ border: '1px solid var(--wpw-border)', borderRadius: 8, overflow: 'hidden' }}>
           {/* summary */}
           <div style={{ padding: '12px 16px', background: '#f5f7fa', borderBottom: '1px solid var(--wpw-border)', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <Stat label="Всего строк" value={report.total} />
-            <Stat label="Найдено в каталоге" value={report.valid.length} color="#2e7d32" />
-            <Stat label="Артикулов-призраков" value={report.ghosts.length} color={report.ghosts.length > 0 ? '#e65100' : '#2e7d32'} />
-            {report.errors.length > 0 && <Stat label="Ошибок формата" value={report.errors.length} color="#c62828" />}
+            <Stat label="Total rows" value={report.total} />
+            <Stat label="Found in catalog" value={report.valid.length} color="#2e7d32" />
+            <Stat label="Ghost SKUs" value={report.ghosts.length} color={report.ghosts.length > 0 ? '#e65100' : '#2e7d32'} />
+            {report.errors.length > 0 && <Stat label="Format errors" value={report.errors.length} color="#c62828" />}
           </div>
 
           {/* ghost list */}
           {report.ghosts.length > 0 && (
             <div style={{ padding: '10px 16px', background: '#fff8e1', borderBottom: '1px solid var(--wpw-border)' }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#e65100', marginBottom: 6 }}>
-                Артикулы не найдены в каталоге WPW:
+                SKUs not found in WPW catalog:
               </div>
               <div style={{ fontSize: 12, fontFamily: 'monospace', color: '#6d4c00', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {report.ghosts.map(g => (
@@ -135,10 +135,10 @@ function ImportPanel({ file, setFile, report, setReport, onImported }) {
           {/* action buttons */}
           <div style={{ padding: '12px 16px', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button className="btn btn-primary" onClick={() => handleExecute(true)} disabled={loading || report.valid.length === 0}>
-              Импортировать без призраков ({report.valid.length})
+              Import without ghosts ({report.valid.length})
             </button>
             <button className="btn btn-secondary" onClick={() => handleExecute(false)} disabled={loading}>
-              Импортировать всё ({report.total - report.errors.length})
+              Import all ({report.total - report.errors.length})
             </button>
           </div>
         </div>
@@ -182,7 +182,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
 
   async function saveNew() {
     if (!newRow.wpwSku.trim() || !newRow.dealerSku.trim()) {
-      toast('WPW SKU и Dealer SKU обязательны', 'warning'); return;
+      toast('WPW SKU and Dealer SKU are required', 'warning'); return;
     }
     setSaving(true);
     try {
@@ -198,7 +198,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
         {!adding && (
           <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={() => setAdding(true)}>
-            + Добавить строку
+            + Add Row
           </button>
         )}
       </div>
@@ -206,7 +206,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #e8edf5' }}>
-              {['WPW SKU', 'Dealer SKU', 'Бренд', ''].map(h => <th key={h} style={thS}>{h}</th>)}
+              {['WPW SKU', 'Dealer SKU', 'Brand', ''].map(h => <th key={h} style={thS}>{h}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -214,10 +214,10 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
               <tr style={{ background: '#f0f7ff' }}>
                 <td style={tdS}><input className="input" style={{ width: '100%' }} placeholder="WPW-001" value={newRow.wpwSku} onChange={e => setNewRow(f => ({ ...f, wpwSku: e.target.value }))} autoFocus /></td>
                 <td style={tdS}><input className="input" style={{ width: '100%' }} placeholder="MY-SKU" value={newRow.dealerSku} onChange={e => setNewRow(f => ({ ...f, dealerSku: e.target.value }))} /></td>
-                <td style={tdS}><input className="input" style={{ width: '100%' }} placeholder="Бренд (необязательно)" value={newRow.dealerBrand} onChange={e => setNewRow(f => ({ ...f, dealerBrand: e.target.value }))} /></td>
+                <td style={tdS}><input className="input" style={{ width: '100%' }} placeholder="Brand (optional)" value={newRow.dealerBrand} onChange={e => setNewRow(f => ({ ...f, dealerBrand: e.target.value }))} /></td>
                 <td style={{ ...tdS, whiteSpace: 'nowrap' }}>
-                  <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={saveNew} disabled={saving}>Сохранить</button>
-                  <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', marginLeft: 6 }} onClick={() => setAdding(false)}>Отмена</button>
+                  <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={saveNew} disabled={saving}>Save</button>
+                  <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', marginLeft: 6 }} onClick={() => setAdding(false)}>Cancel</button>
                 </td>
               </tr>
             )}
@@ -229,8 +229,8 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
                     <td style={tdS}><input className="input" style={{ width: '100%' }} value={editForm.dealerSku} onChange={e => setEditForm(f => ({ ...f, dealerSku: e.target.value }))} autoFocus /></td>
                     <td style={tdS}><input className="input" style={{ width: '100%' }} value={editForm.dealerBrand} onChange={e => setEditForm(f => ({ ...f, dealerBrand: e.target.value }))} /></td>
                     <td style={{ ...tdS, whiteSpace: 'nowrap' }}>
-                      <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => saveEdit(row.wpwSku)} disabled={saving}>Сохранить</button>
-                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', marginLeft: 6 }} onClick={() => setEditKey(null)}>Отмена</button>
+                      <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => saveEdit(row.wpwSku)} disabled={saving}>Save</button>
+                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', marginLeft: 6 }} onClick={() => setEditKey(null)}>Cancel</button>
                     </td>
                   </>
                 ) : (
@@ -240,14 +240,14 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
                     <td style={{ ...tdS, whiteSpace: 'nowrap' }}>
                       {confirmDelete === row.wpwSku ? (
                         <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <span style={{ fontSize: 12, color: '#c62828' }}>Удалить?</span>
-                          <button className="btn btn-primary" style={{ fontSize: 12, padding: '3px 8px', background: '#c62828', borderColor: '#c62828' }} onClick={() => { onDelete(row.wpwSku); setConfirmDelete(null); }}>Да</button>
-                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '3px 8px' }} onClick={() => setConfirmDelete(null)}>Нет</button>
+                          <span style={{ fontSize: 12, color: '#c62828' }}>Delete?</span>
+                          <button className="btn btn-primary" style={{ fontSize: 12, padding: '3px 8px', background: '#c62828', borderColor: '#c62828' }} onClick={() => { onDelete(row.wpwSku); setConfirmDelete(null); }}>Yes</button>
+                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '3px 8px' }} onClick={() => setConfirmDelete(null)}>No</button>
                         </span>
                       ) : (
                         <span style={{ display: 'flex', gap: 6 }}>
-                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => startEdit(row)} disabled={editKey !== null}>Изменить</button>
-                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', color: '#c62828' }} onClick={() => setConfirmDelete(row.wpwSku)} disabled={editKey !== null}>Удалить</button>
+                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => startEdit(row)} disabled={editKey !== null}>Edit</button>
+                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', color: '#c62828' }} onClick={() => setConfirmDelete(row.wpwSku)} disabled={editKey !== null}>Delete</button>
                         </span>
                       )}
                     </td>
@@ -256,7 +256,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
               </tr>
             ))}
             {rows.length === 0 && !adding && (
-              <tr><td colSpan={4} style={{ padding: '32px 12px', textAlign: 'center', color: 'var(--wpw-mid-gray)', fontSize: 13 }}>Маппинги не добавлены</td></tr>
+              <tr><td colSpan={4} style={{ padding: '32px 12px', textAlign: 'center', color: 'var(--wpw-mid-gray)', fontSize: 13 }}>No mappings added</td></tr>
             )}
           </tbody>
         </table>
@@ -293,7 +293,7 @@ export default function DealerImportPage() {
     try {
       await apiDelete(`/dealer/sku-mapping/${encodeURIComponent(wpwSku)}`);
       setRows(prev => prev.filter(r => r.wpwSku !== wpwSku));
-      toast('Строка удалена', 'success');
+      toast('Row deleted', 'success');
     } catch (e) { toast(e.message, 'error'); }
   }
 
@@ -301,27 +301,27 @@ export default function DealerImportPage() {
     <div>
       <div className="page-header">
         <h1 className="page-title">Import</h1>
-        <p className="page-subtitle">Управление соответствием артикулов</p>
+        <p className="page-subtitle">SKU mapping management</p>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         <button className={`btn ${tab === 'mapping' ? 'btn-primary' : ''}`} onClick={() => setTab('mapping')}>SKU Mapping</button>
-        <button className={`btn ${tab === 'import' ? 'btn-primary' : ''}`} onClick={() => setTab('import')}>Импорт Excel</button>
+        <button className={`btn ${tab === 'import' ? 'btn-primary' : ''}`} onClick={() => setTab('import')}>Excel Import</button>
       </div>
 
       {tab === 'mapping' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontSize: 13, color: 'var(--wpw-mid-gray)' }}>
-              {rows.length} {rows.length === 1 ? 'запись' : rows.length < 5 ? 'записи' : 'записей'}
+              {rows.length} {rows.length === 1 ? 'record' : 'records'}
             </div>
             <button className="btn btn-secondary" style={{ fontSize: 12 }}
               onClick={() => downloadFile('/dealer/sku-mapping/export', 'my-sku-mapping.xlsx')}>
-              ⬇ Экспорт Excel
+              ⬇ Export Excel
             </button>
           </div>
           {loading
-            ? <div style={{ textAlign: 'center', padding: 40, color: 'var(--wpw-mid-gray)' }}><div className="spinner" style={{ margin: '0 auto 12px' }} />Загрузка…</div>
+            ? <div style={{ textAlign: 'center', padding: 40, color: 'var(--wpw-mid-gray)' }}><div className="spinner" style={{ margin: '0 auto 12px' }} />Loading…</div>
             : <SkuMappingTable rows={rows} onUpsert={handleUpsert} onDelete={handleDelete} />
           }
         </div>

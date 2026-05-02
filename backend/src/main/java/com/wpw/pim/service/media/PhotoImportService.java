@@ -435,7 +435,7 @@ public class PhotoImportService {
                     } catch (Exception e) {
                         errors++;
                         errorDetails.add(ef.originalName() + ": " + e.getMessage());
-                        log.error("Ошибка конвертации {}: {}", ef.originalName(), e.getMessage());
+                        log.error("Conversion error {}: {}", ef.originalName(), e.getMessage());
                     }
                 }
             }
@@ -487,7 +487,7 @@ public class PhotoImportService {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IOException("Конвертация прервана", e);
+            throw new IOException("Conversion interrupted", e);
         }
     }
 

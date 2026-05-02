@@ -18,100 +18,100 @@ import java.util.UUID;
 @RequestMapping("/api/v1/admin/catalog")
 @PreAuthorize("hasAuthority('MANAGE_CATALOG')")
 @RequiredArgsConstructor
-@Tag(name = "Admin: Catalog", description = "Управление структурой каталога: секции, категории, группы товаров, изображения узлов. Требует MANAGE_CATALOG.")
+@Tag(name = "Admin: Catalog", description = "Catalog structure management: sections, categories, product groups, node images. Requires MANAGE_CATALOG.")
 public class AdminCatalogController {
 
     private final CatalogService catalogService;
     private final CatalogImageService catalogImageService;
 
     // --- Sections ---
-    @Operation(summary = "Создать секцию")
+    @Operation(summary = "Create section")
     @PostMapping("/sections")
     public SectionDto createSection(@RequestBody CreateSectionRequest req,
                                     @RequestParam(defaultValue = "en") String locale) {
         return catalogService.createSection(req, locale);
     }
 
-    @Operation(summary = "Обновить секцию")
+    @Operation(summary = "Update section")
     @PutMapping("/sections/{id}")
     public SectionDto updateSection(@PathVariable UUID id, @RequestBody UpdateSectionRequest req,
                                     @RequestParam(defaultValue = "en") String locale) {
         return catalogService.updateSection(id, req, locale);
     }
 
-    @Operation(summary = "Удалить секцию", description = "cascade=true — каскадное удаление всех дочерних элементов.")
+    @Operation(summary = "Delete section", description = "cascade=true — cascades deletion of all child elements.")
     @DeleteMapping("/sections/{id}")
     public void deleteSection(@PathVariable UUID id, @RequestParam(defaultValue = "false") boolean cascade) {
         catalogService.deleteSection(id, cascade);
     }
 
-    @Operation(summary = "Переупорядочить секции")
+    @Operation(summary = "Reorder sections")
     @PutMapping("/sections/reorder")
     public void reorderSections(@RequestBody ReorderRequest req) {
         catalogService.reorderSections(req);
     }
 
-    @Operation(summary = "Количество дочерних элементов секции", description = "Возвращает количество категорий и групп товаров внутри секции.")
+    @Operation(summary = "Section child count", description = "Returns the number of categories and product groups within the section.")
     @GetMapping("/sections/{id}/children-count")
     public ChildrenCountResponse sectionChildrenCount(@PathVariable UUID id) {
         return catalogService.getChildrenCount(id);
     }
 
     // --- Categories ---
-    @Operation(summary = "Создать категорию")
+    @Operation(summary = "Create category")
     @PostMapping("/categories")
     public CategoryDto createCategory(@RequestBody CreateCategoryRequest req,
                                       @RequestParam(defaultValue = "en") String locale) {
         return catalogService.createCategory(req, locale);
     }
 
-    @Operation(summary = "Обновить категорию")
+    @Operation(summary = "Update category")
     @PutMapping("/categories/{id}")
     public CategoryDto updateCategory(@PathVariable UUID id, @RequestBody UpdateCategoryRequest req,
                                       @RequestParam(defaultValue = "en") String locale) {
         return catalogService.updateCategory(id, req, locale);
     }
 
-    @Operation(summary = "Удалить категорию", description = "cascade=true — каскадное удаление групп товаров.")
+    @Operation(summary = "Delete category", description = "cascade=true — cascades deletion of product groups.")
     @DeleteMapping("/categories/{id}")
     public void deleteCategory(@PathVariable UUID id, @RequestParam(defaultValue = "false") boolean cascade) {
         catalogService.deleteCategory(id, cascade);
     }
 
-    @Operation(summary = "Переупорядочить категории")
+    @Operation(summary = "Reorder categories")
     @PutMapping("/categories/reorder")
     public void reorderCategories(@RequestBody ReorderRequest req) {
         catalogService.reorderCategories(req);
     }
 
-    @Operation(summary = "Количество групп товаров в категории")
+    @Operation(summary = "Product group count in category")
     @GetMapping("/categories/{id}/children-count")
     public Map<String, Long> categoryChildrenCount(@PathVariable UUID id) {
         return Map.of("productGroups", catalogService.getCategoryChildrenCount(id));
     }
 
     // --- Product Groups ---
-    @Operation(summary = "Создать группу товаров")
+    @Operation(summary = "Create product group")
     @PostMapping("/product-groups")
     public ProductGroupDto createProductGroup(@RequestBody CreateProductGroupRequest req,
                                               @RequestParam(defaultValue = "en") String locale) {
         return catalogService.createProductGroup(req, locale);
     }
 
-    @Operation(summary = "Обновить группу товаров")
+    @Operation(summary = "Update product group")
     @PutMapping("/product-groups/{id}")
     public ProductGroupDto updateProductGroup(@PathVariable UUID id, @RequestBody UpdateProductGroupRequest req,
                                               @RequestParam(defaultValue = "en") String locale) {
         return catalogService.updateProductGroup(id, req, locale);
     }
 
-    @Operation(summary = "Удалить группу товаров")
+    @Operation(summary = "Delete product group")
     @DeleteMapping("/product-groups/{id}")
     public void deleteProductGroup(@PathVariable UUID id) {
         catalogService.deleteProductGroup(id);
     }
 
-    @Operation(summary = "Переупорядочить группы товаров")
+    @Operation(summary = "Reorder product groups")
     @PutMapping("/product-groups/reorder")
     public void reorderProductGroups(@RequestBody ReorderRequest req) {
         catalogService.reorderProductGroups(req);
@@ -119,7 +119,7 @@ public class AdminCatalogController {
 
     // --- Node images ---
 
-    @Operation(summary = "Загрузить изображение узла каталога", description = "nodeType: sections, categories, product-groups. Конвертирует в WebP.")
+    @Operation(summary = "Upload catalog node image", description = "nodeType: sections, categories, product-groups. Converts to WebP.")
     @PostMapping("/{nodeType}/{id}/image")
     public Map<String, String> uploadImage(
         @PathVariable String nodeType,
@@ -130,7 +130,7 @@ public class AdminCatalogController {
         return Map.of("imageUrl", url);
     }
 
-    @Operation(summary = "Удалить изображение узла каталога")
+    @Operation(summary = "Delete catalog node image")
     @DeleteMapping("/{nodeType}/{id}/image")
     public ResponseEntity<Void> deleteImage(
         @PathVariable String nodeType,

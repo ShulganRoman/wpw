@@ -85,7 +85,7 @@ class AdminDealerServiceTest {
     class ListAndGet {
 
         @Test
-        @DisplayName("listAll возвращает всех дилеров с контактами")
+        @DisplayName("listAll returns all dealers with contacts")
         void listAll() {
             UUID id = UUID.randomUUID();
             Dealer d = new Dealer();
@@ -102,7 +102,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("getById возвращает DTO с username и priceListId")
+        @DisplayName("getById returns DTO with username and priceListId")
         void getById() {
             UUID id = UUID.randomUUID();
             Dealer d = new Dealer();
@@ -123,7 +123,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("getById -- 404 если не найден")
+        @DisplayName("getById -- 404 if not found")
         void getById_notFound() {
             UUID id = UUID.randomUUID();
             when(dealerRepo.findById(id)).thenReturn(Optional.empty());
@@ -137,7 +137,7 @@ class AdminDealerServiceTest {
     class Create {
 
         @Test
-        @DisplayName("успешно создаёт дилера и юзера")
+        @DisplayName("successfully creates dealer and user")
         void createsSuccessfully() {
             DealerSaveRequest req = baseRequest();
             when(userRepo.existsByUsername("deal-01")).thenReturn(false);
@@ -153,7 +153,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("создание с контактами")
+        @DisplayName("create with contacts")
         void createsWithContacts() {
             DealerSaveRequest req = requestWithContacts();
             when(userRepo.existsByUsername(any())).thenReturn(false);
@@ -167,7 +167,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("CONFLICT если username уже занят")
+        @DisplayName("CONFLICT if username is already taken")
         void conflictUsername() {
             DealerSaveRequest req = baseRequest();
             when(userRepo.existsByUsername(any())).thenReturn(true);
@@ -177,7 +177,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("INTERNAL_SERVER_ERROR если роль 'dealer' не найдена")
+        @DisplayName("INTERNAL_SERVER_ERROR if role 'dealer' not found")
         void roleNotFound() {
             DealerSaveRequest req = baseRequest();
             when(userRepo.existsByUsername(any())).thenReturn(false);
@@ -188,7 +188,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("слаг username делается из dealerCode (нижний регистр + чистка)")
+        @DisplayName("username slug is derived from dealerCode (lowercase + cleanup)")
         void usernameSlug() {
             DealerSaveRequest req = new DealerSaveRequest(
                 "Deal#01@US", "Co", "US",
@@ -210,7 +210,7 @@ class AdminDealerServiceTest {
     class Update {
 
         @Test
-        @DisplayName("обновляет дилера и контакты")
+        @DisplayName("updates dealer and contacts")
         void updates() {
             UUID id = UUID.randomUUID();
             Dealer existing = new Dealer();
@@ -231,7 +231,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("обновление без user'а пропускает sync")
+        @DisplayName("update without user skips sync")
         void updateNoUser() {
             UUID id = UUID.randomUUID();
             Dealer existing = new Dealer();
@@ -245,7 +245,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("404 если дилер не найден")
+        @DisplayName("404 if dealer not found")
         void notFound() {
             UUID id = UUID.randomUUID();
             when(dealerRepo.findById(id)).thenReturn(Optional.empty());
@@ -259,7 +259,7 @@ class AdminDealerServiceTest {
     class Delete {
 
         @Test
-        @DisplayName("удаляет дилера и связанного user'а")
+        @DisplayName("deletes dealer and associated user")
         void deletes() {
             UUID id = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -276,7 +276,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("удаление без user'а — без вызова userRepo.delete")
+        @DisplayName("delete without user — no userRepo.delete call")
         void deleteNoUser() {
             UUID id = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -297,7 +297,7 @@ class AdminDealerServiceTest {
     class ResetPassword {
 
         @Test
-        @DisplayName("сбрасывает и возвращает новый пароль")
+        @DisplayName("resets and returns new password")
         void resets() {
             UUID id = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -317,7 +317,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("400 если у дилера нет user'а")
+        @DisplayName("400 if dealer has no user")
         void noUser() {
             UUID id = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -335,7 +335,7 @@ class AdminDealerServiceTest {
     class Contacts {
 
         @Test
-        @DisplayName("addContact добавляет контакт")
+        @DisplayName("addContact adds contact")
         void add() {
             UUID id = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -351,7 +351,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("updateContact обновляет контакт")
+        @DisplayName("updateContact updates contact")
         void update() {
             UUID dealerId = UUID.randomUUID();
             UUID contactId = UUID.randomUUID();
@@ -372,7 +372,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("updateContact -- 404 если dealerId не совпадает")
+        @DisplayName("updateContact -- 404 if dealerId does not match")
         void updateMismatchedDealer() {
             UUID dealerId = UUID.randomUUID();
             UUID contactId = UUID.randomUUID();
@@ -390,7 +390,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("deleteContact удаляет контакт")
+        @DisplayName("deleteContact deletes contact")
         void delete() {
             UUID dealerId = UUID.randomUUID();
             UUID contactId = UUID.randomUUID();
@@ -408,7 +408,7 @@ class AdminDealerServiceTest {
         }
 
         @Test
-        @DisplayName("deleteContact -- 404 если контакт не существует")
+        @DisplayName("deleteContact -- 404 if contact does not exist")
         void deleteNotFound() {
             UUID dealerId = UUID.randomUUID();
             UUID contactId = UUID.randomUUID();

@@ -161,10 +161,10 @@ function exportCSV(items, currency, notes) {
 }
 
 const DEALER_STATUS_LABELS = {
-  SUBMITTED:     { label: 'Отправлено',  color: '#1565c0', bg: '#e3f2fd' },
-  IN_PROCESSING: { label: 'В обработке', color: '#e65100', bg: '#fff3e0' },
-  CONFIRMED:     { label: 'Подтверждён', color: '#2e7d32', bg: '#e8f5e9' },
-  REJECTED:      { label: 'Отклонён',    color: '#c62828', bg: '#ffebee' },
+  SUBMITTED:     { label: 'Submitted',    color: '#1565c0', bg: '#e3f2fd' },
+  IN_PROCESSING: { label: 'In Processing', color: '#e65100', bg: '#fff3e0' },
+  CONFIRMED:     { label: 'Confirmed',    color: '#2e7d32', bg: '#e8f5e9' },
+  REJECTED:      { label: 'Rejected',     color: '#c62828', bg: '#ffebee' },
 };
 
 function DealerStatusBadge({ status }) {
@@ -183,7 +183,7 @@ function OrderDetailDrawer({ orderId, onClose }) {
   useEffect(() => {
     getDealerOrder(orderId)
       .then(setOrder)
-      .catch(() => toast('Не удалось загрузить заказ', 'error'));
+      .catch(() => toast('Failed to load order', 'error'));
   }, [orderId]);
 
   return (
@@ -191,26 +191,26 @@ function OrderDetailDrawer({ orderId, onClose }) {
       <div style={{ background: '#fff', borderRadius: 8, padding: 24, maxWidth: 680, width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>
-            Заказ #{order?.id?.slice(0, 8).toUpperCase() || '...'}
+            Order #{order?.id?.slice(0, 8).toUpperCase() || '...'}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999' }}>×</button>
         </div>
-        {!order && <div style={{ color: '#888', textAlign: 'center', padding: 40 }}>Загрузка...</div>}
+        {!order && <div style={{ color: '#888', textAlign: 'center', padding: 40 }}>Loading...</div>}
         {order && (
           <>
             <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 13 }}>Статус: <DealerStatusBadge status={order.status} /></div>
-              <div style={{ fontSize: 13 }}>Сумма: <strong>{Number(order.total).toFixed(2)} {order.currency}</strong></div>
+              <div style={{ fontSize: 13 }}>Status: <DealerStatusBadge status={order.status} /></div>
+              <div style={{ fontSize: 13 }}>Total: <strong>{Number(order.total).toFixed(2)} {order.currency}</strong></div>
               <div style={{ fontSize: 13, color: '#888' }}>{new Date(order.submittedAt).toLocaleString('ru-RU')}</div>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--wpw-border)' }}>
-                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>Артикул</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>Название</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Кол-во</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Цена</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Итого</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>SKU</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>Name</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Qty</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Price</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -226,7 +226,7 @@ function OrderDetailDrawer({ orderId, onClose }) {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>Итого:</td>
+                  <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>Total:</td>
                   <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>{Number(order.total).toFixed(2)} {order.currency}</td>
                 </tr>
               </tfoot>
@@ -247,14 +247,14 @@ function OrdersSection() {
   useEffect(() => {
     getDealerOrders()
       .then(setOrders)
-      .catch(() => toast('Не удалось загрузить историю заказов', 'error'))
+      .catch(() => toast('Failed to load order history', 'error'))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ padding: 20, color: '#888', fontSize: 13 }}>Загрузка...</div>;
+  if (loading) return <div style={{ padding: 20, color: '#888', fontSize: 13 }}>Loading...</div>;
   if (!orders || orders.length === 0) return (
     <div style={{ padding: '40px 0', textAlign: 'center', color: '#888', fontSize: 14 }}>
-      У вас ещё нет заказов
+      You have no orders yet
     </div>
   );
 
@@ -265,10 +265,10 @@ function OrdersSection() {
           <thead>
             <tr>
               <th>#</th>
-              <th>Дата</th>
-              <th>Статус</th>
-              <th style={{ textAlign: 'right' }}>Позиций</th>
-              <th style={{ textAlign: 'right' }}>Сумма</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th style={{ textAlign: 'right' }}>Items</th>
+              <th style={{ textAlign: 'right' }}>Total</th>
               <th></th>
             </tr>
           </thead>
@@ -286,7 +286,7 @@ function OrdersSection() {
                 </td>
                 <td>
                   <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setSelectedId(o.id)}>
-                    Открыть
+                    Open
                   </button>
                 </td>
               </tr>
@@ -342,7 +342,7 @@ export default function DealerPage() {
     setCheckingOut(true);
     try {
       const res = await checkout();
-      toast(`Заказ оформлен: #${res.orderId?.toString().slice(0, 8).toUpperCase()}`, 'success');
+      toast(`Order submitted: #${res.orderId?.toString().slice(0, 8).toUpperCase()}`, 'success');
       const fresh = await getCart();
       setCartData(fresh);
       setPage(1);
@@ -396,10 +396,10 @@ export default function DealerPage() {
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <button className={`btn ${activeTab === 'cart' ? 'btn-primary' : ''}`} onClick={() => setActiveTab('cart')}>
-          Корзина {allItems.length > 0 && `(${allItems.length})`}
+          Cart {allItems.length > 0 && `(${allItems.length})`}
         </button>
         <button className={`btn ${activeTab === 'orders' ? 'btn-primary' : ''}`} onClick={() => setActiveTab('orders')}>
-          Мои заказы
+          My Orders
         </button>
       </div>
 

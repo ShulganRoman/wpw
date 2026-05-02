@@ -58,7 +58,7 @@ class AdminStockPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("GET /currencies -- возвращает активные валюты")
+    @DisplayName("GET /currencies -- returns active currencies")
     void getCurrencies() throws Exception {
         when(currencyRepository.findByIsActiveTrueOrderByCode()).thenReturn(List.of(usd()));
 
@@ -69,7 +69,7 @@ class AdminStockPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("GET / -- возвращает позиции прайс-листа")
+    @DisplayName("GET / -- returns price list entries")
     void list() throws Exception {
         PriceListItemDto dto = new PriceListItemDto("TOOL-1", 1, BigDecimal.valueOf(10));
         when(stockPriceService.getItems()).thenReturn(List.of(dto));
@@ -82,7 +82,7 @@ class AdminStockPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("PUT / -- создаёт/обновляет позицию")
+    @DisplayName("PUT / -- creates/updates entry")
     void upsert() throws Exception {
         PriceListItemRequest req = new PriceListItemRequest("TOOL-1", 1, BigDecimal.valueOf(20));
         PriceListItemDto dto = new PriceListItemDto("TOOL-1", 1, BigDecimal.valueOf(20));
@@ -98,7 +98,7 @@ class AdminStockPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("DELETE /{toolNo}/{minQty} -- удаляет позицию (204)")
+    @DisplayName("DELETE /{toolNo}/{minQty} -- deletes entry (204)")
     void delete_returns204() throws Exception {
         mockMvc.perform(delete("/api/v1/admin/price/stock/TOOL-1/1"))
             .andExpect(status().isNoContent());
@@ -108,7 +108,7 @@ class AdminStockPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("POST /import -- импортирует Excel и возвращает отчёт")
+    @DisplayName("POST /import -- imports Excel and returns report")
     void importExcel() throws Exception {
         when(stockPriceService.importExcel(any())).thenReturn(new PriceImportResult(3, 1, List.of("e")));
 
@@ -124,7 +124,7 @@ class AdminStockPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("GET /export -- возвращает Excel с правильным Content-Disposition")
+    @DisplayName("GET /export -- returns Excel with correct Content-Disposition")
     void export() throws Exception {
         when(stockPriceService.export()).thenReturn(new byte[]{0x50, 0x4b});
 
@@ -136,7 +136,7 @@ class AdminStockPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("GET /template -- возвращает Excel шаблон")
+    @DisplayName("GET /template -- returns Excel template")
     void template() throws Exception {
         when(stockPriceService.template()).thenReturn(new byte[]{0x50, 0x4b});
 
@@ -147,7 +147,7 @@ class AdminStockPriceControllerTest {
     }
 
     @Test
-    @DisplayName("без аутентификации возвращает 4xx")
+    @DisplayName("without authentication returns 4xx")
     void unauthenticated_returns4xx() throws Exception {
         mockMvc.perform(get("/api/v1/admin/price/stock"))
             .andExpect(status().is4xxClientError());
@@ -155,7 +155,7 @@ class AdminStockPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("без MANAGE_PRICES возвращает 403")
+    @DisplayName("without MANAGE_PRICES returns 403")
     void wrongAuthority_returns403() throws Exception {
         mockMvc.perform(get("/api/v1/admin/price/stock"))
             .andExpect(status().isForbidden());

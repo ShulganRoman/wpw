@@ -52,7 +52,7 @@ class AdminSkuMappingControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("GET / -- список маппингов")
+    @DisplayName("GET / -- list mappings")
     void list() throws Exception {
         UUID dealerId = UUID.randomUUID();
         when(service.list(dealerId)).thenReturn(List.of(
@@ -65,7 +65,7 @@ class AdminSkuMappingControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("PUT / -- upsert маппинга")
+    @DisplayName("PUT / -- upsert mapping")
     void upsert() throws Exception {
         UUID dealerId = UUID.randomUUID();
         SkuMappingDto dto = new SkuMappingDto("WPW-1", "D-1", "BX");
@@ -80,7 +80,7 @@ class AdminSkuMappingControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("DELETE /{wpwSku} -- удаляет, 204")
+    @DisplayName("DELETE /{wpwSku} -- deletes, 204")
     void delete204() throws Exception {
         UUID dealerId = UUID.randomUUID();
 
@@ -92,7 +92,7 @@ class AdminSkuMappingControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("POST /validate -- валидация без записи")
+    @DisplayName("POST /validate -- validation without writing")
     void validate() throws Exception {
         UUID dealerId = UUID.randomUUID();
         SkuMappingService.ValidationReport report = new SkuMappingService.ValidationReport(
@@ -108,7 +108,7 @@ class AdminSkuMappingControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("POST /execute -- импорт SKU")
+    @DisplayName("POST /execute -- SKU import")
     void execute() throws Exception {
         UUID dealerId = UUID.randomUUID();
         SkuMappingService.SkuMappingImportResult result = new SkuMappingService.SkuMappingImportResult(
@@ -138,7 +138,7 @@ class AdminSkuMappingControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("GET /template -- xlsx шаблон")
+    @DisplayName("GET /template -- xlsx template")
     void template() throws Exception {
         when(service.template()).thenReturn(new byte[]{0x50, 0x4b});
 
@@ -150,7 +150,7 @@ class AdminSkuMappingControllerTest {
     }
 
     @Test
-    @DisplayName("без авторизации — 4xx")
+    @DisplayName("without authorization — 4xx")
     void unauthenticated() throws Exception {
         UUID dealerId = UUID.randomUUID();
         mockMvc.perform(get("/api/v1/admin/dealers/" + dealerId + "/sku-mapping"))

@@ -81,7 +81,7 @@ public class ExcelImportV4Service {
             var sheet = wb.getSheet(props.getSheetName());
             if (sheet == null) {
                 throw new IllegalArgumentException(
-                    "Лист \u00ab" + props.getSheetName() + "\u00bb не найден");
+                    "Sheet \u00ab" + props.getSheetName() + "\u00bb not found");
             }
 
             var evaluator = wb.getCreationHelper().createFormulaEvaluator();
@@ -119,7 +119,7 @@ public class ExcelImportV4Service {
             var sheet = wb.getSheet(props.getSheetName());
             if (sheet == null) {
                 throw new IllegalArgumentException(
-                    "Лист \u00ab" + props.getSheetName() + "\u00bb не найден");
+                    "Sheet \u00ab" + props.getSheetName() + "\u00bb not found");
             }
 
             var evaluator = wb.getCreationHelper().createFormulaEvaluator();
@@ -141,7 +141,7 @@ public class ExcelImportV4Service {
                         findOrCreateGroup(
                             row.getGroupName(), cat, groupCache, acc);
                     } catch (Exception e) {
-                        acc.errors.add("Каталог (строка " + row.getRowNum() + "): " + e.getMessage());
+                        acc.errors.add("Catalog (row " + row.getRowNum() + "): " + e.getMessage());
                     }
                 }
             }
@@ -155,7 +155,7 @@ public class ExcelImportV4Service {
                 try {
                     importProduct(row, categoryCache, groupCache, acc);
                 } catch (Exception e) {
-                    acc.errors.add("Товар " + row.getToolNo() + " (строка " + row.getRowNum() + "): "
+                    acc.errors.add("Product " + row.getToolNo() + " (row " + row.getRowNum() + "): "
                         + e.getMessage());
                     acc.skipped++;
                 }

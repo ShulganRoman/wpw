@@ -62,7 +62,7 @@ class AdminDealerControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("GET /api/v1/admin/dealers -- список дилеров")
+    @DisplayName("GET /api/v1/admin/dealers -- list dealers")
     void list() throws Exception {
         when(service.listAll()).thenReturn(List.of(sampleDealer(UUID.randomUUID())));
 
@@ -73,7 +73,7 @@ class AdminDealerControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("GET /api/v1/admin/dealers/{id} -- получить дилера")
+    @DisplayName("GET /api/v1/admin/dealers/{id} -- get dealer")
     void getById() throws Exception {
         UUID id = UUID.randomUUID();
         when(service.getById(id)).thenReturn(sampleDealer(id));
@@ -85,7 +85,7 @@ class AdminDealerControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("POST /api/v1/admin/dealers -- создаёт дилера, возвращает 201")
+    @DisplayName("POST /api/v1/admin/dealers -- creates dealer, returns 201")
     void create() throws Exception {
         UUID id = UUID.randomUUID();
         DealerCreatedDto result = new DealerCreatedDto(sampleDealer(id), "user1", "pass123");
@@ -101,7 +101,7 @@ class AdminDealerControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("PUT /api/v1/admin/dealers/{id} -- обновляет дилера")
+    @DisplayName("PUT /api/v1/admin/dealers/{id} -- updates dealer")
     void update() throws Exception {
         UUID id = UUID.randomUUID();
         when(service.update(eq(id), any(DealerSaveRequest.class))).thenReturn(sampleDealer(id));
@@ -127,7 +127,7 @@ class AdminDealerControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("POST /api/v1/admin/dealers/{id}/reset-password -- сбрасывает пароль")
+    @DisplayName("POST /api/v1/admin/dealers/{id}/reset-password -- resets password")
     void resetPassword() throws Exception {
         UUID id = UUID.randomUUID();
         when(service.resetPassword(id)).thenReturn(new PasswordResetDto("user1", "newpass"));
@@ -140,7 +140,7 @@ class AdminDealerControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("POST /api/v1/admin/dealers/{id}/contacts -- добавляет контакт, 201")
+    @DisplayName("POST /api/v1/admin/dealers/{id}/contacts -- adds contact, 201")
     void addContact() throws Exception {
         UUID id = UUID.randomUUID();
         UUID contactId = UUID.randomUUID();
@@ -158,7 +158,7 @@ class AdminDealerControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("PUT /api/v1/admin/dealers/{id}/contacts/{contactId} -- обновляет контакт")
+    @DisplayName("PUT /api/v1/admin/dealers/{id}/contacts/{contactId} -- updates contact")
     void updateContact() throws Exception {
         UUID id = UUID.randomUUID();
         UUID contactId = UUID.randomUUID();
@@ -189,7 +189,7 @@ class AdminDealerControllerTest {
     }
 
     @Test
-    @DisplayName("без аутентификации возвращает 4xx")
+    @DisplayName("without authentication returns 4xx")
     void unauthenticated() throws Exception {
         mockMvc.perform(get("/api/v1/admin/dealers"))
             .andExpect(status().is4xxClientError());
@@ -197,7 +197,7 @@ class AdminDealerControllerTest {
 
     @Test
     @WithMockUser(authorities = "OTHER")
-    @DisplayName("без MANAGE_DEALERS возвращает 403")
+    @DisplayName("without MANAGE_DEALERS returns 403")
     void wrongAuthority() throws Exception {
         mockMvc.perform(get("/api/v1/admin/dealers"))
             .andExpect(status().isForbidden());

@@ -73,7 +73,7 @@ class DealerSkuResolverServiceTest {
     class ResolveBatch {
 
         @Test
-        @DisplayName("возвращает маппинг для дилера по списку toolNos")
+        @DisplayName("returns mapping for dealer by toolNos list")
         void returnsMappingForDealer() {
             Authentication auth = authAsDealer(dealerId);
             List<DealerSkuMapping> mappings = List.of(
@@ -91,7 +91,7 @@ class DealerSkuResolverServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает пустую карту для администратора")
+        @DisplayName("returns empty map for administrator")
         void returnsEmptyForAdmin() {
             Map<String, String> result = service.resolveBatch(List.of("WPW-001"), authAsAdmin());
             assertThat(result).isEmpty();
@@ -99,14 +99,14 @@ class DealerSkuResolverServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает пустую карту при null auth")
+        @DisplayName("returns empty map when auth is null")
         void returnsEmptyForNullAuth() {
             Map<String, String> result = service.resolveBatch(List.of("WPW-001"), null);
             assertThat(result).isEmpty();
         }
 
         @Test
-        @DisplayName("возвращает пустую карту при пустом списке toolNos")
+        @DisplayName("returns empty map with empty toolNos list")
         void returnsEmptyForEmptyToolNos() {
             Map<String, String> result = service.resolveBatch(List.of(), authAsDealer(dealerId));
             assertThat(result).isEmpty();
@@ -114,7 +114,7 @@ class DealerSkuResolverServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает пустую карту если маппингов нет")
+        @DisplayName("returns empty map if no mappings")
         void returnsEmptyWhenNoMappings() {
             Authentication auth = authAsDealer(dealerId);
             when(mappingRepo.findByDealerIdAndWpwSkuIn(eq(dealerId), any(Collection.class)))
@@ -130,7 +130,7 @@ class DealerSkuResolverServiceTest {
     class ResolveSingle {
 
         @Test
-        @DisplayName("возвращает dealerSku если маппинг существует")
+        @DisplayName("returns dealerSku if mapping exists")
         void returnsDealerSkuWhenMappingExists() {
             Authentication auth = authAsDealer(dealerId);
             DealerSkuMappingId id = new DealerSkuMappingId(dealerId, "WPW-001");
@@ -142,7 +142,7 @@ class DealerSkuResolverServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает null если маппинга нет")
+        @DisplayName("returns null if no mapping")
         void returnsNullWhenNoMapping() {
             Authentication auth = authAsDealer(dealerId);
             when(mappingRepo.findById(any())).thenReturn(Optional.empty());
@@ -152,7 +152,7 @@ class DealerSkuResolverServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает null для администратора")
+        @DisplayName("returns null for administrator")
         void returnsNullForAdmin() {
             String result = service.resolve("WPW-001", authAsAdmin());
             assertThat(result).isNull();
@@ -160,7 +160,7 @@ class DealerSkuResolverServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает null при null auth")
+        @DisplayName("returns null when auth is null")
         void returnsNullForNullAuth() {
             String result = service.resolve("WPW-001", null);
             assertThat(result).isNull();

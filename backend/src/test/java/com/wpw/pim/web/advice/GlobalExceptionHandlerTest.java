@@ -18,7 +18,7 @@ class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
-    @DisplayName("handleResponseStatus -- маппит ResponseStatusException на ProblemDetail")
+    @DisplayName("handleResponseStatus -- maps ResponseStatusException to ProblemDetail")
     void handleResponseStatus_mapsCorrectly() {
         ResponseStatusException ex = new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
 
@@ -29,7 +29,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("handleResponseStatus -- CONFLICT возвращает 409")
+    @DisplayName("handleResponseStatus -- CONFLICT returns 409")
     void handleResponseStatus_conflict_returns409() {
         ResponseStatusException ex = new ResponseStatusException(HttpStatus.CONFLICT, "Already exists");
 
@@ -40,7 +40,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("handleAccessDenied -- возвращает 403 с Access denied")
+    @DisplayName("handleAccessDenied -- returns 403 with Access denied")
     void handleAccessDenied_returns403() {
         AccessDeniedException ex = new AccessDeniedException("forbidden");
 
@@ -51,7 +51,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("handleGeneral -- возвращает 500 для неожиданного исключения")
+    @DisplayName("handleGeneral -- returns 500 for unexpected exception")
     void handleGeneral_returns500() {
         Exception ex = new RuntimeException("something broke");
 
@@ -62,7 +62,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("handleResponseStatus -- BAD_REQUEST возвращает 400")
+    @DisplayName("handleResponseStatus -- BAD_REQUEST returns 400")
     void handleResponseStatus_badRequest_returns400() {
         ResponseStatusException ex = new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid input");
 

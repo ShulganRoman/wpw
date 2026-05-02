@@ -80,7 +80,7 @@ class EmailServiceTest {
     class OrderSubmitted {
 
         @Test
-        @DisplayName("отправляет письмо если есть активные получатели")
+        @DisplayName("sends email if active recipients exist")
         void sendsWhenRecipientsExist() {
             when(notificationEmailRepository.findByActiveTrue())
                 .thenReturn(List.of(recipient("admin@example.com", true)));
@@ -91,7 +91,7 @@ class EmailServiceTest {
         }
 
         @Test
-        @DisplayName("ничего не шлёт если нет активных получателей")
+        @DisplayName("sends nothing if no active recipients")
         void noRecipients() {
             when(notificationEmailRepository.findByActiveTrue()).thenReturn(List.of());
 
@@ -101,7 +101,7 @@ class EmailServiceTest {
         }
 
         @Test
-        @DisplayName("ошибка mailSender не пробрасывается")
+        @DisplayName("mailSender error is not propagated")
         void swallowsException() {
             when(notificationEmailRepository.findByActiveTrue())
                 .thenReturn(List.of(recipient("admin@example.com", true)));
@@ -118,7 +118,7 @@ class EmailServiceTest {
     class StatusChanged {
 
         @Test
-        @DisplayName("шлёт письмо при валидном email")
+        @DisplayName("sends email with valid email")
         void sendsValid() {
             service.sendStatusChangedToDealer(buildOrder(), "dealer@example.com");
 
@@ -126,7 +126,7 @@ class EmailServiceTest {
         }
 
         @Test
-        @DisplayName("не шлёт письмо если email == null")
+        @DisplayName("does not send email if email == null")
         void nullEmail() {
             service.sendStatusChangedToDealer(buildOrder(), null);
 
@@ -134,7 +134,7 @@ class EmailServiceTest {
         }
 
         @Test
-        @DisplayName("не шлёт письмо если email пустой")
+        @DisplayName("does not send email if email is empty")
         void blankEmail() {
             service.sendStatusChangedToDealer(buildOrder(), "  ");
 
@@ -142,7 +142,7 @@ class EmailServiceTest {
         }
 
         @Test
-        @DisplayName("ошибка mailSender не пробрасывается")
+        @DisplayName("mailSender error is not propagated")
         void swallowsException() {
             doThrow(new RuntimeException("smtp down"))
                 .when(mailSender).send(any(SimpleMailMessage.class));

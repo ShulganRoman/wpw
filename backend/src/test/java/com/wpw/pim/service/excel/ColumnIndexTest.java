@@ -30,8 +30,8 @@ class ColumnIndexTest {
         headerRow.createCell(0).setCellValue("Tool No");
         headerRow.createCell(1).setCellValue("Description");
         headerRow.createCell(2).setCellValue("D (mm)");
-        headerRow.createCell(3).setCellValue(""); // пустая ячейка
-        headerRow.createCell(5).setCellValue("L (mm)"); // gap: col 4 пропущен
+        headerRow.createCell(3).setCellValue(""); // empty cell
+        headerRow.createCell(5).setCellValue("L (mm)"); // gap: col 4 skipped
     }
 
     @AfterAll
@@ -40,7 +40,7 @@ class ColumnIndexTest {
     }
 
     @Test
-    @DisplayName("get — существующий заголовок возвращает правильный индекс")
+    @DisplayName("get — existing header returns correct index")
     void get_existingHeader_returnsCorrectIndex() {
         ColumnIndex idx = new ColumnIndex(sheet.getRow(0));
 
@@ -51,28 +51,28 @@ class ColumnIndexTest {
     }
 
     @Test
-    @DisplayName("get — несуществующий заголовок возвращает -1")
+    @DisplayName("get — non-existent header returns -1")
     void get_missingHeader_returnsMinusOne() {
         ColumnIndex idx = new ColumnIndex(sheet.getRow(0));
         assertThat(idx.get("Unknown Header")).isEqualTo(-1);
     }
 
     @Test
-    @DisplayName("has — существующий заголовок возвращает true")
+    @DisplayName("has — existing header returns true")
     void has_existingHeader_returnsTrue() {
         ColumnIndex idx = new ColumnIndex(sheet.getRow(0));
         assertThat(idx.has("Tool No")).isTrue();
     }
 
     @Test
-    @DisplayName("has — несуществующий заголовок возвращает false")
+    @DisplayName("has — non-existent header returns false")
     void has_missingHeader_returnsFalse() {
         ColumnIndex idx = new ColumnIndex(sheet.getRow(0));
         assertThat(idx.has("Unknown")).isFalse();
     }
 
     @Test
-    @DisplayName("foundHeaders — содержит все непустые заголовки")
+    @DisplayName("foundHeaders — contains all non-empty headers")
     void foundHeaders_containsAllNonEmptyHeaders() {
         ColumnIndex idx = new ColumnIndex(sheet.getRow(0));
         assertThat(idx.foundHeaders())
@@ -80,7 +80,7 @@ class ColumnIndexTest {
     }
 
     @Test
-    @DisplayName("constructor — null headerRow не выбрасывает исключение")
+    @DisplayName("constructor — null headerRow does not throw exception")
     void constructor_nullRow_doesNotThrow() {
         ColumnIndex idx = new ColumnIndex(null);
         assertThat(idx.get("Tool No")).isEqualTo(-1);
@@ -88,7 +88,7 @@ class ColumnIndexTest {
     }
 
     @Test
-    @DisplayName("foundHeaders — пустая строка в ячейке игнорируется")
+    @DisplayName("foundHeaders — empty string in cell is ignored")
     void foundHeaders_emptyCell_ignored() {
         ColumnIndex idx = new ColumnIndex(sheet.getRow(0));
         // Ячейка col 3 пустая — не должна быть в foundHeaders

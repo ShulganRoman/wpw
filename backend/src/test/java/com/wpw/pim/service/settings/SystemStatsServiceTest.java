@@ -82,7 +82,7 @@ class SystemStatsServiceTest {
     class GetStats {
 
         @Test
-        @DisplayName("getStats -- возвращает DTO с правильными значениями")
+        @DisplayName("getStats -- returns DTO with correct values")
         void getStats_returnsDtoWithCorrectValues() {
             setupMocks(10L, 5L, 7L, 200L);
 
@@ -113,7 +113,7 @@ class SystemStatsServiceTest {
         }
 
         @Test
-        @DisplayName("getStats -- null от queryForObject обрабатывается как 0")
+        @DisplayName("getStats -- null from queryForObject handled as 0")
         void getStats_nullFromQueryForObject_returnsZero() {
             setupMocks(10L, 5L, null, null);
 
@@ -125,7 +125,7 @@ class SystemStatsServiceTest {
         }
 
         @Test
-        @DisplayName("getStats -- mediaCoveragePct = 0 когда totalActive = 0")
+        @DisplayName("getStats -- mediaCoveragePct = 0 when totalActive = 0")
         void getStats_mediaCoveragePct_zeroWhenNoActive() {
             setupMocks(0L, 0L, 0L, 0L);
 
@@ -136,7 +136,7 @@ class SystemStatsServiceTest {
         }
 
         @Test
-        @DisplayName("getStats -- mediaCoveragePct = 50.0 при 5 из 10")
+        @DisplayName("getStats -- mediaCoveragePct = 50.0 with 5 out of 10")
         void getStats_mediaCoveragePct_calculatedCorrectly() {
             setupMocks(10L, 5L, 5L, 100L);
 
@@ -147,7 +147,7 @@ class SystemStatsServiceTest {
         }
 
         @Test
-        @DisplayName("getStats -- generatedAt не null")
+        @DisplayName("getStats -- generatedAt is not null")
         void getStats_generatedAtNotNull() {
             setupMocks(1L, 1L, 1L, 1L);
 

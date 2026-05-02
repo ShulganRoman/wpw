@@ -18,13 +18,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/operations")
 @RequiredArgsConstructor
-@Tag(name = "Operations", description = "Операции обработки (теги применения): список, товары по операции, CRUD для администратора")
+@Tag(name = "Operations", description = "Machining operations (application tags): list, products by operation, admin CRUD")
 public class OperationController {
 
     private final OperationService operationService;
 
     @GetMapping
-    @Operation(summary = "Список операций", description = "Все активные операции обработки.")
+    @Operation(summary = "List operations", description = "All active machining operations.")
     public List<OperationDto> list() {
         return operationService.findAll().stream()
             .map(OperationDto::from)
@@ -32,7 +32,7 @@ public class OperationController {
     }
 
     @GetMapping("/{code}/products")
-    @Operation(summary = "Товары по операции", description = "Список товаров, привязанных к операции обработки.")
+    @Operation(summary = "Products by operation", description = "List of products linked to a machining operation.")
     public PagedResponse<ProductSummaryDto> productsByOperation(
         @PathVariable String code,
         @RequestParam(defaultValue = "en") String locale,
@@ -46,21 +46,21 @@ public class OperationController {
 
     @PreAuthorize("hasAuthority('MANAGE_CATALOG')")
     @PostMapping
-    @Operation(summary = "Создать операцию", description = "Требует MANAGE_CATALOG.")
+    @Operation(summary = "Create operation", description = "Requires MANAGE_CATALOG.")
     public ResponseEntity<OperationDto> create(@RequestBody ApplicationTagUpsertDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(operationService.create(dto));
     }
 
     @PreAuthorize("hasAuthority('MANAGE_CATALOG')")
     @PutMapping("/{code}")
-    @Operation(summary = "Обновить операцию", description = "Требует MANAGE_CATALOG.")
+    @Operation(summary = "Update operation", description = "Requires MANAGE_CATALOG.")
     public OperationDto update(@PathVariable String code, @RequestBody ApplicationTagUpsertDto dto) {
         return operationService.update(code, dto);
     }
 
     @PreAuthorize("hasAuthority('MANAGE_CATALOG')")
     @DeleteMapping("/{code}")
-    @Operation(summary = "Удалить операцию", description = "Требует MANAGE_CATALOG.")
+    @Operation(summary = "Delete operation", description = "Requires MANAGE_CATALOG.")
     public ResponseEntity<Void> delete(@PathVariable String code) {
         operationService.delete(code);
         return ResponseEntity.noContent().build();

@@ -44,11 +44,11 @@ class SearchServiceTest {
     }
 
     @Nested
-    @DisplayName("search — SQL формирование")
+    @DisplayName("search — SQL building")
     class Search {
 
         @Test
-        @DisplayName("search вызывает FTS-запрос с ts_rank")
+        @DisplayName("search calls FTS query with ts_rank")
         void search_callsFtsQuery() {
             searchService.search("DR001", "en", 1, 10);
 
@@ -59,7 +59,7 @@ class SearchServiceTest {
         }
 
         @Test
-        @DisplayName("search при FTS-промахе вызывает ILIKE запрос")
+        @DisplayName("search on FTS miss calls ILIKE query")
         void search_ftsEmptyCallsLikeQuery() {
             // FTS возвращает пустой список (default mock behaviour)
             searchService.search("DR002", "en", 1, 10);
@@ -72,7 +72,7 @@ class SearchServiceTest {
         }
 
         @Test
-        @DisplayName("search страница 3 вычисляет offset=40")
+        @DisplayName("search page 3 calculates offset=40")
         void search_pagination_calculatesOffset() {
             searchService.search("test", "en", 3, 20);
 
@@ -83,7 +83,7 @@ class SearchServiceTest {
         }
 
         @Test
-        @DisplayName("search экранирует % в ILIKE-паттерне")
+        @DisplayName("search escapes % in ILIKE pattern")
         void search_percentInQuery_escapedInPattern() {
             searchService.search("100%", "en", 1, 10);
 
@@ -94,7 +94,7 @@ class SearchServiceTest {
         }
 
         @Test
-        @DisplayName("search возвращает непустой List (тип проверки)")
+        @DisplayName("search returns non-empty List (type check)")
         void search_returnsListType() {
             List<Map<String, Object>> result = searchService.search("x", "en", 1, 10);
             assertThat(result).isNotNull();
@@ -102,11 +102,11 @@ class SearchServiceTest {
     }
 
     @Nested
-    @DisplayName("countSearch — SQL формирование")
+    @DisplayName("countSearch — SQL building")
     class CountSearch {
 
         @Test
-        @DisplayName("countSearch вызывает FTS-запрос count")
+        @DisplayName("countSearch calls FTS count query")
         void countSearch_callsFtsQuery() {
             searchService.countSearch("router", "en");
 
@@ -118,7 +118,7 @@ class SearchServiceTest {
         }
 
         @Test
-        @DisplayName("countSearch при FTS-промахе вызывает ILIKE count")
+        @DisplayName("countSearch on FTS miss calls ILIKE count")
         void countSearch_ftsNullFallsBackToLike() {
             // queryForObject returning null (default mock) → fallback to LIKE
             searchService.countSearch("router", "en");
@@ -131,7 +131,7 @@ class SearchServiceTest {
         }
 
         @Test
-        @DisplayName("countSearch возвращает long (не NPE)")
+        @DisplayName("countSearch returns long (no NPE)")
         void countSearch_returnsLong() {
             long count = searchService.countSearch("nothing", "en");
             assertThat(count).isGreaterThanOrEqualTo(0);

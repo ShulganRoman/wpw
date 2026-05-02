@@ -48,7 +48,7 @@ class DealerServiceTest {
     class GetSkuMapping {
 
         @Test
-        @DisplayName("возвращает список SKU-маппингов для дилера")
+        @DisplayName("returns list of SKU mappings for dealer")
         void getSkuMapping_existingDealer_returnsMappings() {
             UUID dealerId = UUID.randomUUID();
 
@@ -68,7 +68,7 @@ class DealerServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает пустой список если нет маппингов")
+        @DisplayName("returns empty list if no mappings")
         void getSkuMapping_noMappings_returnsEmpty() {
             UUID dealerId = UUID.randomUUID();
             when(skuMappingRepo.findByDealerId(dealerId)).thenReturn(List.of());
@@ -82,7 +82,7 @@ class DealerServiceTest {
     class SaveSkuMapping {
 
         @Test
-        @DisplayName("создаёт новый SKU маппинг")
+        @DisplayName("creates new SKU mapping")
         void saveSkuMapping_newMapping_createsSuccessfully() {
             UUID dealerId = UUID.randomUUID();
 
@@ -107,7 +107,7 @@ class DealerServiceTest {
     class GetPriceList {
 
         @Test
-        @DisplayName("возвращает прайс-лист дилера")
+        @DisplayName("returns dealer price list")
         void getPriceList_hasPriceList_returnsPriceListDto() {
             UUID priceListId = UUID.randomUUID();
             UUID productId = UUID.randomUUID();
@@ -145,7 +145,7 @@ class DealerServiceTest {
         }
 
         @Test
-        @DisplayName("бросает NOT_FOUND если прайс-лист не назначен")
+        @DisplayName("throws NOT_FOUND if price list is not assigned")
         void getPriceList_noPriceList_throws404() {
             Dealer dealer = new Dealer();
             dealer.setPriceList(null);

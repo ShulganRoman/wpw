@@ -289,7 +289,7 @@ class ExcelImportV4ServiceTest {
     // ========================= execute — catalog cache reuse =========================
 
     @Nested
-    @DisplayName("execute — каталог: повторное использование")
+    @DisplayName("execute — catalog: reuse existing")
     class ExecuteCatalogReuse {
 
         @Test
@@ -439,7 +439,7 @@ class ExcelImportV4ServiceTest {
     // ========================= execute — product attributes =========================
 
     @Nested
-    @DisplayName("execute — атрибуты товара")
+    @DisplayName("execute — product attributes")
     class ExecuteAttributes {
 
         @org.junit.jupiter.api.BeforeEach
@@ -725,7 +725,7 @@ class ExcelImportV4ServiceTest {
     // ========================= execute — translation upsert =========================
 
     @Nested
-    @DisplayName("execute — переводы")
+    @DisplayName("execute — translations")
     class ExecuteTranslation {
 
         @org.junit.jupiter.api.BeforeEach

@@ -85,7 +85,7 @@ class OrderServiceTest {
     class Checkout {
 
         @Test
-        @DisplayName("успешно создаёт заказ, очищает корзину, отправляет email")
+        @DisplayName("successfully creates order, clears cart, sends email")
         void success() {
             UUID dealerId = UUID.randomUUID();
             Dealer d = dealer(dealerId);
@@ -113,7 +113,7 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("пустая корзина -- 400")
+        @DisplayName("empty cart -- 400")
         void emptyCart() {
             UUID dealerId = UUID.randomUUID();
             when(dealerRepository.findById(dealerId)).thenReturn(Optional.of(dealer(dealerId)));
@@ -128,7 +128,7 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("дилер не найден -- 404")
+        @DisplayName("dealer not found -- 404")
         void dealerNotFound() {
             UUID dealerId = UUID.randomUUID();
             when(dealerRepository.findById(dealerId)).thenReturn(Optional.empty());
@@ -143,7 +143,7 @@ class OrderServiceTest {
     class GetDealerOrders {
 
         @Test
-        @DisplayName("возвращает список заказов")
+        @DisplayName("returns list of orders")
         void returnsList() {
             UUID dealerId = UUID.randomUUID();
             Dealer d = dealer(dealerId);
@@ -159,7 +159,7 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("дилер не найден -- 404")
+        @DisplayName("dealer not found -- 404")
         void notFound() {
             UUID dealerId = UUID.randomUUID();
             when(dealerRepository.findById(dealerId)).thenReturn(Optional.empty());
@@ -174,7 +174,7 @@ class OrderServiceTest {
     class GetDealerOrder {
 
         @Test
-        @DisplayName("возвращает заказ дилера")
+        @DisplayName("returns dealer order")
         void success() {
             UUID dealerId = UUID.randomUUID();
             UUID orderId = UUID.randomUUID();
@@ -191,7 +191,7 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("заказ принадлежит другому дилеру -- 403")
+        @DisplayName("order belongs to another dealer -- 403")
         void accessDenied() {
             UUID dealerId = UUID.randomUUID();
             UUID otherDealerId = UUID.randomUUID();
@@ -210,7 +210,7 @@ class OrderServiceTest {
     class GetAdminOrders {
 
         @Test
-        @DisplayName("getAdminDealerOrders возвращает список с админ-метками")
+        @DisplayName("getAdminDealerOrders returns list with admin labels")
         void adminList() {
             UUID dealerId = UUID.randomUUID();
             Order o = orderOf(UUID.randomUUID(), dealer(dealerId));
@@ -224,7 +224,7 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("getAdminOrder возвращает DTO с админ-метками")
+        @DisplayName("getAdminOrder returns DTO with admin labels")
         void adminOrder() {
             UUID orderId = UUID.randomUUID();
             UUID dealerId = UUID.randomUUID();
@@ -244,7 +244,7 @@ class OrderServiceTest {
     class ChangeStatus {
 
         @Test
-        @DisplayName("обновляет статус и шлёт письмо дилеру")
+        @DisplayName("updates status and sends email to dealer")
         void updates() {
             UUID dealerId = UUID.randomUUID();
             UUID orderId = UUID.randomUUID();
@@ -265,7 +265,7 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("заказ не найден -- 404")
+        @DisplayName("order not found -- 404")
         void notFound() {
             UUID orderId = UUID.randomUUID();
             when(orderRepository.findWithItemsById(orderId)).thenReturn(Optional.empty());
@@ -298,7 +298,7 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("getDealerIdsWithPendingOrders возвращает множество ID")
+        @DisplayName("getDealerIdsWithPendingOrders returns set of IDs")
         void dealerIds() {
             UUID id1 = UUID.randomUUID();
             UUID id2 = UUID.randomUUID();

@@ -3,10 +3,10 @@ import { getAdminDealerOrders, getAdminOrder, changeOrderStatus } from '../api/a
 import { useToast } from './ToastContext';
 
 const STATUS_LABELS = {
-  SUBMITTED:     { admin: 'Новый',       color: '#1565c0', bg: '#e3f2fd' },
-  IN_PROCESSING: { admin: 'В обработке', color: '#e65100', bg: '#fff3e0' },
-  CONFIRMED:     { admin: 'Подтверждён', color: '#2e7d32', bg: '#e8f5e9' },
-  REJECTED:      { admin: 'Отклонён',    color: '#c62828', bg: '#ffebee' },
+  SUBMITTED:     { admin: 'New',          color: '#1565c0', bg: '#e3f2fd' },
+  IN_PROCESSING: { admin: 'In Processing', color: '#e65100', bg: '#fff3e0' },
+  CONFIRMED:     { admin: 'Confirmed',    color: '#2e7d32', bg: '#e8f5e9' },
+  REJECTED:      { admin: 'Rejected',     color: '#c62828', bg: '#ffebee' },
 };
 
 const NEXT_STATUSES = {
@@ -37,7 +37,7 @@ function OrderDetailModal({ orderId, onClose, onStatusChanged }) {
   useEffect(() => {
     getAdminOrder(orderId)
       .then(setOrder)
-      .catch(() => showToast('Не удалось загрузить заказ', 'error'))
+      .catch(() => showToast('Failed to load order', 'error'))
       .finally(() => setLoading(false));
   }, [orderId]);
 
@@ -47,9 +47,9 @@ function OrderDetailModal({ orderId, onClose, onStatusChanged }) {
       const updated = await changeOrderStatus(orderId, newStatus);
       setOrder(updated);
       onStatusChanged?.(updated);
-      showToast('Статус обновлён', 'success');
+      showToast('Status updated', 'success');
     } catch {
-      showToast('Ошибка изменения статуса', 'error');
+      showToast('Error changing status', 'error');
     } finally {
       setChanging(false);
     }
@@ -64,14 +64,14 @@ function OrderDetailModal({ orderId, onClose, onStatusChanged }) {
         background: '#fff', borderRadius: 8, padding: 24, maxWidth: 700, width: '100%',
         maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
       }} onClick={e => e.stopPropagation()}>
-        {loading && <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>Загрузка...</div>}
+        {loading && <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>Loading...</div>}
 
         {order && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
-                  Заказ #{order.id.slice(0, 8).toUpperCase()}
+                  Order #{order.id.slice(0, 8).toUpperCase()}
                 </div>
                 <div style={{ fontSize: 13, color: '#666' }}>
                   {new Date(order.submittedAt).toLocaleString('ru-RU')}
@@ -81,14 +81,14 @@ function OrderDetailModal({ orderId, onClose, onStatusChanged }) {
             </div>
 
             <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 13 }}>Статус: <StatusBadge status={order.status} /></div>
-              <div style={{ fontSize: 13 }}>Сумма: <strong>{Number(order.total).toFixed(2)} {order.currency}</strong></div>
-              <div style={{ fontSize: 13 }}>Позиций: <strong>{order.items.length}</strong></div>
+              <div style={{ fontSize: 13 }}>Status: <StatusBadge status={order.status} /></div>
+              <div style={{ fontSize: 13 }}>Total: <strong>{Number(order.total).toFixed(2)} {order.currency}</strong></div>
+              <div style={{ fontSize: 13 }}>Items: <strong>{order.items.length}</strong></div>
             </div>
 
             {NEXT_STATUSES[order.status]?.length > 0 && (
               <div style={{ marginBottom: 20, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 13, alignSelf: 'center', color: '#555' }}>Изменить статус:</span>
+                <span style={{ fontSize: 13, alignSelf: 'center', color: '#555' }}>Change status:</span>
                 {NEXT_STATUSES[order.status].map(s => (
                   <button
                     key={s}
@@ -111,11 +111,11 @@ function OrderDetailModal({ orderId, onClose, onStatusChanged }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--wpw-border)' }}>
-                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>Артикул</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>Название</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Кол-во</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Цена</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Итого</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>SKU</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>Name</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Qty</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Price</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -135,7 +135,7 @@ function OrderDetailModal({ orderId, onClose, onStatusChanged }) {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>Итого:</td>
+                  <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>Total:</td>
                   <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>
                     {Number(order.total).toFixed(2)} {order.currency}
                   </td>
@@ -160,7 +160,7 @@ export default function AdminDealerOrdersPanel({ dealerId }) {
     setLoading(true);
     getAdminDealerOrders(dealerId)
       .then(setOrders)
-      .catch(() => showToast('Не удалось загрузить заказы', 'error'))
+      .catch(() => showToast('Failed to load orders', 'error'))
       .finally(() => setLoading(false));
   }, [dealerId]);
 
@@ -171,10 +171,10 @@ export default function AdminDealerOrdersPanel({ dealerId }) {
     ));
   }
 
-  if (loading) return <div style={{ padding: 20, color: '#888', fontSize: 13 }}>Загрузка заказов...</div>;
+  if (loading) return <div style={{ padding: 20, color: '#888', fontSize: 13 }}>Loading orders...</div>;
 
   if (!orders || orders.length === 0) {
-    return <div style={{ padding: 20, color: '#888', fontSize: 13 }}>Заказов нет</div>;
+    return <div style={{ padding: 20, color: '#888', fontSize: 13 }}>No orders</div>;
   }
 
   return (
@@ -183,10 +183,10 @@ export default function AdminDealerOrdersPanel({ dealerId }) {
         <thead>
           <tr style={{ borderBottom: '2px solid var(--wpw-border)', background: '#f9fafb' }}>
             <th style={{ padding: '8px 10px', textAlign: 'left' }}>#</th>
-            <th style={{ padding: '8px 10px', textAlign: 'left' }}>Дата</th>
-            <th style={{ padding: '8px 10px', textAlign: 'center' }}>Статус</th>
-            <th style={{ padding: '8px 10px', textAlign: 'right' }}>Позиций</th>
-            <th style={{ padding: '8px 10px', textAlign: 'right' }}>Сумма</th>
+            <th style={{ padding: '8px 10px', textAlign: 'left' }}>Date</th>
+            <th style={{ padding: '8px 10px', textAlign: 'center' }}>Status</th>
+            <th style={{ padding: '8px 10px', textAlign: 'right' }}>Items</th>
+            <th style={{ padding: '8px 10px', textAlign: 'right' }}>Total</th>
             <th style={{ padding: '8px 10px' }}></th>
           </tr>
         </thead>
@@ -212,7 +212,7 @@ export default function AdminDealerOrdersPanel({ dealerId }) {
                   style={{ padding: '3px 10px', fontSize: 12 }}
                   onClick={() => setSelectedOrderId(o.id)}
                 >
-                  Открыть
+                  Open
                 </button>
               </td>
             </tr>

@@ -169,7 +169,7 @@ class DealerControllerTest {
     }
 
     @Test
-    @DisplayName("POST execute с skipGhosts=true передаётся в сервис")
+    @DisplayName("POST execute with skipGhosts=true is passed to service")
     void execute_withSkipGhosts_passesParam() throws Exception {
         DealerPrincipal principal = dealerPrincipal();
         SkuMappingService.SkuMappingImportResult result = new SkuMappingService.SkuMappingImportResult(
@@ -215,7 +215,7 @@ class DealerControllerTest {
     }
 
     @Test
-    @DisplayName("Не-DealerPrincipal user — DealerRepository вызывается")
+    @DisplayName("Non-DealerPrincipal user — DealerRepository is called")
     void resolveDealer_nonDealerPrincipal_usesRepository() throws Exception {
         Dealer dealer = new Dealer();
         dealer.setId(UUID.randomUUID());
@@ -233,7 +233,7 @@ class DealerControllerTest {
     }
 
     @Test
-    @DisplayName("Не-DealerPrincipal user без записи Dealer — 404")
+    @DisplayName("Non-DealerPrincipal user without Dealer record — 404")
     void resolveDealer_dealerProfileNotFound_returns404() throws Exception {
         when(dealerRepository.findByUserUsername("ghost"))
                 .thenReturn(java.util.Optional.empty());

@@ -346,7 +346,7 @@ class ProductMediaServiceTest {
         @Test
         @DisplayName("valid jpg — converted via real cwebp")
         void addImages_validJpg_converted() throws Exception {
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp недоступен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp unavailable");
 
             UUID productId = UUID.randomUUID();
             Product product = new Product();
@@ -382,7 +382,7 @@ class ProductMediaServiceTest {
         @Test
         @DisplayName("broken jpg — throws 500")
         void addImages_brokenJpg_throws500() throws Exception {
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp недоступен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp unavailable");
 
             UUID productId = UUID.randomUUID();
             Product product = new Product();
@@ -412,7 +412,7 @@ class ProductMediaServiceTest {
         }
 
         @Test
-        @DisplayName("getNextVariant скан существующих — следующий = max+1")
+        @DisplayName("getNextVariant scan of existing — next = max+1")
         void addImages_existingFiles_nextVariantBasedOnMax() throws Exception {
             UUID productId = UUID.randomUUID();
             Product product = new Product();
@@ -527,7 +527,7 @@ class ProductMediaServiceTest {
         }
 
         @Test
-        @DisplayName("URL без префикса — обрабатывается корректно")
+        @DisplayName("URL without prefix — handled correctly")
         void deleteImage_urlWithoutPrefix_handledCorrectly() throws Exception {
             UUID productId = UUID.randomUUID();
             UUID imageId = UUID.randomUUID();

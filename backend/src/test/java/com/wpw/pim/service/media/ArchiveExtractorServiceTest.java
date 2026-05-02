@@ -206,7 +206,7 @@ class ArchiveExtractorServiceTest {
                 "archive", null, "application/zip", new byte[0]);
             assertThatThrownBy(() -> service.extractImages(file))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("Имя файла");
+                .hasMessageContaining("Archive filename");
         }
 
         @Test
@@ -215,7 +215,7 @@ class ArchiveExtractorServiceTest {
                 "archive", "   ", "application/zip", new byte[0]);
             assertThatThrownBy(() -> service.extractImages(file))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("Имя файла");
+                .hasMessageContaining("Archive filename");
         }
 
         @Test
@@ -233,7 +233,7 @@ class ArchiveExtractorServiceTest {
                 "archive", "test.xyz", "application/octet-stream", new byte[0]);
             assertThatThrownBy(() -> service.extractImages(file))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("Неподдерживаемый формат");
+                .hasMessageContaining("Unsupported archive format");
         }
     }
 
@@ -553,7 +553,7 @@ class ArchiveExtractorServiceTest {
     // ========================= corrupt archives =========================
 
     @Nested
-    @DisplayName("extractImages — повреждённые архивы")
+    @DisplayName("extractImages — corrupted archives")
     class CorruptArchives {
 
         @Test

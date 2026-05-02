@@ -26,7 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/admin/import")
 @RequiredArgsConstructor
-@Tag(name = "Import", description = "Массовый импорт данных из Excel (формат v4)")
+@Tag(name = "Import", description = "Bulk data import from Excel (v4 format)")
 public class ImportController {
 
     private final ExcelImportV4Service     importService;
@@ -34,8 +34,8 @@ public class ImportController {
 
     @GetMapping(value = "/template",
                 produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    @Operation(summary = "Скачать шаблон импорта",
-               description = "Возвращает .xlsx шаблон v4: один лист Products, группы создаются автоматически из Category + Group Name.")
+    @Operation(summary = "Download import template",
+               description = "Returns .xlsx v4 template: single Products sheet, groups created automatically from Category + Group Name.")
     public ResponseEntity<byte[]> downloadTemplate() throws Exception {
         byte[] bytes = templateGenerator.generate();
         return ResponseEntity.ok()
@@ -44,11 +44,11 @@ public class ImportController {
     }
 
     @PostMapping(value = "/validate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Валидация Excel-файла перед импортом",
-               description = "Разбирает файл и проверяет без записи в БД. "
-                           + "Возвращает ValidationReport: список ошибок (ERROR — строка пропускается) "
-                           + "и предупреждений (WARNING — строка импортируется). "
-                           + "canProceed=true означает что ошибок нет.")
+    @Operation(summary = "Validate Excel file before import",
+               description = "Parses the file and validates without writing to DB. "
+                           + "Returns ValidationReport: list of errors (ERROR — row is skipped) "
+                           + "and warnings (WARNING — row is imported). "
+                           + "canProceed=true means no errors.")
     public ResponseEntity<ValidationReport> validate(
         @RequestParam("file") MultipartFile file
     ) throws Exception {
@@ -58,9 +58,9 @@ public class ImportController {
 
     @PostMapping(value = "/execute", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
                  produces = "text/markdown;charset=UTF-8")
-    @Operation(summary = "Выполнить импорт из Excel",
-               description = "Импортирует товары. Группы создаются автоматически из Category + Group Name. "
-                           + "Возвращает Markdown-отчёт: сколько создано, обновлено, пропущено.")
+    @Operation(summary = "Execute Excel import",
+               description = "Imports products. Groups are created automatically from Category + Group Name. "
+                           + "Returns a Markdown report: how many created, updated, skipped.")
     public ResponseEntity<String> execute(
         @RequestParam("file") MultipartFile file
     ) throws Exception {

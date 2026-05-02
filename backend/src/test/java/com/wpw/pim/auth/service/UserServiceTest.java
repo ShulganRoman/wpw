@@ -52,7 +52,7 @@ class UserServiceTest {
     class FindAll {
 
         @Test
-        @DisplayName("возвращает список пользователей")
+        @DisplayName("returns list of users")
         void findAll_returnsUserResponses() {
             User user = createUser(1L, "admin", testRole);
             when(userRepository.findAll()).thenReturn(List.of(user));
@@ -65,7 +65,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает пустой список если нет пользователей")
+        @DisplayName("returns empty list if no users")
         void findAll_empty_returnsEmptyList() {
             when(userRepository.findAll()).thenReturn(List.of());
 
@@ -78,7 +78,7 @@ class UserServiceTest {
     class Create {
 
         @Test
-        @DisplayName("создаёт пользователя успешно")
+        @DisplayName("creates user successfully")
         void create_validRequest_returnsUserResponse() {
             UserRequest request = new UserRequest("newuser", "pass123", 1L, true);
 
@@ -99,7 +99,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение при дублировании username")
+        @DisplayName("throws exception on duplicate username")
         void create_duplicateUsername_throwsException() {
             UserRequest request = new UserRequest("admin", "pass123", 1L, null);
             when(userRepository.existsByUsername("admin")).thenReturn(true);
@@ -110,7 +110,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение если пароль пустой")
+        @DisplayName("throws exception if password is empty")
         void create_blankPassword_throwsException() {
             UserRequest request = new UserRequest("newuser", "   ", 1L, null);
             when(userRepository.existsByUsername("newuser")).thenReturn(false);
@@ -121,7 +121,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение если пароль null")
+        @DisplayName("throws exception if password is null")
         void create_nullPassword_throwsException() {
             UserRequest request = new UserRequest("newuser", null, 1L, null);
             when(userRepository.existsByUsername("newuser")).thenReturn(false);
@@ -132,7 +132,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение если роль не найдена")
+        @DisplayName("throws exception if role not found")
         void create_roleNotFound_throwsException() {
             UserRequest request = new UserRequest("newuser", "pass123", 999L, null);
             when(userRepository.existsByUsername("newuser")).thenReturn(false);
@@ -149,7 +149,7 @@ class UserServiceTest {
     class Update {
 
         @Test
-        @DisplayName("обновляет пользователя успешно")
+        @DisplayName("updates user successfully")
         void update_validRequest_returnsUpdatedUser() {
             User existing = createUser(1L, "admin", testRole);
             UserRequest request = new UserRequest("admin-updated", "newpass", 1L, false);
@@ -167,7 +167,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("не обновляет пароль если он null")
+        @DisplayName("does not update password if it is null")
         void update_nullPassword_doesNotUpdatePassword() {
             User existing = createUser(1L, "admin", testRole);
             UserRequest request = new UserRequest("admin", null, 1L, null);
@@ -182,7 +182,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение если пользователь не найден")
+        @DisplayName("throws exception if user not found")
         void update_userNotFound_throwsException() {
             when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -192,7 +192,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение при смене username на занятый")
+        @DisplayName("throws exception when changing username to an already taken one")
         void update_duplicateUsername_throwsException() {
             User existing = createUser(1L, "admin", testRole);
             UserRequest request = new UserRequest("taken", "pass", 1L, null);
@@ -211,7 +211,7 @@ class UserServiceTest {
     class Delete {
 
         @Test
-        @DisplayName("удаляет пользователя успешно")
+        @DisplayName("deletes user successfully")
         void delete_existingUser_deletesSuccessfully() {
             User existing = createUser(1L, "admin", testRole);
             when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
@@ -222,7 +222,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение если пользователь не найден")
+        @DisplayName("throws exception if user not found")
         void delete_userNotFound_throwsException() {
             when(userRepository.findById(999L)).thenReturn(Optional.empty());
 

@@ -14,26 +14,26 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin/settings")
 @PreAuthorize("hasAuthority('MANAGE_PRODUCTS') or hasAuthority('MODIFY_PRODUCTS') or hasRole('ADMIN')")
 @RequiredArgsConstructor
-@Tag(name = "Admin: Settings", description = "Системные настройки: фильтрация товаров по наличию медиа, статистика системы.")
+@Tag(name = "Admin: Settings", description = "System settings: product filtering by media availability, system statistics.")
 public class SystemSettingsController {
 
     private final SystemSettingsService settingsService;
     private final SystemStatsService statsService;
 
     @GetMapping
-    @Operation(summary = "Получить системные настройки")
+    @Operation(summary = "Get system settings")
     public SystemSettingsDto get() {
         return settingsService.get();
     }
 
     @PutMapping
-    @Operation(summary = "Обновить системные настройки")
+    @Operation(summary = "Update system settings")
     public SystemSettingsDto update(@RequestBody SystemSettingsDto dto) {
         return settingsService.update(dto);
     }
 
     @GetMapping("/stats")
-    @Operation(summary = "Статистика системы", description = "Покрытие медиа, прайс-листы, дилеры, каталог — для аналитики и бухгалтера.")
+    @Operation(summary = "System statistics", description = "Media coverage, price lists, dealers, catalog — for analytics and accounting.")
     public SystemStatsDto stats() {
         return statsService.getStats();
     }

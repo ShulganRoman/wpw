@@ -80,7 +80,7 @@ class StockPriceServiceTest {
     class GetOrCreateStockList {
 
         @Test
-        @DisplayName("возвращает существующий stock-лист")
+        @DisplayName("returns existing stock list")
         void returnsExisting() {
             PriceList existing = stockList(UUID.randomUUID());
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.of(existing));
@@ -92,7 +92,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("создаёт новый stock-лист если его нет")
+        @DisplayName("creates new stock list if absent")
         void createsNew() {
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.empty());
             when(priceListRepo.save(any(PriceList.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -110,7 +110,7 @@ class StockPriceServiceTest {
     class GetItems {
 
         @Test
-        @DisplayName("возвращает позиции прайс-листа")
+        @DisplayName("returns price list entries")
         void returnsItems() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -133,7 +133,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("бросает 404 если stock-лист не инициализирован")
+        @DisplayName("throws 404 if stock list is not initialized")
         void throwsNotFound() {
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.empty());
 
@@ -147,7 +147,7 @@ class StockPriceServiceTest {
     class UpsertItem {
 
         @Test
-        @DisplayName("создаёт новую позицию")
+        @DisplayName("creates new entry")
         void createsNew() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -166,7 +166,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("обновляет существующую позицию")
+        @DisplayName("updates existing entry")
         void updatesExisting() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -188,7 +188,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("404 если stock-лист не инициализирован")
+        @DisplayName("404 if stock list is not initialized")
         void throwsIfNoStock() {
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.empty());
             assertThatThrownBy(() -> service.upsertItem(
@@ -197,7 +197,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("404 если продукт не найден")
+        @DisplayName("404 if product not found")
         void throwsIfNoProduct() {
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.of(stockList(UUID.randomUUID())));
             when(productRepo.findByToolNo("TOOL-X")).thenReturn(Optional.empty());
@@ -213,7 +213,7 @@ class StockPriceServiceTest {
     class DeleteItem {
 
         @Test
-        @DisplayName("удаляет позицию")
+        @DisplayName("deletes entry")
         void deletes() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -229,7 +229,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("404 если stock-лист отсутствует")
+        @DisplayName("404 if stock list is absent")
         void noStock() {
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.empty());
             assertThatThrownBy(() -> service.deleteItem("TOOL-001", 1))
@@ -237,7 +237,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("404 если продукт не найден")
+        @DisplayName("404 if product not found")
         void noProduct() {
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.of(stockList(UUID.randomUUID())));
             when(productRepo.findByToolNo("TOOL-Y")).thenReturn(Optional.empty());
@@ -251,7 +251,7 @@ class StockPriceServiceTest {
     class ImportExcel {
 
         @Test
-        @DisplayName("успешно импортирует строки и репортит ненайденные продукты")
+        @DisplayName("successfully imports rows and reports not-found products")
         void importsRows() throws IOException {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -281,7 +281,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("обрабатывает строку с числовым tool_no")
+        @DisplayName("processes row with numeric tool_no")
         void importsNumericToolNo() throws IOException {
             UUID plId = UUID.randomUUID();
             PriceList pl = stockList(plId);
@@ -299,7 +299,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("404 если stock-лист не инициализирован")
+        @DisplayName("404 if stock list is not initialized")
         void noStock() {
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.empty());
             MultipartFile file = new MockMultipartFile("file", new byte[]{1, 2, 3});
@@ -313,7 +313,7 @@ class StockPriceServiceTest {
     class ExportAndTemplate {
 
         @Test
-        @DisplayName("export -- возвращает Excel байты")
+        @DisplayName("export -- returns Excel bytes")
         void exportsExcel() throws IOException {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -336,7 +336,7 @@ class StockPriceServiceTest {
         }
 
         @Test
-        @DisplayName("template -- возвращает Excel шаблон")
+        @DisplayName("template -- returns Excel template")
         void templateBytes() throws IOException {
             byte[] result = service.template();
 

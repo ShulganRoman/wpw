@@ -80,7 +80,7 @@ class CatalogImageServiceTest {
     class Delete {
 
         @Test
-        @DisplayName("sections — очищает imageUrl и удаляет файл")
+        @DisplayName("sections — clears imageUrl and deletes file")
         void delete_sections_clearsUrl() throws IOException {
             stubCwebpByPreCreating("sections");
             Section s = new Section();
@@ -99,7 +99,7 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("categories — очищает imageUrl")
+        @DisplayName("categories — clears imageUrl")
         void delete_categories_clearsUrl() throws IOException {
             stubCwebpByPreCreating("categories");
             Category c = new Category();
@@ -115,7 +115,7 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("product-groups — очищает imageUrl")
+        @DisplayName("product-groups — clears imageUrl")
         void delete_productGroups_clearsUrl() throws IOException {
             stubCwebpByPreCreating("product-groups");
             ProductGroup g = new ProductGroup();
@@ -131,7 +131,7 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("не бросает исключение если файл уже удалён")
+        @DisplayName("does not throw exception if file already deleted")
         void delete_toleratesMissingFile() {
             Section s = new Section();
             s.setId(nodeId);
@@ -143,7 +143,7 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("неизвестный nodeType — 400")
+        @DisplayName("unknown nodeType — 400")
         void delete_unknownNodeType_400() {
             assertThatThrownBy(() -> service.delete("unknown", nodeId))
                 .isInstanceOf(ResponseStatusException.class)
@@ -152,7 +152,7 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("секция не найдена — 404")
+        @DisplayName("section not found — 404")
         void delete_sectionNotFound_404() {
             when(sectionRepo.findById(nodeId)).thenReturn(Optional.empty());
 
@@ -170,7 +170,7 @@ class CatalogImageServiceTest {
     class UploadRouting {
 
         @Test
-        @DisplayName("sections — сохраняет imageUrl в Section")
+        @DisplayName("sections — saves imageUrl in Section")
         void upload_sections_savesUrl() throws IOException {
             stubCwebpByPreCreating("sections");
             MultipartFile file = mockFile("img.jpg");
@@ -185,7 +185,7 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("неизвестный nodeType — 400")
+        @DisplayName("unknown nodeType — 400")
         void upload_unknownNodeType_400() throws IOException {
             MultipartFile file = mockFile("img.jpg");
 
@@ -200,7 +200,7 @@ class CatalogImageServiceTest {
     // Использует настоящий cwebp (установлен в системе через homebrew).
 
     @Nested
-    @DisplayName("upload — реальная конвертация (cwebp)")
+    @DisplayName("upload — real conversion (cwebp)")
     class UploadRealCwebp {
 
         /**
@@ -226,10 +226,10 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("sections — конвертирует и сохраняет URL")
+        @DisplayName("sections — converts and saves URL")
         void upload_sections_realCwebp_returnsUrl() throws IOException {
             // Если cwebp недоступен — тест помечается как skipped
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp не установлен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp not installed");
 
             Section s = new Section();
             s.setId(nodeId);
@@ -246,9 +246,9 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("categories — конвертирует и сохраняет URL")
+        @DisplayName("categories — converts and saves URL")
         void upload_categories_realCwebp() throws IOException {
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp не установлен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp not installed");
 
             Category c = new Category();
             c.setId(nodeId);
@@ -261,9 +261,9 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("product-groups — конвертирует и сохраняет URL")
+        @DisplayName("product-groups — converts and saves URL")
         void upload_productGroups_realCwebp() throws IOException {
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp не установлен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp not installed");
 
             ProductGroup g = new ProductGroup();
             g.setId(nodeId);
@@ -276,9 +276,9 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("cwebp падает на невалидном файле — 500")
+        @DisplayName("cwebp fails on invalid file — 500")
         void upload_invalidImage_returns500() throws IOException {
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp не установлен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp not installed");
 
             MultipartFile file = new org.springframework.mock.web.MockMultipartFile(
                 "file", "broken.jpg", "image/jpeg", new byte[]{0, 1, 2, 3});
@@ -290,9 +290,9 @@ class CatalogImageServiceTest {
         }
 
         @Test
-        @DisplayName("upload secitons — node не найден после конвертации => 404")
+        @DisplayName("upload sections — node not found after conversion => 404")
         void upload_nodeNotFound_returns404() throws IOException {
-            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp не установлен");
+            org.junit.jupiter.api.Assumptions.assumeTrue(isCwebpAvailable(), "cwebp not installed");
 
             when(sectionRepo.findById(nodeId)).thenReturn(Optional.empty());
 
@@ -315,7 +315,7 @@ class CatalogImageServiceTest {
     // ── delete — больше веток ─────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("delete — расширенные сценарии")
+    @DisplayName("delete — extended scenarios")
     class DeleteExtended {
 
         @Test

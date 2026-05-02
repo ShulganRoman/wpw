@@ -50,7 +50,7 @@ class AdminDealerPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("GET / -- возвращает прайс-лист дилера")
+    @DisplayName("GET / -- returns dealer price list")
     void getPriceList() throws Exception {
         UUID dealerId = UUID.randomUUID();
         DealerPriceListDto dto = new DealerPriceListDto("USD", "$",
@@ -64,7 +64,7 @@ class AdminDealerPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("GET / -- 204 если прайс-лист отсутствует")
+    @DisplayName("GET / -- 204 if price list is absent")
     void getPriceList_noContent() throws Exception {
         UUID dealerId = UUID.randomUUID();
         when(dealerPriceService.getForDealer(dealerId)).thenReturn(null);
@@ -75,7 +75,7 @@ class AdminDealerPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("POST /import -- импорт прайс-листа")
+    @DisplayName("POST /import -- price list import")
     void importPriceList() throws Exception {
         UUID dealerId = UUID.randomUUID();
         when(dealerPriceService.importPriceList(eq(dealerId), any(), eq("USD"), any()))
@@ -91,7 +91,7 @@ class AdminDealerPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("DELETE / -- удаляет прайс-лист (204)")
+    @DisplayName("DELETE / -- deletes price list (204)")
     void deletePriceList() throws Exception {
         UUID dealerId = UUID.randomUUID();
 
@@ -103,7 +103,7 @@ class AdminDealerPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("GET /export -- возвращает Excel")
+    @DisplayName("GET /export -- returns Excel")
     void export() throws Exception {
         UUID dealerId = UUID.randomUUID();
         when(dealerPriceService.export(dealerId)).thenReturn(new byte[]{0x50, 0x4b});
@@ -116,7 +116,7 @@ class AdminDealerPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRICES")
-    @DisplayName("GET /template -- возвращает Excel шаблон")
+    @DisplayName("GET /template -- returns Excel template")
     void template() throws Exception {
         when(dealerPriceService.template()).thenReturn(new byte[]{0x50, 0x4b});
 
@@ -128,7 +128,7 @@ class AdminDealerPriceControllerTest {
     }
 
     @Test
-    @DisplayName("без аутентификации возвращает 4xx")
+    @DisplayName("without authentication returns 4xx")
     void unauthenticated() throws Exception {
         UUID dealerId = UUID.randomUUID();
         mockMvc.perform(get("/api/v1/admin/dealers/" + dealerId + "/price-list"))
@@ -137,7 +137,7 @@ class AdminDealerPriceControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("без MANAGE_PRICES возвращает 403")
+    @DisplayName("without MANAGE_PRICES returns 403")
     void wrongAuthority() throws Exception {
         UUID dealerId = UUID.randomUUID();
         mockMvc.perform(get("/api/v1/admin/dealers/" + dealerId + "/price-list"))

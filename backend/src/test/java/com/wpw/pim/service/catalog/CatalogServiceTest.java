@@ -47,7 +47,7 @@ class CatalogServiceTest {
     class GetSectionTree {
 
         @Test
-        @DisplayName("строит дерево секций с категориями и группами (admin view)")
+        @DisplayName("builds section tree with categories and groups (admin view)")
         void getSectionTree_returnsFullTree() {
             Section section = createSection("tools", Map.of("en", "Tools", "ru", "Инструменты"));
             Category category = createCategory(section, "router-bits", Map.of("en", "Router Bits"));
@@ -71,7 +71,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("fallback на en если locale не найден в translations")
+        @DisplayName("falls back to en if locale not found in translations")
         void getSectionTree_fallbackLocale_usesEnglish() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             when(sectionRepository.findAllByIsActiveTrueOrderBySortOrder()).thenReturn(List.of(section));
@@ -84,7 +84,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает пустой список если нет активных секций")
+        @DisplayName("returns empty list if no active sections")
         void getSectionTree_noSections_returnsEmpty() {
             when(sectionRepository.findAllByIsActiveTrueOrderBySortOrder()).thenReturn(List.of());
             when(categoryRepository.findAllActiveWithSection()).thenReturn(List.of());
@@ -94,7 +94,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("hideEmpty=true скрывает группы без товаров")
+        @DisplayName("hideEmpty=true hides groups without products")
         void getSectionTree_hideEmpty_filtersEmptyGroups() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -115,7 +115,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("hideEmpty=true скрывает категории без видимых групп")
+        @DisplayName("hideEmpty=true hides categories without visible groups")
         void getSectionTree_hideEmpty_filtersEmptyCategories() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category emptyCategory = createCategory(section, "empty-cat", Map.of("en", "Empty Cat"));
@@ -141,7 +141,7 @@ class CatalogServiceTest {
     class CreateSection {
 
         @Test
-        @DisplayName("создаёт секцию и возвращает DTO")
+        @DisplayName("creates section and returns DTO")
         void createSection_validRequest_returnsSectionDto() {
             CreateSectionRequest req = new CreateSectionRequest("tools", Map.of("en", "Tools"), 1, true);
             when(sectionRepository.save(any(Section.class))).thenAnswer(inv -> {
@@ -162,7 +162,7 @@ class CatalogServiceTest {
     class UpdateSection {
 
         @Test
-        @DisplayName("обновляет секцию частично")
+        @DisplayName("updates section partially")
         void updateSection_partialUpdate_updatesOnlyProvidedFields() {
             Section existing = createSection("tools", Map.of("en", "Tools"));
             UpdateSectionRequest req = new UpdateSectionRequest("new-slug", null, null, null);
@@ -177,7 +177,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("бросает 404 если секция не найдена")
+        @DisplayName("throws 404 if section not found")
         void updateSection_notFound_throws404() {
             UUID id = UUID.randomUUID();
             when(sectionRepository.findById(id)).thenReturn(Optional.empty());
@@ -192,7 +192,7 @@ class CatalogServiceTest {
     class DeleteSection {
 
         @Test
-        @DisplayName("удаляет пустую секцию без cascade")
+        @DisplayName("deletes empty section without cascade")
         void deleteSection_noCascade_noChildren_deletes() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             when(sectionRepository.findById(section.getId())).thenReturn(Optional.of(section));
@@ -204,7 +204,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("бросает CONFLICT при удалении секции с категориями без cascade")
+        @DisplayName("throws CONFLICT when deleting section with categories without cascade")
         void deleteSection_noCascade_hasChildren_throwsConflict() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -217,7 +217,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("каскадно удаляет секцию с категориями и группами")
+        @DisplayName("cascades deletion of section with categories and groups")
         void deleteSection_cascade_deletesAll() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -243,7 +243,7 @@ class CatalogServiceTest {
     class CreateCategoryTests {
 
         @Test
-        @DisplayName("создаёт категорию и возвращает DTO")
+        @DisplayName("creates category and returns DTO")
         void createCategory_valid_returnsCategoryDto() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             CreateCategoryRequest req = new CreateCategoryRequest(section.getId(), "bits",
@@ -263,7 +263,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("бросает 404 если секция не найдена")
+        @DisplayName("throws 404 if section not found")
         void createCategory_sectionNotFound_throws404() {
             UUID sectionId = UUID.randomUUID();
             CreateCategoryRequest req = new CreateCategoryRequest(sectionId, "bits",
@@ -280,7 +280,7 @@ class CatalogServiceTest {
     class UpdateCategoryTests {
 
         @Test
-        @DisplayName("обновляет категорию частично")
+        @DisplayName("updates category partially")
         void updateCategory_partialUpdate_updatesOnlyProvided() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category existing = createCategory(section, "bits", Map.of("en", "Old Bits"));
@@ -296,7 +296,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("бросает 404 если категория не найдена")
+        @DisplayName("throws 404 if category not found")
         void updateCategory_notFound_throws404() {
             UUID id = UUID.randomUUID();
             when(categoryRepository.findById(id)).thenReturn(Optional.empty());
@@ -306,7 +306,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("обновляет все поля категории")
+        @DisplayName("updates all category fields")
         void updateCategory_fullUpdate() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category existing = createCategory(section, "bits", Map.of("en", "Old"));
@@ -328,7 +328,7 @@ class CatalogServiceTest {
     class DeleteCategoryTests {
 
         @Test
-        @DisplayName("удаляет пустую категорию без cascade")
+        @DisplayName("deletes empty category without cascade")
         void deleteCategory_noCascade_noGroups_deletes() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -341,7 +341,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("бросает CONFLICT при удалении категории с группами без cascade")
+        @DisplayName("throws CONFLICT when deleting category with groups without cascade")
         void deleteCategory_noCascade_hasGroups_throwsConflict() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -355,7 +355,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("каскадно удаляет категорию с группами")
+        @DisplayName("cascades deletion of category with groups")
         void deleteCategory_cascade_deletesAll() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -372,7 +372,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("бросает 404 если категория не найдена")
+        @DisplayName("throws 404 if category not found")
         void deleteCategory_notFound_throws404() {
             UUID id = UUID.randomUUID();
             when(categoryRepository.findById(id)).thenReturn(Optional.empty());
@@ -389,7 +389,7 @@ class CatalogServiceTest {
     class CreateProductGroupTests {
 
         @Test
-        @DisplayName("создаёт группу продуктов и возвращает DTO")
+        @DisplayName("creates product group and returns DTO")
         void createProductGroup_valid_returnsDto() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -412,7 +412,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("бросает 404 если категория не найдена")
+        @DisplayName("throws 404 if category not found")
         void createProductGroup_categoryNotFound_throws404() {
             UUID catId = UUID.randomUUID();
             CreateProductGroupRequest req = new CreateProductGroupRequest(catId,
@@ -429,7 +429,7 @@ class CatalogServiceTest {
     class UpdateProductGroupTests {
 
         @Test
-        @DisplayName("обновляет группу продуктов частично")
+        @DisplayName("updates product group partially")
         void updateProductGroup_partialUpdate() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -447,7 +447,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("бросает 404 если группа не найдена")
+        @DisplayName("throws 404 if group not found")
         void updateProductGroup_notFound_throws404() {
             UUID id = UUID.randomUUID();
             when(productGroupRepository.findById(id)).thenReturn(Optional.empty());
@@ -458,7 +458,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("обновляет все поля группы")
+        @DisplayName("updates all group fields")
         void updateProductGroup_fullUpdate() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -483,7 +483,7 @@ class CatalogServiceTest {
     class DeleteProductGroupTests {
 
         @Test
-        @DisplayName("удаляет группу и её продукты")
+        @DisplayName("deletes group and its products")
         void deleteProductGroup_existing_deletes() {
             Section section = createSection("tools", Map.of("en", "Tools"));
             Category category = createCategory(section, "bits", Map.of("en", "Bits"));
@@ -498,7 +498,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("бросает 404 если группа не найдена")
+        @DisplayName("throws 404 if group not found")
         void deleteProductGroup_notFound_throws404() {
             UUID id = UUID.randomUUID();
             when(productGroupRepository.findById(id)).thenReturn(Optional.empty());
@@ -515,7 +515,7 @@ class CatalogServiceTest {
     class ReorderSectionsTests {
 
         @Test
-        @DisplayName("обновляет sortOrder для секций")
+        @DisplayName("updates sortOrder for sections")
         void reorderSections_updatesSortOrder() {
             Section s1 = createSection("s1", Map.of("en", "S1"));
             Section s2 = createSection("s2", Map.of("en", "S2"));
@@ -539,7 +539,7 @@ class CatalogServiceTest {
     class ReorderCategoriesTests {
 
         @Test
-        @DisplayName("обновляет sortOrder для категорий")
+        @DisplayName("updates sortOrder for categories")
         void reorderCategories_updatesSortOrder() {
             Section section = createSection("s", Map.of("en", "S"));
             Category c1 = createCategory(section, "c1", Map.of("en", "C1"));
@@ -561,7 +561,7 @@ class CatalogServiceTest {
     class ReorderProductGroupsTests {
 
         @Test
-        @DisplayName("обновляет sortOrder для групп продуктов")
+        @DisplayName("updates sortOrder for product groups")
         void reorderProductGroups_updatesSortOrder() {
             Section section = createSection("s", Map.of("en", "S"));
             Category category = createCategory(section, "c", Map.of("en", "C"));
@@ -586,7 +586,7 @@ class CatalogServiceTest {
     class ChildrenCount {
 
         @Test
-        @DisplayName("возвращает количество дочерних категорий и групп")
+        @DisplayName("returns count of child categories and groups")
         void getChildrenCount_returnsCorrectCounts() {
             UUID sectionId = UUID.randomUUID();
             Category cat = new Category();
@@ -603,7 +603,7 @@ class CatalogServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает 0 групп если нет категорий")
+        @DisplayName("returns 0 groups if no categories")
         void getChildrenCount_noCategories_zeroGroups() {
             UUID sectionId = UUID.randomUUID();
             when(categoryRepository.countBySectionId(sectionId)).thenReturn(0L);
@@ -621,7 +621,7 @@ class CatalogServiceTest {
     class CategoryChildrenCount {
 
         @Test
-        @DisplayName("возвращает количество групп в категории")
+        @DisplayName("returns group count in category")
         void getCategoryChildrenCount_returnsCount() {
             UUID categoryId = UUID.randomUUID();
             when(productGroupRepository.countByCategoryId(categoryId)).thenReturn(3L);

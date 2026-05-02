@@ -126,13 +126,13 @@ class PriceResolverServiceTest {
     class Resolve {
 
         @Test
-        @DisplayName("null если auth отсутствует")
+        @DisplayName("null if auth is absent")
         void nullAuth() {
             assertThat(service.resolve("T-1", null)).isNull();
         }
 
         @Test
-        @DisplayName("null если auth не аутентифицирован")
+        @DisplayName("null if auth is not authenticated")
         void notAuthenticated() {
             Authentication auth = new AnonymousAuthenticationToken("k", "p",
                 List.of(new SimpleGrantedAuthority("ROLE_ANON")));
@@ -143,14 +143,14 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("null если продукт не найден")
+        @DisplayName("null if product not found")
         void productNotFound() {
             when(productRepo.findByToolNo("missing")).thenReturn(Optional.empty());
             assertThat(service.resolve("missing", adminAuth())).isNull();
         }
 
         @Test
-        @DisplayName("admin путь: возвращает stock-цену")
+        @DisplayName("admin path: returns stock price")
         void adminStockPrice() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -168,7 +168,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("admin: null если stock-лист не существует")
+        @DisplayName("admin: null if stock list does not exist")
         void adminNoStock() {
             UUID prodId = UUID.randomUUID();
             when(productRepo.findByToolNo("T-1")).thenReturn(Optional.of(product(prodId)));
@@ -178,7 +178,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("admin: null если позиция в stock не найдена")
+        @DisplayName("admin: null if stock entry not found")
         void adminNoItem() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -190,7 +190,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("admin (MANAGE_CATALOG) тоже видит stock-цену")
+        @DisplayName("admin (MANAGE_CATALOG) also sees stock price")
         void catalogAlsoSeesStock() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -203,7 +203,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("dealer principal: возвращает dealer-цену")
+        @DisplayName("dealer principal: returns dealer price")
         void dealerPrincipal() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -225,7 +225,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("dealer principal без price list: null")
+        @DisplayName("dealer principal without price list: null")
         void dealerPrincipalNoList() {
             UUID prodId = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -240,7 +240,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("dealer principal: items пустые → null")
+        @DisplayName("dealer principal: items are empty → null")
         void dealerPrincipalNoItems() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -257,7 +257,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("UserDetails с ROLE_dealer: разрешает цену через username")
+        @DisplayName("UserDetails with ROLE_dealer: resolves price via username")
         void userDetailsDealer() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -274,7 +274,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("UserDetails без ROLE_dealer: null")
+        @DisplayName("UserDetails without ROLE_dealer: null")
         void userDetailsNoDealerRole() {
             UUID prodId = UUID.randomUUID();
             UserDetails ud = User.withUsername("u").password("x")
@@ -288,7 +288,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("UserDetails: dealer не найден → null")
+        @DisplayName("UserDetails: dealer not found → null")
         void userDetailsDealerNotFound() {
             UUID prodId = UUID.randomUUID();
             when(productRepo.findByToolNo("T-1")).thenReturn(Optional.of(product(prodId)));
@@ -303,19 +303,19 @@ class PriceResolverServiceTest {
     class ResolveBatch {
 
         @Test
-        @DisplayName("пустая мапа если auth = null")
+        @DisplayName("empty map if auth = null")
         void nullAuth() {
             assertThat(service.resolveBatch(List.of(UUID.randomUUID()), null)).isEmpty();
         }
 
         @Test
-        @DisplayName("пустая мапа если productIds пуст")
+        @DisplayName("empty map if productIds is empty")
         void emptyIds() {
             assertThat(service.resolveBatch(List.of(), adminAuth())).isEmpty();
         }
 
         @Test
-        @DisplayName("admin: возвращает stock-цены для запрошенных продуктов")
+        @DisplayName("admin: returns stock prices for requested products")
         void adminBatch() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -333,7 +333,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("admin: empty если stock-лист отсутствует")
+        @DisplayName("admin: empty if stock list is absent")
         void adminBatchNoStock() {
             UUID prodId = UUID.randomUUID();
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.empty());
@@ -341,7 +341,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("dealer principal: возвращает dealer-цены")
+        @DisplayName("dealer principal: returns dealer prices")
         void dealerPrincipalBatch() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -362,7 +362,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("dealer principal без price list: empty map")
+        @DisplayName("dealer principal without price list: empty map")
         void dealerPrincipalBatchNoList() {
             Dealer dealer = new Dealer();
             dealer.setName("D");
@@ -374,7 +374,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("UserDetails dealer: успешно возвращает мапу")
+        @DisplayName("UserDetails dealer: successfully returns map")
         void userDetailsBatch() {
             UUID plId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -392,7 +392,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("UserDetails dealer без price list: empty")
+        @DisplayName("UserDetails dealer without price list: empty")
         void userDetailsNoList() {
             Dealer dealer = new Dealer();
             dealer.setPriceList(null);
@@ -403,7 +403,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("UserDetails dealer не найден: empty")
+        @DisplayName("UserDetails dealer not found: empty")
         void userDetailsDealerMissing() {
             when(dealerRepo.findByUserUsername("u")).thenReturn(Optional.empty());
             assertThat(service.resolveBatch(List.of(UUID.randomUUID()),
@@ -411,7 +411,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("обычный UserDetails (не dealer): empty")
+        @DisplayName("regular UserDetails (non-dealer): empty")
         void userDetailsRegular() {
             UserDetails ud = User.withUsername("u").password("x")
                 .authorities(new SimpleGrantedAuthority("ROLE_USER"))
@@ -426,13 +426,13 @@ class PriceResolverServiceTest {
     class ResolvePriceListId {
 
         @Test
-        @DisplayName("null если auth = null")
+        @DisplayName("null if auth = null")
         void nullAuth() {
             assertThat(service.resolvePriceListId(null)).isNull();
         }
 
         @Test
-        @DisplayName("admin: возвращает stock id")
+        @DisplayName("admin: returns stock id")
         void admin() {
             UUID id = UUID.randomUUID();
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.of(stockList(id)));
@@ -440,14 +440,14 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("admin: null если stock отсутствует")
+        @DisplayName("admin: null if stock is absent")
         void adminNoStock() {
             when(priceListRepo.findFirstByType("stock")).thenReturn(Optional.empty());
             assertThat(service.resolvePriceListId(adminAuth())).isNull();
         }
 
         @Test
-        @DisplayName("dealer principal с list")
+        @DisplayName("dealer principal with list")
         void dealerPrincipal() {
             UUID id = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -459,7 +459,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("dealer principal без list: null")
+        @DisplayName("dealer principal without list: null")
         void dealerPrincipalNull() {
             Dealer dealer = new Dealer();
             dealer.setName("D");
@@ -470,7 +470,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("UserDetails dealer: возвращает id")
+        @DisplayName("UserDetails dealer: returns id")
         void userDetailsDealer() {
             UUID id = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -480,7 +480,7 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("UserDetails dealer без price list: null")
+        @DisplayName("UserDetails dealer without price list: null")
         void userDetailsNoList() {
             Dealer dealer = new Dealer();
             dealer.setPriceList(null);
@@ -489,14 +489,14 @@ class PriceResolverServiceTest {
         }
 
         @Test
-        @DisplayName("UserDetails dealer не найден: null")
+        @DisplayName("UserDetails dealer not found: null")
         void userDetailsMissing() {
             when(dealerRepo.findByUserUsername("u")).thenReturn(Optional.empty());
             assertThat(service.resolvePriceListId(dealerUserAuth("u"))).isNull();
         }
 
         @Test
-        @DisplayName("обычный UserDetails (не dealer): null")
+        @DisplayName("regular UserDetails (non-dealer): null")
         void userDetailsRegular() {
             UserDetails ud = User.withUsername("u").password("x")
                 .authorities(new SimpleGrantedAuthority("ROLE_USER"))

@@ -16,43 +16,43 @@ public class ImportReportGenerator {
 
         header(md, "WPW PIM — Import Report");
         md.append("\n");
-        line(md, "**Дата импорта:** " + s.getImportedAt());
-        line(md, "**Длительность:** " + formatDuration(s.getDuration()));
+        line(md, "**Import date:** " + s.getImportedAt());
+        line(md, "**Duration:** " + formatDuration(s.getDuration()));
         md.append("\n");
 
         header2(md, "Summary");
         table(md,
-            List.of("Метрика", "Кол-во"),
+            List.of("Metric", "Count"),
             List.of(
-                row("Всего строк товаров в файле", s.getTotalProductRows()),
-                row("Товаров создано",              s.getProductsCreated()),
-                row("Товаров обновлено",            s.getProductsUpdated()),
-                row("Строк пропущено",              s.getProductsSkipped()),
-                row("Ошибок при выполнении",        s.getExecutionErrors().size())
+                row("Total product rows in file", s.getTotalProductRows()),
+                row("Products created",           s.getProductsCreated()),
+                row("Products updated",           s.getProductsUpdated()),
+                row("Rows skipped",               s.getProductsSkipped()),
+                row("Execution errors",           s.getExecutionErrors().size())
             )
         );
         md.append("\n");
 
-        header2(md, "Структура каталога");
+        header2(md, "Catalog Structure");
         table(md,
-            List.of("Объект", "Создано", "Найдено"),
+            List.of("Object", "Created", "Found"),
             List.of(
-                row3("Разделы (Sections)",     s.getSectionsCreated(),    "—"),
-                row3("Категории (Categories)", s.getCategoriesCreated(),  s.getCategoriesFound()),
-                row3("Группы (Product Groups)", s.getGroupsCreated(),     s.getGroupsFound())
+                row3("Sections",      s.getSectionsCreated(),    "—"),
+                row3("Categories",    s.getCategoriesCreated(),  s.getCategoriesFound()),
+                row3("Product Groups", s.getGroupsCreated(),     s.getGroupsFound())
             )
         );
         md.append("\n");
 
         if (!s.getExecutionErrors().isEmpty()) {
-            header2(md, "Ошибки выполнения");
-            md.append("> ⚠️ Следующие строки не были импортированы:\n\n");
+            header2(md, "Execution Errors");
+            md.append("> ⚠️ The following rows were not imported:\n\n");
             s.getExecutionErrors().forEach(e -> md.append("- ").append(e).append("\n"));
             md.append("\n");
         }
 
         if (!s.getExecutionWarnings().isEmpty()) {
-            header2(md, "Предупреждения");
+            header2(md, "Warnings");
             s.getExecutionWarnings().forEach(w -> md.append("- ").append(w).append("\n"));
             md.append("\n");
         }

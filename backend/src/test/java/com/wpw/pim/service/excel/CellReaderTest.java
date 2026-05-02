@@ -32,15 +32,15 @@ class CellReaderTest {
         row0.createCell(1).setCellValue(42.0);              // NUMERIC (целое)
         row0.createCell(2).setCellValue(3.14);              // NUMERIC (дробное)
         row0.createCell(3).setCellValue(true);              // BOOLEAN
-        row0.createCell(4).setCellValue("");                 // пустая строка
-        row0.createCell(5).setCellValue("   ");             // пробелы
+        row0.createCell(4).setCellValue("");                 // empty string
+        row0.createCell(5).setCellValue("   ");             // blanks
         // col 6 — отсутствует (null)
 
         // Row 1: формулы
         Row row1 = sheet.createRow(1);
-        row1.createCell(0).setCellFormula("1+1");           // формула → число
-        row1.createCell(1).setCellFormula("\"AB\" & \"CD\""); // формула → строка
-        row1.createCell(2).setCellFormula("TRUE");           // формула → boolean
+        row1.createCell(0).setCellFormula("1+1");           // formula → number
+        row1.createCell(1).setCellFormula("\"AB\" & \"CD\""); // formula → string
+        row1.createCell(2).setCellFormula("TRUE");           // formula → boolean
 
         // Row 2: NaN/infinity — это нельзя поставить в ячейку напрямую,
         // но можно проверить через doubleToString
@@ -52,90 +52,90 @@ class CellReaderTest {
     }
 
     @Test
-    @DisplayName("read — STRING ячейка возвращает trimmed строку")
+    @DisplayName("read — STRING cell returns trimmed string")
     void read_stringCell_returnsTrimmedValue() {
         Row row = sheet.getRow(0);
         assertThat(CellReader.read(row, 0, evaluator)).isEqualTo("Hello");
     }
 
     @Test
-    @DisplayName("read — NUMERIC целое число возвращается без дробной части")
+    @DisplayName("read — NUMERIC integer returned without fractional part")
     void read_numericIntegerCell_returnsWithoutDecimal() {
         Row row = sheet.getRow(0);
         assertThat(CellReader.read(row, 1, evaluator)).isEqualTo("42");
     }
 
     @Test
-    @DisplayName("read — NUMERIC дробное число возвращается как есть")
+    @DisplayName("read — NUMERIC decimal returned as-is")
     void read_numericDecimalCell_returnsDecimalString() {
         Row row = sheet.getRow(0);
         assertThat(CellReader.read(row, 2, evaluator)).isEqualTo("3.14");
     }
 
     @Test
-    @DisplayName("read — BOOLEAN ячейка возвращает 'true' или 'false'")
+    @DisplayName("read — BOOLEAN cell returns 'true' or 'false'")
     void read_booleanCell_returnsBooleanString() {
         Row row = sheet.getRow(0);
         assertThat(CellReader.read(row, 3, evaluator)).isEqualTo("true");
     }
 
     @Test
-    @DisplayName("read — пустая строка возвращает null")
+    @DisplayName("read — empty string returns null")
     void read_emptyStringCell_returnsNull() {
         Row row = sheet.getRow(0);
         assertThat(CellReader.read(row, 4, evaluator)).isNull();
     }
 
     @Test
-    @DisplayName("read — строка из пробелов возвращает null")
+    @DisplayName("read — blank string returns null")
     void read_blankStringCell_returnsNull() {
         Row row = sheet.getRow(0);
         assertThat(CellReader.read(row, 5, evaluator)).isNull();
     }
 
     @Test
-    @DisplayName("read — отсутствующая ячейка (null) возвращает null")
+    @DisplayName("read — missing cell (null) returns null")
     void read_missingCell_returnsNull() {
         Row row = sheet.getRow(0);
         assertThat(CellReader.read(row, 6, evaluator)).isNull();
     }
 
     @Test
-    @DisplayName("read — отрицательный индекс возвращает null")
+    @DisplayName("read — negative index returns null")
     void read_negativeIndex_returnsNull() {
         Row row = sheet.getRow(0);
         assertThat(CellReader.read(row, -1, evaluator)).isNull();
     }
 
     @Test
-    @DisplayName("read — null row возвращает null")
+    @DisplayName("read — null row returns null")
     void read_nullRow_returnsNull() {
         assertThat(CellReader.read(null, 0, evaluator)).isNull();
     }
 
     @Test
-    @DisplayName("read — формула 1+1 возвращает '2'")
+    @DisplayName("read — formula 1+1 returns '2'")
     void read_formulaNumeric_returnsEvaluatedResult() {
         Row row = sheet.getRow(1);
         assertThat(CellReader.read(row, 0, evaluator)).isEqualTo("2");
     }
 
     @Test
-    @DisplayName("read — формула конкатенации возвращает строку")
+    @DisplayName("read — concatenation formula returns string")
     void read_formulaString_returnsEvaluatedString() {
         Row row = sheet.getRow(1);
         assertThat(CellReader.read(row, 1, evaluator)).isEqualTo("ABCD");
     }
 
     @Test
-    @DisplayName("read — формула TRUE возвращает 'true'")
+    @DisplayName("read — formula TRUE returns 'true'")
     void read_formulaBoolean_returnsBooleanString() {
         Row row = sheet.getRow(1);
         assertThat(CellReader.read(row, 2, evaluator)).isEqualTo("true");
     }
 
     @Test
-    @DisplayName("read — формула без evaluator использует кэшированное значение")
+    @DisplayName("read — formula without evaluator uses cached value")
     void read_formulaWithoutEvaluator_usesCachedValue() {
         // Сначала вычислим формулы через evaluator чтобы кэш заполнился
         evaluator.evaluateAll();
@@ -147,7 +147,7 @@ class CellReaderTest {
     }
 
     @Test
-    @DisplayName("read — индекс за пределами строки возвращает null")
+    @DisplayName("read — index out of row bounds returns null")
     void read_outOfRangeIndex_returnsNull() {
         Row row = sheet.getRow(0);
         assertThat(CellReader.read(row, 100, evaluator)).isNull();

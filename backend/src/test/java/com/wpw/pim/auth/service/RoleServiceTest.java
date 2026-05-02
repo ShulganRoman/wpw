@@ -45,7 +45,7 @@ class RoleServiceTest {
     class FindAll {
 
         @Test
-        @DisplayName("возвращает все роли")
+        @DisplayName("returns all roles")
         void findAll_returnsRoleResponses() {
             Role role = createRole(1L, "ADMIN", false, Privilege.MODIFY_PRODUCTS);
             when(roleRepository.findAll()).thenReturn(List.of(role));
@@ -63,7 +63,7 @@ class RoleServiceTest {
     class FindById {
 
         @Test
-        @DisplayName("возвращает роль по id")
+        @DisplayName("returns role by id")
         void findById_existingId_returnsRole() {
             Role role = createRole(1L, "ADMIN", false);
             when(roleRepository.findById(1L)).thenReturn(Optional.of(role));
@@ -74,7 +74,7 @@ class RoleServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение если роль не найдена")
+        @DisplayName("throws exception if role not found")
         void findById_notFound_throwsException() {
             when(roleRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -89,7 +89,7 @@ class RoleServiceTest {
     class Create {
 
         @Test
-        @DisplayName("создаёт роль с привилегиями")
+        @DisplayName("creates role with privileges")
         void create_validRequest_returnsRoleResponse() {
             RoleRequest request = new RoleRequest("EDITOR", Set.of("MODIFY_PRODUCTS", "BULK_IMPORT"));
 
@@ -107,7 +107,7 @@ class RoleServiceTest {
         }
 
         @Test
-        @DisplayName("создаёт роль с пустыми привилегиями")
+        @DisplayName("creates role with empty privileges")
         void create_emptyPrivileges_createsRoleSuccessfully() {
             RoleRequest request = new RoleRequest("VIEWER", Set.of());
 
@@ -124,7 +124,7 @@ class RoleServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение при дублировании имени")
+        @DisplayName("throws exception on duplicate name")
         void create_duplicateName_throwsException() {
             when(roleRepository.existsByName("ADMIN")).thenReturn(true);
 
@@ -134,7 +134,7 @@ class RoleServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение при неизвестной привилегии")
+        @DisplayName("throws exception for unknown privilege")
         void create_unknownPrivilege_throwsException() {
             when(roleRepository.existsByName("BAD_ROLE")).thenReturn(false);
 
@@ -149,7 +149,7 @@ class RoleServiceTest {
     class Update {
 
         @Test
-        @DisplayName("обновляет роль успешно")
+        @DisplayName("updates role successfully")
         void update_validRequest_updatesRole() {
             Role existing = createRole(1L, "EDITOR", false);
             RoleRequest request = new RoleRequest("EDITOR_V2", Set.of("BULK_EXPORT"));
@@ -165,7 +165,7 @@ class RoleServiceTest {
         }
 
         @Test
-        @DisplayName("не проверяет уникальность если имя не изменилось")
+        @DisplayName("does not check uniqueness if name unchanged")
         void update_sameName_noUniquenessCheck() {
             Role existing = createRole(1L, "EDITOR", false);
             RoleRequest request = new RoleRequest("EDITOR", Set.of("BULK_EXPORT"));
@@ -185,7 +185,7 @@ class RoleServiceTest {
     class Delete {
 
         @Test
-        @DisplayName("удаляет роль успешно")
+        @DisplayName("deletes role successfully")
         void delete_customRole_deletesSuccessfully() {
             Role role = createRole(1L, "CUSTOM", false);
             when(roleRepository.findById(1L)).thenReturn(Optional.of(role));
@@ -197,7 +197,7 @@ class RoleServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение при удалении встроенной роли")
+        @DisplayName("throws exception when deleting built-in role")
         void delete_builtInRole_throwsException() {
             Role role = createRole(1L, "ADMIN", true);
             when(roleRepository.findById(1L)).thenReturn(Optional.of(role));
@@ -208,7 +208,7 @@ class RoleServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение если роль назначена пользователям")
+        @DisplayName("throws exception if role is assigned to users")
         void delete_roleAssignedToUsers_throwsException() {
             Role role = createRole(1L, "EDITOR", false);
             when(roleRepository.findById(1L)).thenReturn(Optional.of(role));
@@ -220,7 +220,7 @@ class RoleServiceTest {
         }
 
         @Test
-        @DisplayName("бросает исключение если роль не найдена")
+        @DisplayName("throws exception if role not found")
         void delete_notFound_throwsException() {
             when(roleRepository.findById(999L)).thenReturn(Optional.empty());
 

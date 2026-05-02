@@ -86,7 +86,7 @@ class CartControllerTest {
     class GetCart {
 
         @Test
-        @DisplayName("возвращает корзину дилера")
+        @DisplayName("returns dealer cart")
         void returnsCart() throws Exception {
             when(cartService.getCart(dealerId)).thenReturn(emptyCart());
 
@@ -98,7 +98,7 @@ class CartControllerTest {
         }
 
         @Test
-        @DisplayName("без аутентификации — 4xx")
+        @DisplayName("without authentication — 4xx")
         void unauthenticated() throws Exception {
             mockMvc.perform(get("/api/v1/dealer/cart"))
                 .andExpect(status().is4xxClientError());
@@ -106,7 +106,7 @@ class CartControllerTest {
 
         @Test
         @WithMockUser(roles = "ADMIN")
-        @DisplayName("роль ADMIN — 403")
+        @DisplayName("ADMIN role — 403")
         void adminForbidden() throws Exception {
             mockMvc.perform(get("/api/v1/dealer/cart"))
                 .andExpect(status().isForbidden());
@@ -120,7 +120,7 @@ class CartControllerTest {
     class AddItems {
 
         @Test
-        @DisplayName("добавляет позиции и возвращает обновлённую корзину")
+        @DisplayName("adds items and returns updated cart")
         void addsItems() throws Exception {
             UUID productId = UUID.randomUUID();
             when(cartService.addItems(eq(dealerId), any())).thenReturn(cartWithItem(productId));
@@ -137,7 +137,7 @@ class CartControllerTest {
         }
 
         @Test
-        @DisplayName("без аутентификации — 4xx")
+        @DisplayName("without authentication — 4xx")
         void unauthenticated() throws Exception {
             mockMvc.perform(post("/api/v1/dealer/cart/items")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -153,7 +153,7 @@ class CartControllerTest {
     class UpdateQty {
 
         @Test
-        @DisplayName("обновляет количество")
+        @DisplayName("updates quantity")
         void updatesQty() throws Exception {
             UUID productId = UUID.randomUUID();
             when(cartService.updateQty(dealerId, productId, 5)).thenReturn(cartWithItem(productId));
@@ -175,7 +175,7 @@ class CartControllerTest {
     class RemoveItem {
 
         @Test
-        @DisplayName("удаляет позицию и возвращает корзину")
+        @DisplayName("removes item and returns cart")
         void removesItem() throws Exception {
             UUID productId = UUID.randomUUID();
             when(cartService.removeItem(dealerId, productId)).thenReturn(emptyCart());
@@ -196,7 +196,7 @@ class CartControllerTest {
     class ClearCart {
 
         @Test
-        @DisplayName("очищает корзину — 204")
+        @DisplayName("clears cart — 204")
         void clearsCart() throws Exception {
             mockMvc.perform(delete("/api/v1/dealer/cart")
                     .with(user(dealerPrincipal)))

@@ -26,7 +26,7 @@ class CuttingTypeNormalizerTest {
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"   "})
-    @DisplayName("normalize — null, пустая строка и пробелы возвращают null")
+    @DisplayName("normalize — null, empty string and blanks return null")
     void normalize_nullOrBlank_returnsNull(String input) {
         assertThat(normalizer.normalize(input)).isNull();
     }
@@ -39,7 +39,7 @@ class CuttingTypeNormalizerTest {
         "standard, straight",
         "Standard, straight"
     })
-    @DisplayName("normalize — straight/standard варианты")
+    @DisplayName("normalize — straight/standard variants")
     void normalize_straight_variants(String input, String expected) {
         assertThat(normalizer.normalize(input)).isEqualTo(expected);
     }
@@ -51,7 +51,7 @@ class CuttingTypeNormalizerTest {
         "Up Cut, spiral_upcut",
         "upcut/downcut, spiral_upcut"
     })
-    @DisplayName("normalize — spiral upcut варианты")
+    @DisplayName("normalize — spiral upcut variants")
     void normalize_spiralUpcut_variants(String input, String expected) {
         assertThat(normalizer.normalize(input)).isEqualTo(expected);
     }
@@ -62,7 +62,7 @@ class CuttingTypeNormalizerTest {
         "downcut, spiral_downcut",
         "Down Cut, spiral_downcut"
     })
-    @DisplayName("normalize — spiral downcut варианты")
+    @DisplayName("normalize — spiral downcut variants")
     void normalize_spiralDowncut_variants(String input, String expected) {
         assertThat(normalizer.normalize(input)).isEqualTo(expected);
     }
@@ -72,7 +72,7 @@ class CuttingTypeNormalizerTest {
         "compression, compression",
         "up/down compression, compression"
     })
-    @DisplayName("normalize — compression варианты")
+    @DisplayName("normalize — compression variants")
     void normalize_compression_variants(String input, String expected) {
         assertThat(normalizer.normalize(input)).isEqualTo(expected);
     }
@@ -84,7 +84,7 @@ class CuttingTypeNormalizerTest {
         "flush-trim, flush_trim",
         "template, flush_trim"
     })
-    @DisplayName("normalize — flush trim варианты")
+    @DisplayName("normalize — flush trim variants")
     void normalize_flushTrim_variants(String input, String expected) {
         assertThat(normalizer.normalize(input)).isEqualTo(expected);
     }
@@ -94,7 +94,7 @@ class CuttingTypeNormalizerTest {
         "conical, conical",
         "taper-point, conical"
     })
-    @DisplayName("normalize — conical варианты")
+    @DisplayName("normalize — conical variants")
     void normalize_conical_variants(String input, String expected) {
         assertThat(normalizer.normalize(input)).isEqualTo(expected);
     }
@@ -140,7 +140,7 @@ class CuttingTypeNormalizerTest {
         "v-groove, v_groove",
         "v groove, v_groove"
     })
-    @DisplayName("normalize — v-groove варианты")
+    @DisplayName("normalize — v-groove variants")
     void normalize_vGroove_variants(String input, String expected) {
         assertThat(normalizer.normalize(input)).isEqualTo(expected);
     }
@@ -176,7 +176,7 @@ class CuttingTypeNormalizerTest {
     }
 
     @Test
-    @DisplayName("normalize — неизвестный тип возвращается как lowercase trimmed")
+    @DisplayName("normalize — unknown type is returned as lowercase trimmed")
     void normalize_unknownType_returnsLowercaseTrimmed() {
         assertThat(normalizer.normalize("  Some Custom Type  "))
             .isEqualTo("some custom type");

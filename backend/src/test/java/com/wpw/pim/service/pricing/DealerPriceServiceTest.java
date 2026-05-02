@@ -88,7 +88,7 @@ class DealerPriceServiceTest {
     class GetForDealer {
 
         @Test
-        @DisplayName("возвращает прайс-лист дилера, не expired")
+        @DisplayName("returns dealer price list, not expired")
         void returnsActive() {
             UUID dealerId = UUID.randomUUID();
             UUID plId = UUID.randomUUID();
@@ -114,7 +114,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("expired=true если validTo в прошлом")
+        @DisplayName("expired=true if validTo is in the past")
         void expiredFlag() {
             UUID dealerId = UUID.randomUUID();
             UUID plId = UUID.randomUUID();
@@ -131,7 +131,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает null если у дилера нет прайс-листа")
+        @DisplayName("returns null if dealer has no price list")
         void noPriceList() {
             UUID dealerId = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -143,7 +143,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("404 если дилер не найден")
+        @DisplayName("404 if dealer not found")
         void notFound() {
             UUID dealerId = UUID.randomUUID();
             when(dealerRepo.findById(dealerId)).thenReturn(Optional.empty());
@@ -157,7 +157,7 @@ class DealerPriceServiceTest {
     class ImportPriceListT {
 
         @Test
-        @DisplayName("создаёт новый прайс-лист и сохраняет позиции")
+        @DisplayName("creates new price list and saves entries")
         void createsNewList() throws IOException {
             UUID dealerId = UUID.randomUUID();
             UUID prodId = UUID.randomUUID();
@@ -189,7 +189,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("переиспользует существующий прайс-лист дилера")
+        @DisplayName("reuses existing dealer price list")
         void reusesExisting() throws IOException {
             UUID dealerId = UUID.randomUUID();
             UUID plId = UUID.randomUUID();
@@ -214,7 +214,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("404 если дилер не найден")
+        @DisplayName("404 if dealer not found")
         void noDealer() {
             UUID dealerId = UUID.randomUUID();
             when(dealerRepo.findById(dealerId)).thenReturn(Optional.empty());
@@ -224,7 +224,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("400 если валюта не найдена")
+        @DisplayName("400 if currency not found")
         void unknownCurrency() {
             UUID dealerId = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -242,7 +242,7 @@ class DealerPriceServiceTest {
     class DeletePriceListT {
 
         @Test
-        @DisplayName("удаляет прайс-лист дилера")
+        @DisplayName("deletes dealer price list")
         void deletes() {
             UUID dealerId = UUID.randomUUID();
             UUID plId = UUID.randomUUID();
@@ -261,7 +261,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("ничего не делает если прайс-лист отсутствует")
+        @DisplayName("does nothing if price list is absent")
         void noOp() {
             UUID dealerId = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -276,7 +276,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("404 если дилер не найден")
+        @DisplayName("404 if dealer not found")
         void notFound() {
             UUID dealerId = UUID.randomUUID();
             when(dealerRepo.findById(dealerId)).thenReturn(Optional.empty());
@@ -290,7 +290,7 @@ class DealerPriceServiceTest {
     class ExportAndTemplate {
 
         @Test
-        @DisplayName("export -- успешно собирает Excel")
+        @DisplayName("export -- successfully builds Excel")
         void exportsBytes() throws IOException {
             UUID dealerId = UUID.randomUUID();
             UUID plId = UUID.randomUUID();
@@ -314,7 +314,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("export -- 404 если у дилера нет прайс-листа")
+        @DisplayName("export -- 404 if dealer has no price list")
         void exportNoList() {
             UUID dealerId = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -327,7 +327,7 @@ class DealerPriceServiceTest {
         }
 
         @Test
-        @DisplayName("template -- возвращает Excel шаблон")
+        @DisplayName("template -- returns Excel template")
         void templateBytes() throws IOException {
             byte[] result = service.template();
             assertThat(result).isNotEmpty();

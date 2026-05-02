@@ -52,7 +52,7 @@ class OperationControllerTest {
     class ListOperations {
 
         @Test
-        @DisplayName("возвращает список операций")
+        @DisplayName("returns list of operations")
         void list_returnsOperations() throws Exception {
             Operation op = new Operation();
             op.setCode("drilling");
@@ -73,7 +73,7 @@ class OperationControllerTest {
     class ProductsByOperation {
 
         @Test
-        @DisplayName("возвращает продукты по операции")
+        @DisplayName("returns products by operation")
         void productsByOperation_returnsPagedResponse() throws Exception {
             PagedResponse<ProductSummaryDto> response = PagedResponse.of(List.of(), 0, 1, 48);
             when(operationService.findProductsByOperation("drilling", "en", 1, 48)).thenReturn(response);
@@ -90,7 +90,7 @@ class OperationControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("авторизованный пользователь создаёт операцию -- 201")
+        @DisplayName("authorized user creates operation -- 201")
         void create_authorized_returns201() throws Exception {
             OperationDto dto = new OperationDto("new-op", "New Op", 0);
             when(operationService.create(any(ApplicationTagUpsertDto.class))).thenReturn(dto);
@@ -103,7 +103,7 @@ class OperationControllerTest {
         }
 
         @Test
-        @DisplayName("неавторизованный пользователь -- 401")
+        @DisplayName("unauthorized user -- 401")
         void create_unauthenticated_returns403() throws Exception {
             mockMvc.perform(post("/api/v1/operations")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -113,7 +113,7 @@ class OperationControllerTest {
 
         @Test
         @WithMockUser(authorities = "MODIFY_PRODUCTS")
-        @DisplayName("пользователь без MANAGE_CATALOG -- 403")
+        @DisplayName("user without MANAGE_CATALOG -- 403")
         void create_forbidden_returns403() throws Exception {
             mockMvc.perform(post("/api/v1/operations")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -128,7 +128,7 @@ class OperationControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("обновляет операцию")
+        @DisplayName("updates operation")
         void update_authorized_returns200() throws Exception {
             OperationDto dto = new OperationDto("drilling", "Updated Drilling", 5);
             when(operationService.update(eq("drilling"), any(ApplicationTagUpsertDto.class))).thenReturn(dto);
@@ -147,7 +147,7 @@ class OperationControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("удаляет операцию -- 204")
+        @DisplayName("deletes operation -- 204")
         void delete_authorized_returns204() throws Exception {
             mockMvc.perform(delete("/api/v1/operations/drilling"))
                     .andExpect(status().isNoContent());

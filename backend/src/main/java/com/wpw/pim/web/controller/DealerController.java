@@ -29,7 +29,7 @@ import java.util.List;
 @RequestMapping("/api/v1/dealer")
 @PreAuthorize("hasRole('DEALER')")
 @RequiredArgsConstructor
-@Tag(name = "Dealer", description = "Личный кабинет дилера: прайс-лист, маппинг SKU, импорт. Требует роль DEALER.")
+@Tag(name = "Dealer", description = "Dealer personal area: price list, SKU mapping, import. Requires DEALER role.")
 public class DealerController {
 
     private final DealerService dealerService;
@@ -39,7 +39,7 @@ public class DealerController {
     // --- price list ---
 
     @GetMapping("/price-list")
-    @Operation(summary = "Мой прайс-лист", description = "Возвращает персональный прайс-лист текущего дилера.")
+    @Operation(summary = "My price list", description = "Returns the personal price list of the current dealer.")
     public PriceListDto getPriceList(@AuthenticationPrincipal UserDetails principal) {
         return dealerService.getPriceList(resolveDealer(principal));
     }
@@ -47,13 +47,13 @@ public class DealerController {
     // --- sku mapping CRUD ---
 
     @GetMapping("/sku-mapping")
-    @Operation(summary = "Мой маппинг SKU")
+    @Operation(summary = "My SKU mapping")
     public List<SkuMappingDto> getSkuMapping(@AuthenticationPrincipal UserDetails principal) {
         return dealerService.getSkuMapping(resolveDealer(principal).getId());
     }
 
     @PutMapping("/sku-mapping")
-    @Operation(summary = "Создать или обновить маппинг SKU")
+    @Operation(summary = "Create or update SKU mapping")
     public SkuMappingDto upsertSkuMapping(
         @AuthenticationPrincipal UserDetails principal,
         @Valid @RequestBody SkuMappingCreateRequest request
@@ -64,7 +64,7 @@ public class DealerController {
 
     @DeleteMapping("/sku-mapping/{wpwSku}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Удалить маппинг SKU")
+    @Operation(summary = "Delete SKU mapping")
     public void deleteSkuMapping(
         @AuthenticationPrincipal UserDetails principal,
         @PathVariable String wpwSku
@@ -75,7 +75,7 @@ public class DealerController {
     // --- import ---
 
     @PostMapping(value = "/sku-mapping/validate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Валидация файла маппинга SKU")
+    @Operation(summary = "Validate SKU mapping file")
     public SkuMappingService.ValidationReport validate(
         @AuthenticationPrincipal UserDetails principal,
         @RequestParam("file") MultipartFile file
@@ -85,7 +85,7 @@ public class DealerController {
     }
 
     @PostMapping(value = "/sku-mapping/execute", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Импортировать маппинг SKU из Excel")
+    @Operation(summary = "Import SKU mapping from Excel")
     public SkuMappingService.SkuMappingImportResult execute(
         @AuthenticationPrincipal UserDetails principal,
         @RequestParam("file") MultipartFile file,
@@ -95,7 +95,7 @@ public class DealerController {
     }
 
     @GetMapping("/sku-mapping/export")
-    @Operation(summary = "Экспортировать мой маппинг SKU в Excel")
+    @Operation(summary = "Export my SKU mapping to Excel")
     public ResponseEntity<byte[]> export(@AuthenticationPrincipal UserDetails principal) throws IOException {
         byte[] bytes = skuMappingService.export(resolveDealer(principal).getId());
         return ResponseEntity.ok()
@@ -105,7 +105,7 @@ public class DealerController {
     }
 
     @GetMapping("/sku-mapping/template")
-    @Operation(summary = "Скачать шаблон маппинга SKU")
+    @Operation(summary = "Download SKU mapping template")
     public ResponseEntity<byte[]> template() throws IOException {
         byte[] bytes = skuMappingService.template();
         return ResponseEntity.ok()

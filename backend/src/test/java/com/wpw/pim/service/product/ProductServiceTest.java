@@ -78,7 +78,7 @@ class ProductServiceTest {
     class GetFilterOptions {
 
         @Test
-        @DisplayName("возвращает карту фильтров")
+        @DisplayName("returns filter map")
         void getFilterOptions_returnsAllFilterKeys() {
             when(productRepo.findDistinctToolMaterials()).thenReturn(List.of("HSS", "Carbide"));
             when(productRepo.findDistinctWorkpieceMaterials()).thenReturn(List.of("Wood"));
@@ -100,7 +100,7 @@ class ProductServiceTest {
     class FindAll {
 
         @Test
-        @DisplayName("возвращает пагинированный ответ")
+        @DisplayName("returns paginated response")
         void findAll_returnsPagedResponse() {
             Product product = createProduct("TOOL-001");
             PageImpl<Product> page = new PageImpl<>(List.of(product), PageRequest.of(0, 48), 1);
@@ -120,7 +120,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("findAll с переводом и атрибутами")
+        @DisplayName("findAll with translation and attributes")
         void findAll_withTranslationAndAttributes_mapsSummaryCorrectly() {
             Product product = createProductWithAttributes("TOOL-002");
             PageImpl<Product> page = new PageImpl<>(List.of(product), PageRequest.of(0, 48), 1);
@@ -149,7 +149,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("findAll для he locale помечает isRtl=true")
+        @DisplayName("findAll for he locale marks isRtl=true")
         void findAll_hebrewLocale_isRtl() {
             Product product = createProduct("TOOL-003");
             PageImpl<Product> page = new PageImpl<>(List.of(product), PageRequest.of(0, 48), 1);
@@ -172,7 +172,7 @@ class ProductServiceTest {
     class FindByToolNo {
 
         @Test
-        @DisplayName("возвращает детали продукта")
+        @DisplayName("returns product details")
         void findByToolNo_existingProduct_returnsDetail() {
             Product product = createProduct("TOOL-001");
             ProductTranslation translation = new ProductTranslation();
@@ -194,7 +194,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("бросает NOT_FOUND если продукт не найден")
+        @DisplayName("throws NOT_FOUND if product not found")
         void findByToolNo_notFound_throws404() {
             when(productRepo.findByToolNo("NONEXISTENT")).thenReturn(Optional.empty());
 
@@ -203,7 +203,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("fallback на en перевод если запрошенная локаль не найдена")
+        @DisplayName("falls back to en translation if requested locale not found")
         void findByToolNo_fallbackToEnTranslation() {
             Product product = createProduct("TOOL-001");
             ProductTranslation enTranslation = new ProductTranslation();
@@ -226,7 +226,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает detail с null translation - использует toolNo как имя")
+        @DisplayName("returns detail with null translation — uses toolNo as name")
         void findByToolNo_noTranslation_usesToolNoAsName() {
             Product product = createProduct("TOOL-001");
 
@@ -243,7 +243,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает detail с атрибутами, группой, категорией и секцией")
+        @DisplayName("returns detail with attributes, group, category and section")
         void findByToolNo_withAttributesAndGroupHierarchy() {
             Product product = createProductWithAttributes("TOOL-ATT");
             Section section = new Section();
@@ -273,7 +273,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает mediaUrls из media списка")
+        @DisplayName("returns mediaUrls from media list")
         void findByToolNo_withMedia_returnsUrls() {
             Product product = createProduct("TOOL-MEDIA");
             MediaFile mf = new MediaFile();
@@ -298,7 +298,7 @@ class ProductServiceTest {
     class UpdateProduct {
 
         @Test
-        @DisplayName("обновляет продукт и возвращает detail")
+        @DisplayName("updates product and returns detail")
         void updateProduct_existing_updatesAndReturns() {
             Product product = createProduct("TOOL-UPD");
             ProductUpdateDto dto = new ProductUpdateDto(
@@ -324,7 +324,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("бросает NOT_FOUND если продукт не найден")
+        @DisplayName("throws NOT_FOUND if product not found")
         void updateProduct_notFound_throws404() {
             UUID id = UUID.randomUUID();
             ProductUpdateDto dto = new ProductUpdateDto(null, null, null, null, null,
@@ -336,7 +336,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("обновляет с attributes dto")
+        @DisplayName("updates with attributes dto")
         void updateProduct_withAttributes_updatesAttributes() {
             Product product = createProduct("TOOL-ATTR");
             ProductAttributesDto attrsDto = new ProductAttributesDto(
@@ -363,7 +363,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("обновляет коллекции - пустой Set очищает, null не трогает")
+        @DisplayName("updates collections — empty Set clears, null leaves unchanged")
         void updateProduct_collectionsUpdated() {
             Product product = createProduct("TOOL-COLL");
             product.getToolMaterials().add("OldMaterial");
@@ -392,7 +392,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("обновляет существующий перевод вместо создания нового")
+        @DisplayName("updates existing translation instead of creating a new one")
         void updateProduct_existingTranslation_updatesIt() {
             Product product = createProduct("TOOL-TR");
             ProductTranslation existing = new ProductTranslation();
@@ -428,7 +428,7 @@ class ProductServiceTest {
     class DeleteProduct {
 
         @Test
-        @DisplayName("удаляет продукт и файлы с диска")
+        @DisplayName("deletes product and files from disk")
         void deleteProduct_existing_deletesProductAndMedia() {
             UUID productId = UUID.randomUUID();
             Product product = new Product();
@@ -444,7 +444,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("бросает NOT_FOUND если продукт не найден")
+        @DisplayName("throws NOT_FOUND if product not found")
         void deleteProduct_notFound_throws404() {
             UUID id = UUID.randomUUID();
             when(productRepo.findById(id)).thenReturn(Optional.empty());
@@ -454,7 +454,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("удаляет медиафайлы с диска включая thumbnails")
+        @DisplayName("deletes media files from disk including thumbnails")
         void deleteProduct_withMediaAndThumbnails_deletesFiles() {
             UUID productId = UUID.randomUUID();
             Product product = new Product();
@@ -474,7 +474,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("если thumbnail совпадает с url, удаляет файл один раз")
+        @DisplayName("if thumbnail matches url, deletes file once")
         void deleteProduct_sameThumbnailAsUrl_deletesOnce() {
             UUID productId = UUID.randomUUID();
             Product product = new Product();
@@ -499,7 +499,7 @@ class ProductServiceTest {
     class DeleteByGroupIds {
 
         @Test
-        @DisplayName("не делает ничего при пустом списке groupIds")
+        @DisplayName("does nothing with empty groupIds list")
         void deleteProductsByGroupIds_emptyList_doesNothing() {
             productService.deleteProductsByGroupIds(List.of());
 
@@ -507,7 +507,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("не делает ничего при null groupIds")
+        @DisplayName("does nothing with null groupIds")
         void deleteProductsByGroupIds_null_doesNothing() {
             productService.deleteProductsByGroupIds(null);
 
@@ -515,7 +515,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("удаляет продукты по groupIds")
+        @DisplayName("deletes products by groupIds")
         void deleteProductsByGroupIds_validIds_deletesProducts() {
             UUID groupId = UUID.randomUUID();
             UUID productId = UUID.randomUUID();
@@ -529,7 +529,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("не удаляет если productIds пустой")
+        @DisplayName("does not delete if productIds is empty")
         void deleteProductsByGroupIds_noProducts_doesNotDelete() {
             UUID groupId = UUID.randomUUID();
             when(productRepo.findIdsByGroupIdIn(List.of(groupId))).thenReturn(List.of());
@@ -540,7 +540,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("удаляет медиафайлы с диска включая thumbnail")
+        @DisplayName("deletes media files from disk including thumbnail")
         void deleteProductsByGroupIds_withMedia_deletesMediaFiles() {
             UUID groupId = UUID.randomUUID();
             UUID productId = UUID.randomUUID();
@@ -563,7 +563,7 @@ class ProductServiceTest {
     class CreateProduct {
 
         @Test
-        @DisplayName("бросает CONFLICT при дублировании toolNo")
+        @DisplayName("throws CONFLICT on duplicate toolNo")
         void createProduct_duplicateToolNo_throwsConflict() {
             ProductCreateDto dto = new ProductCreateDto("EXISTING", null, null, null, null, null, null,
                     null, null, null, null, null, null, null, null, null, null, null, null);
@@ -574,7 +574,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("создаёт продукт с полным набором полей")
+        @DisplayName("creates product with full set of fields")
         void createProduct_fullDto_createsProductAndTranslation() {
             UUID groupId = UUID.randomUUID();
             ProductGroup group = new ProductGroup();
@@ -605,7 +605,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("бросает NOT_FOUND если группа не найдена")
+        @DisplayName("throws NOT_FOUND if group not found")
         void createProduct_groupNotFound_throws404() {
             UUID groupId = UUID.randomUUID();
             ProductCreateDto dto = new ProductCreateDto("NEW-002", groupId, null, null, null, null, null,
@@ -619,7 +619,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("создаёт продукт без имени - не сохраняет перевод")
+        @DisplayName("creates product without name — does not save translation")
         void createProduct_blankName_noTranslation() {
             ProductCreateDto dto = new ProductCreateDto("NO-NAME", null, null, null, null, null, null,
                     null, null, null, null, null, null, null, null, null, null, null, null);
@@ -640,7 +640,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("создаёт продукт с атрибутами")
+        @DisplayName("creates product with attributes")
         void createProduct_withAttributes_savesAttributes() {
             ProductAttributesDto attrsDto = new ProductAttributesDto(
                     new BigDecimal("12.5"), null, null, null, null, null, null, null,
@@ -673,7 +673,7 @@ class ProductServiceTest {
     class GetSpareParts {
 
         @Test
-        @DisplayName("возвращает пустой список если нет запчастей")
+        @DisplayName("returns empty list if no spare parts")
         void getSpareParts_noSpareParts_returnsEmpty() {
             UUID productId = UUID.randomUUID();
             when(sparePartRepo.findByProductId(productId)).thenReturn(List.of());
@@ -684,7 +684,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает запчасти с переводом")
+        @DisplayName("returns spare parts with translation")
         void getSpareParts_withTranslation_returnsTranslatedName() {
             UUID productId = UUID.randomUUID();
             Product part = createProduct("PART-001");
@@ -711,7 +711,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("использует toolNo если перевод не найден")
+        @DisplayName("uses toolNo if translation not found")
         void getSpareParts_noTranslation_usesToolNo() {
             UUID productId = UUID.randomUUID();
             Product part = createProduct("PART-002");
@@ -737,7 +737,7 @@ class ProductServiceTest {
     class GetCompatibleTools {
 
         @Test
-        @DisplayName("возвращает пустой список если нет совместимых инструментов")
+        @DisplayName("returns empty list if no compatible tools")
         void getCompatibleTools_empty_returnsEmpty() {
             UUID partId = UUID.randomUUID();
             when(sparePartRepo.findByPartId(partId)).thenReturn(List.of());
@@ -748,7 +748,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает совместимые инструменты с переводом")
+        @DisplayName("returns compatible tools with translation")
         void getCompatibleTools_withTranslation_returnsTranslatedName() {
             UUID partId = UUID.randomUUID();
             Product tool = createProduct("TOOL-COMPAT");
@@ -774,7 +774,7 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("использует toolNo если перевод не найден")
+        @DisplayName("uses toolNo if translation not found")
         void getCompatibleTools_noTranslation_usesToolNo() {
             UUID partId = UUID.randomUUID();
             Product tool = createProduct("TOOL-NO-TR");

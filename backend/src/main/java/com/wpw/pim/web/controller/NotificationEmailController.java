@@ -20,20 +20,20 @@ import java.util.UUID;
 @RequestMapping("/api/v1/admin/notification-emails")
 @PreAuthorize("hasAuthority('MANAGE_DEALERS')")
 @RequiredArgsConstructor
-@Tag(name = "Admin: Notification Emails", description = "Адреса для email-уведомлений о заказах")
+@Tag(name = "Admin: Notification Emails", description = "Email addresses for order notifications")
 public class NotificationEmailController {
 
     private final NotificationEmailRepository repository;
 
     @GetMapping
-    @Operation(summary = "Список адресов")
+    @Operation(summary = "List addresses")
     public List<NotificationEmailDto> list() {
         return repository.findAll().stream().map(this::toDto).toList();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Добавить адрес")
+    @Operation(summary = "Add address")
     public NotificationEmailDto create(@Valid @RequestBody NotificationEmailSaveRequest req) {
         NotificationEmail entity = new NotificationEmail();
         entity.setEmail(req.email());
@@ -42,7 +42,7 @@ public class NotificationEmailController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Обновить адрес")
+    @Operation(summary = "Update address")
     public NotificationEmailDto update(@PathVariable UUID id, @Valid @RequestBody NotificationEmailSaveRequest req) {
         NotificationEmail entity = repository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Email not found"));
@@ -53,7 +53,7 @@ public class NotificationEmailController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Удалить адрес")
+    @Operation(summary = "Delete address")
     public void delete(@PathVariable UUID id) {
         repository.deleteById(id);
     }

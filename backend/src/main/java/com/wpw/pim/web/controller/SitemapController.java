@@ -27,19 +27,19 @@ public class SitemapController {
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
 
-        // Главная страница
+        // Home page
         xml.append("  <url>\n");
         xml.append("    <loc>").append(baseUrl).append("/</loc>\n");
         xml.append("    <priority>1.0</priority>\n");
         xml.append("  </url>\n");
 
-        // Страница каталога
+        // Catalog page
         xml.append("  <url>\n");
         xml.append("    <loc>").append(baseUrl).append("/catalog</loc>\n");
         xml.append("    <priority>0.9</priority>\n");
         xml.append("  </url>\n");
 
-        // Страницы продуктов
+        // Product pages
         for (ProductSitemapProjection product : products) {
             xml.append("  <url>\n");
             xml.append("    <loc>").append(baseUrl).append("/product/")

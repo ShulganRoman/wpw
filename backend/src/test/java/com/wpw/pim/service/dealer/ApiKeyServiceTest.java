@@ -14,7 +14,7 @@ class ApiKeyServiceTest {
     private final ApiKeyService apiKeyService = new ApiKeyService();
 
     @Test
-    @DisplayName("generateKey -- возвращает непустой Base64-URL ключ")
+    @DisplayName("generateKey -- returns non-empty Base64-URL key")
     void generateKey_returnsNonEmptyBase64UrlKey() {
         String key = apiKeyService.generateKey();
 
@@ -24,7 +24,7 @@ class ApiKeyServiceTest {
     }
 
     @Test
-    @DisplayName("generateKey -- каждый вызов генерирует уникальный ключ")
+    @DisplayName("generateKey -- each call generates unique key")
     void generateKey_producesUniqueKeys() {
         String key1 = apiKeyService.generateKey();
         String key2 = apiKeyService.generateKey();
@@ -33,7 +33,7 @@ class ApiKeyServiceTest {
     }
 
     @Test
-    @DisplayName("hashKey -- возвращает BCrypt хеш")
+    @DisplayName("hashKey -- returns BCrypt hash")
     void hashKey_returnsBCryptHash() {
         String key = apiKeyService.generateKey();
         String hash = apiKeyService.hashKey(key);
@@ -43,7 +43,7 @@ class ApiKeyServiceTest {
     }
 
     @Test
-    @DisplayName("verifyKey -- успешно верифицирует правильный ключ")
+    @DisplayName("verifyKey -- successfully verifies correct key")
     void verifyKey_correctKey_returnsTrue() {
         String key = apiKeyService.generateKey();
         String hash = apiKeyService.hashKey(key);
@@ -52,7 +52,7 @@ class ApiKeyServiceTest {
     }
 
     @Test
-    @DisplayName("verifyKey -- отклоняет неправильный ключ")
+    @DisplayName("verifyKey -- rejects wrong key")
     void verifyKey_wrongKey_returnsFalse() {
         String key = apiKeyService.generateKey();
         String hash = apiKeyService.hashKey(key);
@@ -62,7 +62,7 @@ class ApiKeyServiceTest {
     }
 
     @Test
-    @DisplayName("generateKey -- длина ключа соответствует 32 байтам в Base64")
+    @DisplayName("generateKey -- key length corresponds to 32 bytes in Base64")
     void generateKey_hasExpectedLength() {
         String key = apiKeyService.generateKey();
 

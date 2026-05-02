@@ -17,25 +17,25 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('MANAGE_DEALERS')")
-@Tag(name = "Admin: Orders", description = "Управление заказами дилеров")
+@Tag(name = "Admin: Orders", description = "Dealer order management")
 public class AdminOrderController {
 
     private final OrderService orderService;
 
     @GetMapping("/api/v1/admin/dealers/{dealerId}/orders")
-    @Operation(summary = "Список заказов дилера")
+    @Operation(summary = "List dealer orders")
     public List<OrderSummaryDto> getDealerOrders(@PathVariable UUID dealerId) {
         return orderService.getAdminDealerOrders(dealerId);
     }
 
     @GetMapping("/api/v1/admin/orders/{orderId}")
-    @Operation(summary = "Детали заказа")
+    @Operation(summary = "Order details")
     public OrderDto getOrder(@PathVariable UUID orderId) {
         return orderService.getAdminOrder(orderId);
     }
 
     @PatchMapping("/api/v1/admin/orders/{orderId}/status")
-    @Operation(summary = "Изменить статус заказа")
+    @Operation(summary = "Change order status")
     public OrderDto changeStatus(
         @PathVariable UUID orderId,
         @Valid @RequestBody ChangeStatusRequest req
@@ -44,13 +44,13 @@ public class AdminOrderController {
     }
 
     @GetMapping("/api/v1/admin/dealers/{dealerId}/orders/pending")
-    @Operation(summary = "Есть ли незакрытые заказы у дилера")
+    @Operation(summary = "Check if dealer has open orders")
     public boolean hasPending(@PathVariable UUID dealerId) {
         return orderService.hasPendingOrders(dealerId);
     }
 
     @GetMapping("/api/v1/admin/orders/pending-dealer-ids")
-    @Operation(summary = "ID дилеров с незакрытыми заказами")
+    @Operation(summary = "IDs of dealers with open orders")
     public java.util.Set<UUID> pendingDealerIds() {
         return orderService.getDealerIdsWithPendingOrders();
     }

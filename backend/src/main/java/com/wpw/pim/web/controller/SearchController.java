@@ -13,13 +13,13 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/search")
 @RequiredArgsConstructor
-@Tag(name = "Search", description = "Полнотекстовый поиск по товарам")
+@Tag(name = "Search", description = "Full-text product search")
 public class SearchController {
 
     private final SearchService searchService;
 
     @GetMapping
-    @Operation(summary = "Поиск товаров", description = "Полнотекстовый поиск по названию, описанию и артикулу. Поддерживает пагинацию.")
+    @Operation(summary = "Search products", description = "Full-text search by name, description and SKU. Supports pagination.")
     public PagedResponse<Map<String, Object>> search(
         @RequestParam String q,
         @RequestParam(defaultValue = "en") String locale,

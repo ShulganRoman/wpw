@@ -53,7 +53,7 @@ class SkuMappingServiceTest {
     class ListT {
 
         @Test
-        @DisplayName("возвращает маппинги дилера")
+        @DisplayName("returns dealer mappings")
         void returnsList() {
             UUID dealerId = UUID.randomUUID();
             DealerSkuMapping m = new DealerSkuMapping();
@@ -74,7 +74,7 @@ class SkuMappingServiceTest {
     class Upsert {
 
         @Test
-        @DisplayName("создаёт новый маппинг")
+        @DisplayName("creates new mapping")
         void createsNew() {
             UUID dealerId = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -90,7 +90,7 @@ class SkuMappingServiceTest {
         }
 
         @Test
-        @DisplayName("обновляет существующий маппинг")
+        @DisplayName("updates existing mapping")
         void updatesExisting() {
             UUID dealerId = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -108,7 +108,7 @@ class SkuMappingServiceTest {
         }
 
         @Test
-        @DisplayName("404 если дилер не найден")
+        @DisplayName("404 if dealer not found")
         void noDealer() {
             UUID dealerId = UUID.randomUUID();
             when(dealerRepo.findById(dealerId)).thenReturn(Optional.empty());
@@ -122,7 +122,7 @@ class SkuMappingServiceTest {
     class DeleteT {
 
         @Test
-        @DisplayName("удаляет существующий маппинг")
+        @DisplayName("deletes existing mapping")
         void deletes() {
             UUID dealerId = UUID.randomUUID();
             DealerSkuMappingId id = new DealerSkuMappingId(dealerId, "WPW-1");
@@ -133,7 +133,7 @@ class SkuMappingServiceTest {
         }
 
         @Test
-        @DisplayName("404 если маппинг не существует")
+        @DisplayName("404 if mapping does not exist")
         void notFound() {
             UUID dealerId = UUID.randomUUID();
             when(mappingRepo.existsById(any())).thenReturn(false);
@@ -148,7 +148,7 @@ class SkuMappingServiceTest {
     class Validate {
 
         @Test
-        @DisplayName("классифицирует строки на valid/ghosts/errors")
+        @DisplayName("classifies rows into valid/ghosts/errors")
         void classifies() throws IOException {
             when(productRepo.existsByToolNo("WPW-1")).thenReturn(true);
             when(productRepo.existsByToolNo("WPW-GHOST")).thenReturn(false);
@@ -173,7 +173,7 @@ class SkuMappingServiceTest {
         }
 
         @Test
-        @DisplayName("обрабатывает разные типы ячеек (numeric, boolean)")
+        @DisplayName("handles different cell types (numeric, boolean)")
         void handlesCellTypes() throws IOException {
             when(productRepo.existsByToolNo(any())).thenReturn(true);
 
@@ -191,7 +191,7 @@ class SkuMappingServiceTest {
     class Execute {
 
         @Test
-        @DisplayName("импортирует с skipGhosts=true")
+        @DisplayName("imports with skipGhosts=true")
         void executeSkipGhosts() throws IOException {
             UUID dealerId = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -219,7 +219,7 @@ class SkuMappingServiceTest {
         }
 
         @Test
-        @DisplayName("импортирует с skipGhosts=false (включая ghosts)")
+        @DisplayName("imports with skipGhosts=false (including ghosts)")
         void executeIncludeGhosts() throws IOException {
             UUID dealerId = UUID.randomUUID();
             Dealer dealer = new Dealer();
@@ -251,7 +251,7 @@ class SkuMappingServiceTest {
         }
 
         @Test
-        @DisplayName("404 если дилер не найден")
+        @DisplayName("404 if dealer not found")
         void noDealer() {
             UUID dealerId = UUID.randomUUID();
             when(dealerRepo.findById(dealerId)).thenReturn(Optional.empty());
@@ -267,7 +267,7 @@ class SkuMappingServiceTest {
     class ExportAndTemplate {
 
         @Test
-        @DisplayName("export возвращает Excel байты")
+        @DisplayName("export returns Excel bytes")
         void exportsBytes() throws IOException {
             UUID dealerId = UUID.randomUUID();
             DealerSkuMapping m = new DealerSkuMapping();
@@ -284,7 +284,7 @@ class SkuMappingServiceTest {
         }
 
         @Test
-        @DisplayName("template возвращает Excel шаблон")
+        @DisplayName("template returns Excel template")
         void templateBytes() throws IOException {
             byte[] result = service.template();
             assertThat(result).isNotEmpty();

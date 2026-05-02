@@ -82,7 +82,7 @@ function NotificationEmailsSection() {
   useEffect(() => {
     getNotificationEmails()
       .then(setEmails)
-      .catch(() => showToast('Не удалось загрузить адреса', 'error'))
+      .catch(() => showToast('Failed to load addresses', 'error'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -93,9 +93,9 @@ function NotificationEmailsSection() {
       const created = await createNotificationEmail({ email: newEmail.trim(), active: true });
       setEmails(prev => [...prev, created]);
       setNewEmail('');
-      showToast('Адрес добавлен', 'success');
+      showToast('Address added', 'success');
     } catch (e) {
-      showToast(e.message || 'Ошибка добавления', 'error');
+      showToast(e.message || 'Error adding address', 'error');
     } finally {
       setAdding(false);
     }
@@ -106,7 +106,7 @@ function NotificationEmailsSection() {
       const updated = await updateNotificationEmail(entry.id, { email: entry.email, active: !entry.active });
       setEmails(prev => prev.map(e => e.id === updated.id ? updated : e));
     } catch {
-      showToast('Ошибка обновления', 'error');
+      showToast('Error updating address', 'error');
     }
   }
 
@@ -116,9 +116,9 @@ function NotificationEmailsSection() {
       const updated = await updateNotificationEmail(entry.id, { email: editValue.trim(), active: entry.active });
       setEmails(prev => prev.map(e => e.id === updated.id ? updated : e));
       setEditId(null);
-      showToast('Адрес обновлён', 'success');
+      showToast('Address updated', 'success');
     } catch (e) {
-      showToast(e.message || 'Ошибка обновления', 'error');
+      showToast(e.message || 'Error updating address', 'error');
     }
   }
 
@@ -126,20 +126,20 @@ function NotificationEmailsSection() {
     try {
       await deleteNotificationEmail(id);
       setEmails(prev => prev.filter(e => e.id !== id));
-      showToast('Адрес удалён', 'success');
+      showToast('Address deleted', 'success');
     } catch {
-      showToast('Ошибка удаления', 'error');
+      showToast('Error deleting address', 'error');
     }
   }
 
   return (
     <div>
       <p style={{ fontSize: 13, color: 'var(--wpw-text-muted)', margin: '0 0 16px' }}>
-        На эти адреса будут приходить уведомления о новых заказах от дилеров.
+        These addresses will receive notifications about new dealer orders.
       </p>
 
       {loading ? (
-        <div style={{ color: '#888', fontSize: 13 }}>Загрузка...</div>
+        <div style={{ color: '#888', fontSize: 13 }}>Loading...</div>
       ) : (
         <>
           {emails.length > 0 && (
@@ -160,8 +160,8 @@ function NotificationEmailsSection() {
                         onKeyDown={e => { if (e.key === 'Enter') handleSaveEdit(entry); if (e.key === 'Escape') setEditId(null); }}
                         autoFocus
                       />
-                      <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => handleSaveEdit(entry)}>Сохранить</button>
-                      <button className="btn" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setEditId(null)}>Отмена</button>
+                      <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => handleSaveEdit(entry)}>Save</button>
+                      <button className="btn" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setEditId(null)}>Cancel</button>
                     </>
                   ) : (
                     <>
@@ -172,23 +172,23 @@ function NotificationEmailsSection() {
                         className="btn btn-secondary"
                         style={{ padding: '2px 8px', fontSize: 11, color: entry.active ? '#2e7d32' : '#888' }}
                         onClick={() => handleToggleActive(entry)}
-                        title={entry.active ? 'Деактивировать' : 'Активировать'}
+                        title={entry.active ? 'Deactivate' : 'Activate'}
                       >
-                        {entry.active ? 'Активен' : 'Выкл'}
+                        {entry.active ? 'Active' : 'Off'}
                       </button>
                       <button
                         className="btn btn-secondary"
                         style={{ padding: '2px 8px', fontSize: 11 }}
                         onClick={() => { setEditId(entry.id); setEditValue(entry.email); }}
                       >
-                        Изменить
+                        Edit
                       </button>
                       <button
                         className="btn btn-secondary"
                         style={{ padding: '2px 8px', fontSize: 11, color: '#c62828' }}
                         onClick={() => handleDelete(entry.id)}
                       >
-                        Удалить
+                        Delete
                       </button>
                     </>
                   )}
@@ -208,7 +208,7 @@ function NotificationEmailsSection() {
               onKeyDown={e => e.key === 'Enter' && handleAdd()}
             />
             <button className="btn btn-primary" onClick={handleAdd} disabled={adding || !newEmail.trim()} style={{ fontSize: 13 }}>
-              {adding ? 'Добавление...' : 'Добавить'}
+              {adding ? 'Adding...' : 'Add'}
             </button>
           </div>
         </>
@@ -230,7 +230,7 @@ export default function SettingsTab() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    getSystemSettings().then(setSettings).catch(() => showToast('Не удалось загрузить настройки', 'error'));
+    getSystemSettings().then(setSettings).catch(() => showToast('Failed to load settings', 'error'));
     loadStats();
   }, []);
 
@@ -238,7 +238,7 @@ export default function SettingsTab() {
     setStatsLoading(true);
     getSystemStats()
       .then(setStats)
-      .catch(() => showToast('Не удалось загрузить статистику', 'error'))
+      .catch(() => showToast('Failed to load statistics', 'error'))
       .finally(() => setStatsLoading(false));
   }, []);
 
@@ -248,9 +248,9 @@ export default function SettingsTab() {
     setSaving(true);
     try {
       await updateSystemSettings(next);
-      showToast('Настройки сохранены', 'success');
+      showToast('Settings saved', 'success');
     } catch {
-      showToast('Ошибка сохранения', 'error');
+      showToast('Error saving settings', 'error');
       setSettings(settings); // rollback
     } finally {
       setSaving(false);
@@ -261,11 +261,11 @@ export default function SettingsTab() {
     setDeleting(true);
     try {
       const result = await deleteAllProductMedia();
-      showToast(`Удалено: ${result.deletedRecords} записей, ${result.deletedDirectories} папок`, 'success');
+      showToast(`Deleted: ${result.deletedRecords} records, ${result.deletedDirectories} folders`, 'success');
       setDeleteConfirm(false);
       loadStats();
     } catch {
-      showToast('Ошибка удаления', 'error');
+      showToast('Error deleting media', 'error');
     } finally {
       setDeleting(false);
     }
@@ -274,29 +274,28 @@ export default function SettingsTab() {
   return (
     <div style={{ maxWidth: 900 }}>
       {/* --- Visibility --- */}
-      <Section title="Видимость товаров">
+      <Section title="Product Visibility">
         <p style={{ fontSize: 13, color: 'var(--wpw-text-muted)', margin: '0 0 16px' }}>
-          Когда тумблер включён — в соответствующем разделе отображаются только товары,
-          у которых есть собственные изображения (не унаследованные от группы/категории).
+          When enabled — only products with their own images (not inherited from group/category) are shown in the corresponding section.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Toggle
-            label="Только с фото — для администраторов"
-            description="Применяется к панели администратора и API с правами ADMIN/MANAGE_*"
+            label="Photos only — for admins"
+            description="Applies to the admin panel and API with ADMIN/MANAGE_* permissions"
             checked={settings?.requireImagesAdmin ?? false}
             onChange={v => handleToggle('requireImagesAdmin', v)}
             disabled={!settings || saving}
           />
           <Toggle
-            label="Только с фото — для дилеров"
-            description="Применяется к личному кабинету дилера (роль DEALER)"
+            label="Photos only — for dealers"
+            description="Applies to the dealer account (DEALER role)"
             checked={settings?.requireImagesDealer ?? false}
             onChange={v => handleToggle('requireImagesDealer', v)}
             disabled={!settings || saving}
           />
           <Toggle
-            label="Только с фото — для пользователей"
-            description="Применяется к публичному каталогу и поиску"
+            label="Photos only — for public"
+            description="Applies to the public catalog and search"
             checked={settings?.requireImagesPublic ?? false}
             onChange={v => handleToggle('requireImagesPublic', v)}
             disabled={!settings || saving}
@@ -305,30 +304,30 @@ export default function SettingsTab() {
       </Section>
 
       {/* --- Price visibility --- */}
-      <Section title="Видимость по цене">
+      <Section title="Price Visibility">
         <p style={{ fontSize: 13, color: 'var(--wpw-text-muted)', margin: '0 0 16px' }}>
-          Когда тумблер включён — скрываются товары, у которых нет цены в прайс-листе.
-          Для дилеров проверяется их персональный прайс-лист. Для публичного доступа — любой прайс-лист.
-          Пустые узлы дерева каталога также скрываются.
+          When enabled — products without a price in the price list are hidden.
+          For dealers, their personal price list is checked. For public access — any price list.
+          Empty catalog tree nodes are also hidden.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Toggle
-            label="Только с ценой — для администраторов"
-            description="Применяется к панели администратора и API с правами ADMIN/MANAGE_*"
+            label="Priced only — for admins"
+            description="Applies to the admin panel and API with ADMIN/MANAGE_* permissions"
             checked={settings?.requirePriceAdmin ?? false}
             onChange={v => handleToggle('requirePriceAdmin', v)}
             disabled={!settings || saving}
           />
           <Toggle
-            label="Только с ценой — для дилеров"
-            description="Скрывает товары без цены из персонального прайс-листа дилера"
+            label="Priced only — for dealers"
+            description="Hides products without a price from the dealer's personal price list"
             checked={settings?.requirePriceDealer ?? false}
             onChange={v => handleToggle('requirePriceDealer', v)}
             disabled={!settings || saving}
           />
           <Toggle
-            label="Только с ценой — для пользователей"
-            description="Применяется к публичному каталогу и поиску"
+            label="Priced only — for public"
+            description="Applies to the public catalog and search"
             checked={settings?.requirePricePublic ?? false}
             onChange={v => handleToggle('requirePricePublic', v)}
             disabled={!settings || saving}
@@ -337,76 +336,76 @@ export default function SettingsTab() {
       </Section>
 
       {/* --- Statistics --- */}
-      <Section title="Статистика системы">
+      <Section title="System Statistics">
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
           <button className="btn" onClick={loadStats} disabled={statsLoading} style={{ fontSize: 13 }}>
-            {statsLoading ? 'Обновление...' : 'Обновить'}
+            {statsLoading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
 
         {stats && (
           <>
             <h4 style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--wpw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Товары и медиафайлы
+              Products &amp; Media
             </h4>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
-              <StatCard label="Активных товаров" value={stats.totalActiveProducts} />
-              <StatCard label="С изображениями" value={stats.productsWithOwnMedia} sub={pct(stats.mediaCoveragePct) + ' покрытие'} />
-              <StatCard label="Без изображений" value={stats.productsWithoutOwnMedia} />
-              <StatCard label="Медиафайлов всего" value={stats.totalMediaFiles} />
+              <StatCard label="Active products" value={stats.totalActiveProducts} />
+              <StatCard label="With images" value={stats.productsWithOwnMedia} sub={pct(stats.mediaCoveragePct) + ' coverage'} />
+              <StatCard label="Without images" value={stats.productsWithoutOwnMedia} />
+              <StatCard label="Total media files" value={stats.totalMediaFiles} />
             </div>
 
             <h4 style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--wpw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Публичный прайс-лист (Stock)
+              Public Price List (Stock)
             </h4>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
-              <StatCard label="Строк в прайс-листе" value={stats.stockPriceListItems} />
-              <StatCard label="Товаров в прайс-листе" value={stats.productsInStockPriceList} />
-              <StatCard label="Активных с ценой" value={stats.activeProductsWithStockPrice} sub={pct(stats.stockPriceCoveragePct) + ' покрытие'} />
-              <StatCard label="Активных без цены" value={stats.activeProductsWithoutStockPrice} />
+              <StatCard label="Price list rows" value={stats.stockPriceListItems} />
+              <StatCard label="Products in price list" value={stats.productsInStockPriceList} />
+              <StatCard label="Active with price" value={stats.activeProductsWithStockPrice} sub={pct(stats.stockPriceCoveragePct) + ' coverage'} />
+              <StatCard label="Active without price" value={stats.activeProductsWithoutStockPrice} />
             </div>
 
             <h4 style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--wpw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Дилеры
+              Dealers
             </h4>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
-              <StatCard label="Всего дилеров" value={stats.totalDealers} />
-              <StatCard label="Активных дилеров" value={stats.activeDealers} />
-              <StatCard label="С прайс-листом" value={stats.dealersWithPriceList} />
-              <StatCard label="Без прайс-листа" value={stats.dealersWithoutPriceList} />
-              <StatCard label="С SKU-маппингом" value={stats.dealersWithSkuMapping} />
-              <StatCard label="Всего SKU-маппингов" value={stats.totalSkuMappings} />
+              <StatCard label="Total dealers" value={stats.totalDealers} />
+              <StatCard label="Active dealers" value={stats.activeDealers} />
+              <StatCard label="With price list" value={stats.dealersWithPriceList} />
+              <StatCard label="Without price list" value={stats.dealersWithoutPriceList} />
+              <StatCard label="With SKU mapping" value={stats.dealersWithSkuMapping} />
+              <StatCard label="Total SKU mappings" value={stats.totalSkuMappings} />
             </div>
 
             <h4 style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--wpw-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Каталог
+              Catalog
             </h4>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
-              <StatCard label="Разделов" value={stats.totalSections} />
-              <StatCard label="Категорий" value={stats.totalCategories} />
-              <StatCard label="Групп товаров" value={stats.totalProductGroups} />
-              <StatCard label="Пустых групп" value={stats.emptyProductGroups} />
-              <StatCard label="Узлов с изображением" value={stats.catalogNodesWithImage} />
+              <StatCard label="Sections" value={stats.totalSections} />
+              <StatCard label="Categories" value={stats.totalCategories} />
+              <StatCard label="Product groups" value={stats.totalProductGroups} />
+              <StatCard label="Empty groups" value={stats.emptyProductGroups} />
+              <StatCard label="Nodes with image" value={stats.catalogNodesWithImage} />
             </div>
 
             <div style={{ fontSize: 11, color: 'var(--wpw-text-muted)', marginTop: 8 }}>
-              Данные актуальны на: {new Date(stats.generatedAt).toLocaleString('ru-RU')}
+              Data as of: {new Date(stats.generatedAt).toLocaleString('en-US')}
             </div>
           </>
         )}
 
         {statsLoading && !stats && (
-          <div style={{ color: 'var(--wpw-text-muted)', fontSize: 14 }}>Загрузка статистики...</div>
+          <div style={{ color: 'var(--wpw-text-muted)', fontSize: 14 }}>Loading statistics...</div>
         )}
       </Section>
 
       {/* --- Notification Emails --- */}
-      <Section title="Email-уведомления о заказах">
+      <Section title="Order Email Notifications">
         <NotificationEmailsSection />
       </Section>
 
       {/* --- Danger Zone --- */}
-      <Section title="Опасная зона">
+      <Section title="Danger Zone">
         <div style={{
           border: '1px solid #fca5a5',
           borderRadius: 8,
@@ -414,12 +413,12 @@ export default function SettingsTab() {
           background: '#fff5f5',
         }}>
           <div style={{ fontWeight: 600, marginBottom: 4, color: '#dc2626' }}>
-            Удалить все медиафайлы товаров
+            Delete all product media
           </div>
           <div style={{ fontSize: 13, color: '#7f1d1d', marginBottom: 12 }}>
-            Удаляет все записи MediaFile из базы данных и физические файлы на диске.
-            Изображения разделов, категорий и групп <strong>не затрагиваются</strong>.
-            Действие необратимо.
+            Deletes all MediaFile records from the database and physical files on disk.
+            Section, category and group images are <strong>not affected</strong>.
+            This action is irreversible.
           </div>
 
           {!deleteConfirm ? (
@@ -428,12 +427,12 @@ export default function SettingsTab() {
               style={{ background: '#dc2626', color: '#fff', border: 'none' }}
               onClick={() => setDeleteConfirm(true)}
             >
-              Удалить все изображения товаров
+              Delete all product images
             </button>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 13, fontWeight: 500, color: '#dc2626' }}>
-                Вы уверены? Это действие нельзя отменить.
+                Are you sure? This action cannot be undone.
               </span>
               <button
                 className="btn"
@@ -441,10 +440,10 @@ export default function SettingsTab() {
                 onClick={handleDeleteAll}
                 disabled={deleting}
               >
-                {deleting ? 'Удаление...' : 'Да, удалить всё'}
+                {deleting ? 'Deleting...' : 'Yes, delete all'}
               </button>
               <button className="btn" onClick={() => setDeleteConfirm(false)} disabled={deleting}>
-                Отмена
+                Cancel
               </button>
             </div>
           )}

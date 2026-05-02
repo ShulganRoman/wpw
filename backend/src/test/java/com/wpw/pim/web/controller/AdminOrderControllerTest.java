@@ -47,7 +47,7 @@ class AdminOrderControllerTest {
 
     private OrderSummaryDto sampleSummary(UUID id) {
         return new OrderSummaryDto(
-            id, OrderStatus.SUBMITTED, "Новый", "USD",
+            id, OrderStatus.SUBMITTED, "New", "USD",
             new BigDecimal("100.00"), 1,
             OffsetDateTime.now(), OffsetDateTime.now()
         );
@@ -60,7 +60,7 @@ class AdminOrderControllerTest {
         );
         return new OrderDto(
             orderId, dealerId, "Acme LLC",
-            OrderStatus.SUBMITTED, "Новый", "USD",
+            OrderStatus.SUBMITTED, "New", "USD",
             new BigDecimal("100.00"),
             OffsetDateTime.now(), OffsetDateTime.now(),
             List.of(item)
@@ -69,7 +69,7 @@ class AdminOrderControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("GET /api/v1/admin/dealers/{dealerId}/orders -- список заказов")
+    @DisplayName("GET /api/v1/admin/dealers/{dealerId}/orders -- list orders")
     void getDealerOrders() throws Exception {
         UUID dealerId = UUID.randomUUID();
         when(orderService.getAdminDealerOrders(dealerId))
@@ -77,13 +77,13 @@ class AdminOrderControllerTest {
 
         mockMvc.perform(get("/api/v1/admin/dealers/" + dealerId + "/orders"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].statusLabel").value("Новый"))
+            .andExpect(jsonPath("$[0].statusLabel").value("New"))
             .andExpect(jsonPath("$[0].currency").value("USD"));
     }
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("GET /api/v1/admin/orders/{orderId} -- детали заказа")
+    @DisplayName("GET /api/v1/admin/orders/{orderId} -- order details")
     void getOrder() throws Exception {
         UUID orderId = UUID.randomUUID();
         UUID dealerId = UUID.randomUUID();
@@ -98,13 +98,13 @@ class AdminOrderControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("PATCH /api/v1/admin/orders/{orderId}/status -- меняет статус")
+    @DisplayName("PATCH /api/v1/admin/orders/{orderId}/status -- changes status")
     void changeStatus() throws Exception {
         UUID orderId = UUID.randomUUID();
         UUID dealerId = UUID.randomUUID();
         OrderDto dto = new OrderDto(
             orderId, dealerId, "Acme LLC",
-            OrderStatus.CONFIRMED, "Подтверждён", "USD",
+            OrderStatus.CONFIRMED, "Confirmed", "USD",
             new BigDecimal("100.00"),
             OffsetDateTime.now(), OffsetDateTime.now(),
             List.of()
@@ -118,7 +118,7 @@ class AdminOrderControllerTest {
                 .content(objectMapper.writeValueAsString(req)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("CONFIRMED"))
-            .andExpect(jsonPath("$.statusLabel").value("Подтверждён"));
+            .andExpect(jsonPath("$.statusLabel").value("Confirmed"));
     }
 
     @Test
@@ -147,7 +147,7 @@ class AdminOrderControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_DEALERS")
-    @DisplayName("GET /api/v1/admin/orders/pending-dealer-ids -- массив ID")
+    @DisplayName("GET /api/v1/admin/orders/pending-dealer-ids -- array of IDs")
     void pendingDealerIds() throws Exception {
         UUID id1 = UUID.randomUUID();
         when(orderService.getDealerIdsWithPendingOrders()).thenReturn(Set.of(id1));
@@ -158,7 +158,7 @@ class AdminOrderControllerTest {
     }
 
     @Test
-    @DisplayName("без аутентификации -- 4xx")
+    @DisplayName("without authentication -- 4xx")
     void unauthenticated() throws Exception {
         mockMvc.perform(get("/api/v1/admin/dealers/" + UUID.randomUUID() + "/orders"))
             .andExpect(status().is4xxClientError());
@@ -166,7 +166,7 @@ class AdminOrderControllerTest {
 
     @Test
     @WithMockUser(authorities = "OTHER")
-    @DisplayName("без MANAGE_DEALERS -- 403")
+    @DisplayName("without MANAGE_DEALERS -- 403")
     void wrongAuthority() throws Exception {
         mockMvc.perform(get("/api/v1/admin/dealers/" + UUID.randomUUID() + "/orders"))
             .andExpect(status().isForbidden());

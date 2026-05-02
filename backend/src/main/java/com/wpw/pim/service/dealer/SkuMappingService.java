@@ -139,15 +139,15 @@ public class SkuMappingService {
         Set<String> seen = new LinkedHashSet<>();
         for (SkuMappingDto row : rows) {
             if (row.wpwSku() == null || row.wpwSku().isBlank()) {
-                errors.add("Пустой WPW SKU в строке пропущен");
+                errors.add("Empty WPW SKU in row skipped");
                 continue;
             }
             if (row.dealerSku() == null || row.dealerSku().isBlank()) {
-                errors.add("Пустой Dealer SKU для WPW артикула: " + row.wpwSku());
+                errors.add("Empty Dealer SKU for WPW SKU: " + row.wpwSku());
                 continue;
             }
             if (!seen.add(row.wpwSku())) {
-                errors.add("Дубль WPW SKU в файле: " + row.wpwSku() + " (будет использована последняя строка)");
+                errors.add("Duplicate WPW SKU in file: " + row.wpwSku() + " (last row will be used)");
             }
             if (productRepo.existsByToolNo(row.wpwSku())) {
                 valid.add(row);

@@ -57,7 +57,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    @DisplayName("без заголовка Authorization — пропускает фильтр-цепочку без аутентификации")
+    @DisplayName("no Authorization header — passes filter chain without authentication")
     void missingHeader() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
         MockHttpServletResponse resp = new MockHttpServletResponse();
@@ -70,7 +70,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    @DisplayName("заголовок без 'Bearer ' префикса — пропускает фильтр")
+    @DisplayName("header without 'Bearer ' prefix — passes filter")
     void wrongPrefix() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
         req.addHeader("Authorization", "Basic abc");
@@ -83,7 +83,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    @DisplayName("валидный Bearer токен и enabled пользователь — устанавливает аутентификацию")
+    @DisplayName("valid Bearer token and enabled user — sets authentication")
     void validToken() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
         req.addHeader("Authorization", "Bearer valid-token");
@@ -105,7 +105,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    @DisplayName("невалидный токен (extractUsername возвращает empty) — пропускает фильтр")
+    @DisplayName("invalid token (extractUsername returns empty) — passes filter")
     void invalidToken() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
         req.addHeader("Authorization", "Bearer broken");
@@ -121,7 +121,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    @DisplayName("disabled пользователь — аутентификация не устанавливается")
+    @DisplayName("disabled user — authentication is not set")
     void disabledUser() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
         req.addHeader("Authorization", "Bearer valid-token");
@@ -142,7 +142,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    @DisplayName("уже установленная аутентификация (например, от API key filter) — не перезаписывается")
+    @DisplayName("already set authentication (e.g. from API key filter) — not overwritten")
     void existingAuthIsKept() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
         req.addHeader("Authorization", "Bearer valid-token");

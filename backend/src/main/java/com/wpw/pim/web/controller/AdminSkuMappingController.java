@@ -20,32 +20,32 @@ import java.util.UUID;
 @RequestMapping("/api/v1/admin/dealers/{dealerId}/sku-mapping")
 @PreAuthorize("hasAuthority('MANAGE_DEALERS')")
 @RequiredArgsConstructor
-@Tag(name = "Admin: SKU Mapping", description = "Управление маппингом артикулов дилера (WPW SKU → дилерский SKU). Требует MANAGE_DEALERS.")
+@Tag(name = "Admin: SKU Mapping", description = "Dealer SKU mapping management (WPW SKU → dealer SKU). Requires MANAGE_DEALERS.")
 public class AdminSkuMappingController {
 
     private final SkuMappingService service;
 
     @GetMapping
-    @Operation(summary = "Список маппингов SKU дилера")
+    @Operation(summary = "List dealer SKU mappings")
     public List<SkuMappingDto> list(@PathVariable UUID dealerId) {
         return service.list(dealerId);
     }
 
     @PutMapping
-    @Operation(summary = "Создать или обновить маппинг SKU")
+    @Operation(summary = "Create or update SKU mapping")
     public SkuMappingDto upsert(@PathVariable UUID dealerId, @RequestBody SkuMappingDto req) {
         return service.upsert(dealerId, req);
     }
 
     @DeleteMapping("/{wpwSku}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Удалить маппинг SKU")
+    @Operation(summary = "Delete SKU mapping")
     public void delete(@PathVariable UUID dealerId, @PathVariable String wpwSku) {
         service.delete(dealerId, wpwSku);
     }
 
     @PostMapping(value = "/validate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Валидация файла маппинга SKU", description = "Проверяет Excel без записи в БД.")
+    @Operation(summary = "Validate SKU mapping file", description = "Validates Excel without writing to DB.")
     public SkuMappingService.ValidationReport validate(
         @PathVariable UUID dealerId,
         @RequestParam("file") MultipartFile file
@@ -54,7 +54,7 @@ public class AdminSkuMappingController {
     }
 
     @PostMapping(value = "/execute", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Импортировать маппинг SKU из Excel", description = "skipGhosts=true — пропускать строки с несуществующими WPW SKU.")
+    @Operation(summary = "Import SKU mapping from Excel", description = "skipGhosts=true — skip rows with non-existent WPW SKUs.")
     public SkuMappingService.SkuMappingImportResult execute(
         @PathVariable UUID dealerId,
         @RequestParam("file") MultipartFile file,
@@ -64,7 +64,7 @@ public class AdminSkuMappingController {
     }
 
     @GetMapping("/export")
-    @Operation(summary = "Экспортировать маппинг SKU в Excel")
+    @Operation(summary = "Export SKU mapping to Excel")
     public ResponseEntity<byte[]> export(@PathVariable UUID dealerId) throws IOException {
         byte[] bytes = service.export(dealerId);
         return ResponseEntity.ok()
@@ -74,7 +74,7 @@ public class AdminSkuMappingController {
     }
 
     @GetMapping("/template")
-    @Operation(summary = "Скачать шаблон маппинга SKU")
+    @Operation(summary = "Download SKU mapping template")
     public ResponseEntity<byte[]> template() throws IOException {
         byte[] bytes = service.template();
         return ResponseEntity.ok()

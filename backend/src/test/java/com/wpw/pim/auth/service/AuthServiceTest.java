@@ -44,7 +44,7 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    @DisplayName("login -- успешная аутентификация возвращает токен и привилегии")
+    @DisplayName("login -- successful authentication returns token and privileges")
     void login_validCredentials_returnsLoginResponse() {
         Role role = createRole("ADMIN", Privilege.MODIFY_PRODUCTS, Privilege.BULK_IMPORT);
         User user = createUser("admin", "hashed-pw", role, true);
@@ -64,7 +64,7 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("login -- несуществующий пользователь вызывает IllegalArgumentException")
+    @DisplayName("login -- non-existent user throws IllegalArgumentException")
     void login_userNotFound_throwsException() {
         when(userRepository.findByUsernameWithRole("unknown")).thenReturn(Optional.empty());
 
@@ -76,7 +76,7 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("login -- неверный пароль вызывает IllegalArgumentException")
+    @DisplayName("login -- wrong password throws IllegalArgumentException")
     void login_wrongPassword_throwsException() {
         Role role = createRole("ADMIN");
         User user = createUser("admin", "hashed-pw", role, true);
@@ -90,7 +90,7 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("login -- disabled пользователь вызывает IllegalArgumentException")
+    @DisplayName("login -- disabled user throws IllegalArgumentException")
     void login_disabledUser_throwsException() {
         Role role = createRole("ADMIN");
         User user = createUser("admin", "hashed-pw", role, false);

@@ -88,13 +88,13 @@ public class ArchiveExtractorService {
     public ExtractionResult extractImages(MultipartFile archive) throws IOException {
         String filename = archive.getOriginalFilename();
         if (filename == null || filename.isBlank()) {
-            throw new IOException("Имя файла архива не указано");
+            throw new IOException("Archive filename is not specified");
         }
 
         String lowerName = filename.toLowerCase();
         ArchiveType type = detectArchiveType(lowerName);
 
-        log.info("Начало извлечения изображений из архива '{}', тип: {}", filename, type);
+        log.info("Starting image extraction from archive '{}', type: {}", filename, type);
 
         Path tempDir = Files.createTempDirectory("archive-extract-");
         try {
@@ -105,7 +105,7 @@ public class ArchiveExtractorService {
                 case SEVEN_Z -> extractSevenZ(archive, tempDir);
             };
 
-            log.info("Извлечение завершено: всего записей={}, изображений={}, пропущено={}",
+            log.info("Extraction complete: total entries={}, images={}, skipped={}",
                     result.totalEntries(), result.imageEntries(), result.skippedEntries().size());
 
             return result;
@@ -148,7 +148,7 @@ public class ArchiveExtractorService {
                     Files.deleteIfExists(ef.tempFile());
                 }
             } catch (IOException e) {
-                log.warn("Не удалось удалить временный файл: {}", ef.tempFile(), e);
+                log.warn("Failed to delete temp file: {}", ef.tempFile(), e);
             }
         }
 
@@ -175,13 +175,13 @@ public class ArchiveExtractorService {
     public ScanResult scanImageNames(MultipartFile archive) throws IOException {
         String filename = archive.getOriginalFilename();
         if (filename == null || filename.isBlank()) {
-            throw new IOException("Имя файла архива не указано");
+            throw new IOException("Archive filename is not specified");
         }
 
         String lowerName = filename.toLowerCase();
         ArchiveType type = detectArchiveType(lowerName);
 
-        log.info("Сканирование архива '{}', тип: {}", filename, type);
+        log.info("Scanning archive '{}', type: {}", filename, type);
 
         if (type == ArchiveType.SEVEN_Z) {
             return scanSevenZ(archive);
@@ -296,10 +296,10 @@ public class ArchiveExtractorService {
             case "tar" -> ArchiveType.TAR;
             case "7z" -> ArchiveType.SEVEN_Z;
             case "rar" -> throw new IOException(
-                    "Формат RAR не поддерживается. Пожалуйста, используйте ZIP, 7Z или TAR.GZ.");
+                    "RAR format is not supported. Please use ZIP, 7Z or TAR.GZ.");
             default -> throw new IOException(
-                    "Неподдерживаемый формат архива: ." + ext
-                            + ". Поддерживаются: ZIP, 7Z, TAR, TAR.GZ, TGZ.");
+                    "Unsupported archive format: ." + ext
+                            + ". Supported: ZIP, 7Z, TAR, TAR.GZ, TGZ.");
         };
     }
 
@@ -498,11 +498,11 @@ public class ArchiveExtractorService {
                         try {
                             Files.deleteIfExists(path);
                         } catch (IOException e) {
-                            log.warn("Не удалось удалить: {}", path, e);
+                            log.warn("Failed to delete: {}", path, e);
                         }
                     });
         } catch (IOException e) {
-            log.warn("Не удалось очистить временную директорию: {}", dir, e);
+            log.warn("Failed to clean temp directory: {}", dir, e);
         }
     }
 }

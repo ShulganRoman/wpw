@@ -59,23 +59,23 @@ class DealerOrderControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/dealer/cart/checkout -- 200 с orderId")
+    @DisplayName("POST /api/v1/dealer/cart/checkout -- 200 with orderId")
     void checkout() throws Exception {
         UUID orderId = UUID.randomUUID();
-        when(orderService.checkout(dealerId)).thenReturn(new CheckoutResponse(orderId, "Заказ оформлен"));
+        when(orderService.checkout(dealerId)).thenReturn(new CheckoutResponse(orderId, "Order placed successfully"));
 
         mockMvc.perform(post("/api/v1/dealer/cart/checkout")
                 .with(user(dealerPrincipal)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.orderId").value(orderId.toString()))
-            .andExpect(jsonPath("$.message").value("Заказ оформлен"));
+            .andExpect(jsonPath("$.message").value("Order placed successfully"));
     }
 
     @Test
-    @DisplayName("GET /api/v1/dealer/orders -- список заказов")
+    @DisplayName("GET /api/v1/dealer/orders -- list orders")
     void myOrders() throws Exception {
         OrderSummaryDto summary = new OrderSummaryDto(
-            UUID.randomUUID(), OrderStatus.SUBMITTED, "Отправлено", "USD",
+            UUID.randomUUID(), OrderStatus.SUBMITTED, "Submitted", "USD",
             new BigDecimal("100.00"), 1,
             OffsetDateTime.now(), OffsetDateTime.now()
         );
@@ -84,16 +84,16 @@ class DealerOrderControllerTest {
         mockMvc.perform(get("/api/v1/dealer/orders")
                 .with(user(dealerPrincipal)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].statusLabel").value("Отправлено"));
+            .andExpect(jsonPath("$[0].statusLabel").value("Submitted"));
     }
 
     @Test
-    @DisplayName("GET /api/v1/dealer/orders/{orderId} -- детали с dealerName")
+    @DisplayName("GET /api/v1/dealer/orders/{orderId} -- details with dealerName")
     void myOrder() throws Exception {
         UUID orderId = UUID.randomUUID();
         OrderDto dto = new OrderDto(
             orderId, dealerId, "Acme LLC",
-            OrderStatus.SUBMITTED, "Отправлено", "USD",
+            OrderStatus.SUBMITTED, "Submitted", "USD",
             new BigDecimal("100.00"),
             OffsetDateTime.now(), OffsetDateTime.now(),
             List.of()
@@ -108,7 +108,7 @@ class DealerOrderControllerTest {
     }
 
     @Test
-    @DisplayName("без аутентификации -- 4xx")
+    @DisplayName("without authentication -- 4xx")
     void unauthenticated() throws Exception {
         mockMvc.perform(get("/api/v1/dealer/orders"))
             .andExpect(status().is4xxClientError());
@@ -116,7 +116,7 @@ class DealerOrderControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    @DisplayName("роль ADMIN -- 403")
+    @DisplayName("ADMIN role -- 403")
     void adminForbidden() throws Exception {
         mockMvc.perform(get("/api/v1/dealer/orders"))
             .andExpect(status().isForbidden());

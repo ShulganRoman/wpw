@@ -49,32 +49,32 @@ public class ImportV4Validator {
             // Tool No обязателен
             if (blank(row.getToolNo())) {
                 issues.add(ValidationIssue.error(Sheet.PRODUCTS, rowNum, "toolNo", null,
-                    "Tool No отсутствует"));
+                    "Tool No is missing"));
                 continue;
             }
 
             // Дублирование toolNo в файле
             if (!seenToolNos.add(row.getToolNo())) {
                 issues.add(ValidationIssue.warning(Sheet.PRODUCTS, rowNum, "toolNo", row.getToolNo(),
-                    "Дублирующийся Tool No в файле"));
+                    "Duplicate Tool No in file"));
             }
 
             // Category
             if (blank(row.getCategoryName())) {
                 issues.add(ValidationIssue.warning(Sheet.PRODUCTS, rowNum, "category", null,
-                    "Category не задана"));
+                    "Category not set"));
             }
 
             // Group Name
             if (blank(row.getGroupName())) {
                 issues.add(ValidationIssue.warning(Sheet.PRODUCTS, rowNum, "groupName", null,
-                    "Group Name не задан"));
+                    "Group Name not set"));
             }
 
             // Name
             if (blank(row.getName())) {
                 issues.add(ValidationIssue.warning(Sheet.PRODUCTS, rowNum, "name", null,
-                    "Name отсутствует"));
+                    "Name is missing"));
             }
 
             // Decimal fields
@@ -131,7 +131,7 @@ public class ImportV4Validator {
             new BigDecimal(value);
         } catch (NumberFormatException e) {
             issues.add(ValidationIssue.warning(Sheet.PRODUCTS, row, field, value,
-                "Нечисловое значение \u00ab" + value + "\u00bb \u2014 будет сохранено как null"));
+                "Non-numeric value \u00ab" + value + "\u00bb — will be saved as null"));
         }
     }
 
@@ -141,7 +141,7 @@ public class ImportV4Validator {
             Integer.parseInt(value);
         } catch (NumberFormatException e) {
             issues.add(ValidationIssue.warning(Sheet.PRODUCTS, row, field, value,
-                "Нечисловое значение \u00ab" + value + "\u00bb \u2014 будет сохранено как null"));
+                "Non-numeric value \u00ab" + value + "\u00bb — will be saved as null"));
         }
     }
 
@@ -150,7 +150,7 @@ public class ImportV4Validator {
         if (value == null || value.isBlank()) return;
         if (!allowed.contains(value.toLowerCase().trim())) {
             issues.add(ValidationIssue.warning(Sheet.PRODUCTS, row, field, value,
-                "Неизвестное значение \u00ab" + value + "\u00bb \u2014 допустимые: " + allowed));
+                "Unknown value \u00ab" + value + "\u00bb — allowed: " + allowed));
         }
     }
 

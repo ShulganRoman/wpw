@@ -40,7 +40,7 @@ class OperationServiceTest {
     class FindAll {
 
         @Test
-        @DisplayName("возвращает все операции отсортированные по sortOrder")
+        @DisplayName("returns all operations sorted by sortOrder")
         void findAll_returnsSortedOperations() {
             Operation op1 = createOperation("drilling", "Drilling", 0);
             Operation op2 = createOperation("milling", "Milling", 1);
@@ -59,7 +59,7 @@ class OperationServiceTest {
     class Create {
 
         @Test
-        @DisplayName("создаёт операцию из имени (генерирует code)")
+        @DisplayName("creates operation from name (generates code)")
         void create_validName_createsOperation() {
             ApplicationTagUpsertDto dto = new ApplicationTagUpsertDto("Surface Processing", 5);
             when(operationRepository.existsById("surface-processing")).thenReturn(false);
@@ -73,7 +73,7 @@ class OperationServiceTest {
         }
 
         @Test
-        @DisplayName("автоматически назначает sortOrder если не указан")
+        @DisplayName("automatically assigns sortOrder if not provided")
         void create_noSortOrder_usesRepoCount() {
             ApplicationTagUpsertDto dto = new ApplicationTagUpsertDto("New Tag", null);
             when(operationRepository.existsById("new-tag")).thenReturn(false);
@@ -86,7 +86,7 @@ class OperationServiceTest {
         }
 
         @Test
-        @DisplayName("бросает CONFLICT если операция уже существует")
+        @DisplayName("throws CONFLICT if operation already exists")
         void create_duplicateCode_throwsConflict() {
             ApplicationTagUpsertDto dto = new ApplicationTagUpsertDto("Drilling", null);
             when(operationRepository.existsById("drilling")).thenReturn(true);
@@ -102,7 +102,7 @@ class OperationServiceTest {
     class Update {
 
         @Test
-        @DisplayName("обновляет имя операции")
+        @DisplayName("updates operation name")
         void update_validRequest_updatesName() {
             Operation existing = createOperation("drilling", "Drilling", 0);
             when(operationRepository.findById("drilling")).thenReturn(Optional.of(existing));
@@ -114,7 +114,7 @@ class OperationServiceTest {
         }
 
         @Test
-        @DisplayName("обновляет sortOrder")
+        @DisplayName("updates sortOrder")
         void update_sortOrder_updated() {
             Operation existing = createOperation("drilling", "Drilling", 0);
             when(operationRepository.findById("drilling")).thenReturn(Optional.of(existing));
@@ -126,7 +126,7 @@ class OperationServiceTest {
         }
 
         @Test
-        @DisplayName("бросает NOT_FOUND если операция не найдена")
+        @DisplayName("throws NOT_FOUND if operation not found")
         void update_notFound_throws404() {
             when(operationRepository.findById("nonexistent")).thenReturn(Optional.empty());
 
@@ -140,7 +140,7 @@ class OperationServiceTest {
     class Delete {
 
         @Test
-        @DisplayName("удаляет операцию успешно")
+        @DisplayName("deletes operation successfully")
         void delete_existing_deletesSuccessfully() {
             when(operationRepository.existsById("drilling")).thenReturn(true);
 
@@ -150,7 +150,7 @@ class OperationServiceTest {
         }
 
         @Test
-        @DisplayName("бросает NOT_FOUND если операция не найдена")
+        @DisplayName("throws NOT_FOUND if operation not found")
         void delete_notFound_throws404() {
             when(operationRepository.existsById("nonexistent")).thenReturn(false);
 

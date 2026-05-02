@@ -53,7 +53,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("POST /api/v1/admin/catalog/sections -- создаёт секцию")
+        @DisplayName("POST /api/v1/admin/catalog/sections -- creates section")
         void createSection_authorized_returns200() throws Exception {
             SectionDto dto = new SectionDto(UUID.randomUUID(), "tools", "Tools", 1, null, List.of());
             when(catalogService.createSection(any(CreateSectionRequest.class), eq("en"))).thenReturn(dto);
@@ -68,7 +68,7 @@ class AdminCatalogControllerTest {
         }
 
         @Test
-        @DisplayName("POST /api/v1/admin/catalog/sections -- без авторизации возвращает 401")
+        @DisplayName("POST /api/v1/admin/catalog/sections -- without auth returns 401")
         void createSection_unauthenticated_returns403() throws Exception {
             mockMvc.perform(post("/api/v1/admin/catalog/sections")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -78,7 +78,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "BULK_EXPORT")
-        @DisplayName("POST /api/v1/admin/catalog/sections -- без MANAGE_CATALOG возвращает 403")
+        @DisplayName("POST /api/v1/admin/catalog/sections -- without MANAGE_CATALOG returns 403")
         void createSection_forbidden_returns403() throws Exception {
             mockMvc.perform(post("/api/v1/admin/catalog/sections")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -88,7 +88,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("PUT /api/v1/admin/catalog/sections/{id} -- обновляет секцию")
+        @DisplayName("PUT /api/v1/admin/catalog/sections/{id} -- updates section")
         void updateSection_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             SectionDto dto = new SectionDto(id, "updated", "Updated", 1, null, List.of());
@@ -103,7 +103,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("DELETE /api/v1/admin/catalog/sections/{id} -- удаляет секцию")
+        @DisplayName("DELETE /api/v1/admin/catalog/sections/{id} -- deletes section")
         void deleteSection_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
 
@@ -115,7 +115,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("DELETE с cascade=true -- каскадное удаление")
+        @DisplayName("DELETE with cascade=true -- cascaded deletion")
         void deleteSection_cascade_deletesAll() throws Exception {
             UUID id = UUID.randomUUID();
 
@@ -127,7 +127,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("GET /api/v1/admin/catalog/sections/{id}/children-count -- возвращает счётчики")
+        @DisplayName("GET /api/v1/admin/catalog/sections/{id}/children-count -- returns counts")
         void childrenCount_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             when(catalogService.getChildrenCount(id)).thenReturn(new ChildrenCountResponse(3, 10));
@@ -145,7 +145,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("POST /api/v1/admin/catalog/categories -- создаёт категорию")
+        @DisplayName("POST /api/v1/admin/catalog/categories -- creates category")
         void createCategory_authorized_returns200() throws Exception {
             UUID sectionId = UUID.randomUUID();
             CategoryDto dto = new CategoryDto(UUID.randomUUID(), "bits", "Bits", 0, null, List.of());
@@ -167,7 +167,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("POST /api/v1/admin/catalog/product-groups -- создаёт группу")
+        @DisplayName("POST /api/v1/admin/catalog/product-groups -- creates group")
         void createProductGroup_authorized_returns200() throws Exception {
             UUID categoryId = UUID.randomUUID();
             ProductGroupDto dto = new ProductGroupDto(UUID.randomUUID(), "straight", "GRP-001", "Straight", 0, null, 0L);
@@ -185,7 +185,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("DELETE /api/v1/admin/catalog/product-groups/{id} -- удаляет группу")
+        @DisplayName("DELETE /api/v1/admin/catalog/product-groups/{id} -- deletes group")
         void deleteProductGroup_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
 
@@ -197,7 +197,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("PUT /api/v1/admin/catalog/product-groups/{id} -- обновляет группу")
+        @DisplayName("PUT /api/v1/admin/catalog/product-groups/{id} -- updates group")
         void updateProductGroup_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             ProductGroupDto dto = new ProductGroupDto(id, "updated", "GRP-99", "Updated", 0, null, 0L);
@@ -213,7 +213,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("PUT /api/v1/admin/catalog/product-groups/reorder -- переупорядочивает")
+        @DisplayName("PUT /api/v1/admin/catalog/product-groups/reorder -- reorders")
         void reorderProductGroups_authorized_returns200() throws Exception {
             mockMvc.perform(put("/api/v1/admin/catalog/product-groups/reorder")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -230,7 +230,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("PUT /api/v1/admin/catalog/categories/{id} -- обновляет категорию")
+        @DisplayName("PUT /api/v1/admin/catalog/categories/{id} -- updates category")
         void updateCategory_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             CategoryDto dto = new CategoryDto(id, "updated", "Updated", 0, null, List.of());
@@ -245,7 +245,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("DELETE /api/v1/admin/catalog/categories/{id} -- удаляет категорию")
+        @DisplayName("DELETE /api/v1/admin/catalog/categories/{id} -- deletes category")
         void deleteCategory_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
 
@@ -269,7 +269,7 @@ class AdminCatalogControllerTest {
 
         @Test
         @WithMockUser(authorities = "MANAGE_CATALOG")
-        @DisplayName("PUT reorder для categories")
+        @DisplayName("PUT reorder for categories")
         void reorderCategories_returns200() throws Exception {
             mockMvc.perform(put("/api/v1/admin/catalog/categories/reorder")
                             .contentType(MediaType.APPLICATION_JSON)

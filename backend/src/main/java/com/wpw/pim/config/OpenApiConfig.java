@@ -16,7 +16,7 @@ public class OpenApiConfig {
         return new OpenAPI()
             .info(new Info()
                 .title("WPW PIM API")
-                .description("Product Information Management для WPW Professional Cutting Tools")
+                .description("Product Information Management for WPW Professional Cutting Tools")
                 .version("v1"))
             .addSecurityItem(new SecurityRequirement().addList("Bearer"))
             .addSecurityItem(new SecurityRequirement().addList("X-API-Key"))
@@ -25,11 +25,11 @@ public class OpenApiConfig {
                     .type(SecurityScheme.Type.HTTP)
                     .scheme("bearer")
                     .bearerFormat("JWT")
-                    .description("JWT токен. Получить: POST /api/v1/auth/login"))
+                    .description("JWT token. Obtain via: POST /api/v1/auth/login"))
                 .addSecuritySchemes("X-API-Key", new SecurityScheme()
                     .type(SecurityScheme.Type.APIKEY)
                     .in(SecurityScheme.In.HEADER)
                     .name("X-API-Key")
-                    .description("API ключ для сервисных интеграций")));
+                    .description("API key for service integrations")));
     }
 }

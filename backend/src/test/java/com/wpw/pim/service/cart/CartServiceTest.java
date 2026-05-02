@@ -102,7 +102,7 @@ class CartServiceTest {
     class GetCart {
 
         @Test
-        @DisplayName("404 если дилер не найден")
+        @DisplayName("404 if dealer not found")
         void dealerNotFound() {
             when(dealerRepository.findById(dealerId)).thenReturn(Optional.empty());
             assertThatThrownBy(() -> cartService.getCart(dealerId))
@@ -111,7 +111,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает пустую корзину для нового дилера")
+        @DisplayName("returns empty cart for new dealer")
         void emptyCart() {
             stubDealerFound();
             stubEmptyCart();
@@ -124,7 +124,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает USD когда у дилера нет прайс-листа")
+        @DisplayName("returns USD when dealer has no price list")
         void defaultCurrencyUsd() {
             stubDealerFound();
             stubEmptyCart();
@@ -134,7 +134,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("берёт валюту из прайс-листа дилера")
+        @DisplayName("takes currency from dealer price list")
         void currencyFromPriceList() {
             Currency eur = new Currency();
             eur.setCode("EUR");
@@ -153,7 +153,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("возвращает позицию с именем из английского перевода")
+        @DisplayName("returns item with name from English translation")
         void itemWithTranslatedName() {
             stubDealerFound();
             when(cartItemRepository.findByDealerIdWithProduct(dealerId)).thenReturn(List.of(cartItem(2)));
@@ -167,7 +167,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("неактивный продукт попадает в removedToolNos и исключается из позиций")
+        @DisplayName("inactive product goes into removedToolNos and is excluded from items")
         void inactiveProductExcluded() {
             product.setStatus(ProductStatus.discontinued);
             stubDealerFound();
@@ -181,7 +181,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("рассчитывает unitPrice и lineTotal по активному ценовому уровню")
+        @DisplayName("calculates unitPrice and lineTotal by active price level")
         void priceCalculation() {
             UUID plId = UUID.randomUUID();
             PriceList pl = new PriceList();
@@ -212,7 +212,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("unitPrice null если прайс-лист не назначен")
+        @DisplayName("unitPrice null if price list not assigned")
         void noPriceListGivesNullPrice() {
             stubDealerFound();
             when(cartItemRepository.findByDealerIdWithProduct(dealerId)).thenReturn(List.of(cartItem(1)));
@@ -233,7 +233,7 @@ class CartServiceTest {
     class AddItems {
 
         @Test
-        @DisplayName("создаёт новую позицию если её нет в корзине")
+        @DisplayName("creates new cart item if not in cart")
         void addsNewItem() {
             stubDealerFound();
             when(productRepository.findById(productId)).thenReturn(Optional.of(product));
@@ -246,7 +246,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("инкрементирует qty если позиция уже в корзине")
+        @DisplayName("increments qty if item already in cart")
         void incrementsExistingQty() {
             CartItem existing = cartItem(3);
             stubDealerFound();
@@ -261,7 +261,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("404 если продукт не найден")
+        @DisplayName("404 if product not found")
         void productNotFound() {
             stubDealerFound();
             when(productRepository.findById(productId)).thenReturn(Optional.empty());
@@ -272,7 +272,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("404 если дилер не найден")
+        @DisplayName("404 if dealer not found")
         void dealerNotFound() {
             when(dealerRepository.findById(dealerId)).thenReturn(Optional.empty());
             assertThatThrownBy(() -> cartService.addItems(dealerId, List.of(productId)))
@@ -287,7 +287,7 @@ class CartServiceTest {
     class AddByFilter {
 
         @Test
-        @DisplayName("возвращает корзину без изменений если список пустой")
+        @DisplayName("returns cart unchanged if list is empty")
         void emptyList() {
             stubDealerFound();
             stubEmptyCart();
@@ -299,7 +299,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("пропускает продукты уже в корзине")
+        @DisplayName("skips products already in cart")
         void skipsAlreadyInCart() {
             stubDealerFound();
             when(cartItemRepository.findProductIdsByDealerId(dealerId)).thenReturn(List.of(productId));
@@ -314,7 +314,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("пропускает неактивные продукты")
+        @DisplayName("skips inactive products")
         void skipsInactiveProducts() {
             product.setStatus(ProductStatus.discontinued);
             UUID otherId = UUID.randomUUID();
@@ -329,7 +329,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("сохраняет новые активные продукты")
+        @DisplayName("saves new active products")
         void savesNewActiveProducts() {
             stubDealerFound();
             when(cartItemRepository.findProductIdsByDealerId(dealerId)).thenReturn(List.of());
@@ -349,7 +349,7 @@ class CartServiceTest {
     class UpdateQty {
 
         @Test
-        @DisplayName("qty <= 0 удаляет позицию")
+        @DisplayName("qty <= 0 removes item")
         void zeroQtyRemovesItem() {
             stubDealerFound();
             stubEmptyCart();
@@ -360,7 +360,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("обновляет qty для существующей позиции")
+        @DisplayName("updates qty for existing item")
         void updatesQty() {
             CartItem existing = cartItem(1);
             when(dealerRepository.findById(dealerId)).thenReturn(Optional.of(dealer));
@@ -375,7 +375,7 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("404 если позиция не найдена")
+        @DisplayName("404 if item not found")
         void itemNotFound() {
             stubDealerFound();
             when(cartItemRepository.findById(any(CartItemId.class))).thenReturn(Optional.empty());
@@ -393,7 +393,7 @@ class CartServiceTest {
     class RemoveItem {
 
         @Test
-        @DisplayName("удаляет позицию и возвращает корзину")
+        @DisplayName("removes item and returns cart")
         void removesItem() {
             stubDealerFound();
             stubEmptyCart();
@@ -411,7 +411,7 @@ class CartServiceTest {
     class ClearCartTest {
 
         @Test
-        @DisplayName("удаляет все позиции дилера")
+        @DisplayName("removes all dealer items")
         void clearsAll() {
             cartService.clearCart(dealerId);
             verify(cartItemRepository).deleteByDealerId(dealerId);

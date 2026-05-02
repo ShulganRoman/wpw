@@ -31,11 +31,11 @@ public class EmailService {
         if (recipients.isEmpty()) return;
 
         String dealerName = order.getDealer().getName();
-        String subject = "Новый заказ от дилера: " + dealerName;
+        String subject = "New order from dealer: " + dealerName;
         String body = String.format(
-            "Дилер \"%s\" оформил заказ #%s на сумму %s %s.%n%n" +
-            "Позиций: %d%n" +
-            "Требует обработки в панели администратора.",
+            "Dealer \"%s\" submitted order #%s for %s %s.%n%n" +
+            "Items: %d%n" +
+            "Requires processing in the admin panel.",
             dealerName,
             order.getId(),
             order.getTotal().toPlainString(),
@@ -50,10 +50,10 @@ public class EmailService {
         if (dealerEmail == null || dealerEmail.isBlank()) return;
 
         String statusLabel = dealerStatusLabel(order.getStatus());
-        String subject = "Статус вашего заказа изменён: " + statusLabel;
+        String subject = "Your order status has changed: " + statusLabel;
         String body = String.format(
-            "Статус вашего заказа #%s изменён на: %s.%n%n" +
-            "Сумма заказа: %s %s",
+            "Your order #%s status has been changed to: %s.%n%n" +
+            "Order total: %s %s",
             order.getId(),
             statusLabel,
             order.getTotal().toPlainString(),
@@ -77,10 +77,10 @@ public class EmailService {
 
     private String dealerStatusLabel(OrderStatus status) {
         return switch (status) {
-            case SUBMITTED    -> "Отправлено";
-            case IN_PROCESSING -> "В обработке";
-            case CONFIRMED    -> "Подтверждён";
-            case REJECTED     -> "Отклонён";
+            case SUBMITTED    -> "Submitted";
+            case IN_PROCESSING -> "In Processing";
+            case CONFIRMED    -> "Confirmed";
+            case REJECTED     -> "Rejected";
         };
     }
 }

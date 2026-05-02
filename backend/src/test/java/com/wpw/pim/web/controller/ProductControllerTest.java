@@ -60,7 +60,7 @@ class ProductControllerTest {
     class ListProducts {
 
         @Test
-        @DisplayName("возвращает пагинированный список продуктов")
+        @DisplayName("returns paginated product list")
         void list_returnsPagedResponse() throws Exception {
             PagedResponse<ProductSummaryDto> response = PagedResponse.of(List.of(), 0, 1, 48);
             when(productService.findAll(any(ProductFilter.class))).thenReturn(response);
@@ -77,7 +77,7 @@ class ProductControllerTest {
     class GetByToolNo {
 
         @Test
-        @DisplayName("возвращает детали продукта")
+        @DisplayName("returns product details")
         void getByToolNo_existingProduct_returns200() throws Exception {
             ProductDetailDto detail = createDetailDto("TOOL-001");
             when(productService.findByToolNo("TOOL-001", "en")).thenReturn(detail);
@@ -93,7 +93,7 @@ class ProductControllerTest {
     class FilterOptions {
 
         @Test
-        @DisplayName("возвращает доступные фильтры")
+        @DisplayName("returns available filters")
         void getFilterOptions_returnsMap() throws Exception {
             Map<String, List<String>> options = Map.of("toolMaterial", List.of("HSS"));
             when(productService.getFilterOptions()).thenReturn(options);
@@ -110,7 +110,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "MODIFY_PRODUCTS")
-        @DisplayName("авторизованный пользователь создаёт продукт -- 201")
+        @DisplayName("authorized user creates product -- 201")
         void create_authorized_returns201() throws Exception {
             ProductDetailDto detail = createDetailDto("NEW-001");
             ProductCreateDto createDto = new ProductCreateDto("NEW-001", null, null, null, null, null,
@@ -126,7 +126,7 @@ class ProductControllerTest {
         }
 
         @Test
-        @DisplayName("неавторизованный пользователь -- 401")
+        @DisplayName("unauthorized user -- 401")
         void create_unauthenticated_returns403() throws Exception {
             mockMvc.perform(post("/api/v1/products")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -136,7 +136,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "BULK_EXPORT")
-        @DisplayName("пользователь без привилегии MODIFY_PRODUCTS -- 403")
+        @DisplayName("user without MODIFY_PRODUCTS privilege -- 403")
         void create_forbidden_returns403() throws Exception {
             mockMvc.perform(post("/api/v1/products")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -151,7 +151,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "MODIFY_PRODUCTS")
-        @DisplayName("авторизованный пользователь удаляет продукт -- 204")
+        @DisplayName("authorized user deletes product -- 204")
         void delete_authorized_returns204() throws Exception {
             UUID id = UUID.randomUUID();
 
@@ -167,7 +167,7 @@ class ProductControllerTest {
     class SpareParts {
 
         @Test
-        @DisplayName("возвращает список запчастей")
+        @DisplayName("returns spare parts list")
         void getSpareParts_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             when(productService.getSpareParts(id, "en")).thenReturn(List.of());
@@ -183,7 +183,7 @@ class ProductControllerTest {
     class CompatibleTools {
 
         @Test
-        @DisplayName("возвращает список совместимых инструментов")
+        @DisplayName("returns compatible tools list")
         void getCompatibleTools_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             when(productService.getCompatibleTools(id, "en")).thenReturn(List.of());
@@ -194,7 +194,7 @@ class ProductControllerTest {
         }
 
         @Test
-        @DisplayName("возвращает с указанной локалью")
+        @DisplayName("returns with specified locale")
         void getCompatibleTools_withLocale_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             when(productService.getCompatibleTools(id, "ru")).thenReturn(List.of());
@@ -210,7 +210,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "MODIFY_PRODUCTS")
-        @DisplayName("авторизованный пользователь обновляет продукт -- 200")
+        @DisplayName("authorized user updates product -- 200")
         void update_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             ProductDetailDto detail = createDetailDto("UPDATED-001");
@@ -225,7 +225,7 @@ class ProductControllerTest {
         }
 
         @Test
-        @DisplayName("неавторизованный -- 403")
+        @DisplayName("unauthorized -- 403")
         void update_unauthenticated_returns403() throws Exception {
             UUID id = UUID.randomUUID();
             mockMvc.perform(put("/api/v1/products/" + id)
@@ -236,7 +236,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "BULK_EXPORT")
-        @DisplayName("без MODIFY_PRODUCTS -- 403")
+        @DisplayName("without MODIFY_PRODUCTS -- 403")
         void update_forbidden_returns403() throws Exception {
             UUID id = UUID.randomUUID();
             mockMvc.perform(put("/api/v1/products/" + id)
@@ -247,7 +247,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "MODIFY_PRODUCTS")
-        @DisplayName("обновление с другой локалью")
+        @DisplayName("update with different locale")
         void update_withDifferentLocale_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             ProductDetailDto detail = createDetailDto("RU-001");
@@ -267,7 +267,7 @@ class ProductControllerTest {
     class DeleteProductSecurity {
 
         @Test
-        @DisplayName("неавторизованный -- 403")
+        @DisplayName("unauthorized -- 403")
         void delete_unauthenticated_returns403() throws Exception {
             UUID id = UUID.randomUUID();
             mockMvc.perform(delete("/api/v1/products/" + id))
@@ -276,7 +276,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "BULK_EXPORT")
-        @DisplayName("без MODIFY_PRODUCTS -- 403")
+        @DisplayName("without MODIFY_PRODUCTS -- 403")
         void delete_forbidden_returns403() throws Exception {
             UUID id = UUID.randomUUID();
             mockMvc.perform(delete("/api/v1/products/" + id))
@@ -289,7 +289,7 @@ class ProductControllerTest {
     class GetImages {
 
         @Test
-        @DisplayName("возвращает список изображений")
+        @DisplayName("returns image list")
         void getImages_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             UUID imgId = UUID.randomUUID();
@@ -303,7 +303,7 @@ class ProductControllerTest {
         }
 
         @Test
-        @DisplayName("пустой список -- 200")
+        @DisplayName("empty list -- 200")
         void getImages_empty_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             when(productMediaService.getImages(id)).thenReturn(List.of());
@@ -320,7 +320,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "MODIFY_PRODUCTS")
-        @DisplayName("авторизованный пользователь добавляет изображения -- 200")
+        @DisplayName("authorized user adds images -- 200")
         void addImages_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             MockMultipartFile file = new MockMultipartFile(
@@ -335,7 +335,7 @@ class ProductControllerTest {
         }
 
         @Test
-        @DisplayName("неавторизованный -- 403")
+        @DisplayName("unauthorized -- 403")
         void addImages_unauthenticated_returns403() throws Exception {
             UUID id = UUID.randomUUID();
             MockMultipartFile file = new MockMultipartFile(
@@ -351,7 +351,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "MODIFY_PRODUCTS")
-        @DisplayName("авторизованный пользователь удаляет изображение -- 200")
+        @DisplayName("authorized user deletes image -- 200")
         void deleteImage_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             UUID imgId = UUID.randomUUID();
@@ -365,7 +365,7 @@ class ProductControllerTest {
         }
 
         @Test
-        @DisplayName("неавторизованный -- 403")
+        @DisplayName("unauthorized -- 403")
         void deleteImage_unauthenticated_returns403() throws Exception {
             UUID id = UUID.randomUUID();
             UUID imgId = UUID.randomUUID();
@@ -375,7 +375,7 @@ class ProductControllerTest {
 
         @Test
         @WithMockUser(authorities = "BULK_EXPORT")
-        @DisplayName("без MODIFY_PRODUCTS -- 403")
+        @DisplayName("without MODIFY_PRODUCTS -- 403")
         void deleteImage_forbidden_returns403() throws Exception {
             UUID id = UUID.randomUUID();
             UUID imgId = UUID.randomUUID();
@@ -389,7 +389,7 @@ class ProductControllerTest {
     class ListWithFilters {
 
         @Test
-        @DisplayName("фильтр по sectionId/categoryId/groupId")
+        @DisplayName("filter by sectionId/categoryId/groupId")
         void list_withCatalogFilters_returns200() throws Exception {
             PagedResponse<ProductSummaryDto> response = PagedResponse.of(List.of(), 0, 1, 48);
             when(productService.findAll(any(ProductFilter.class))).thenReturn(response);
@@ -418,7 +418,7 @@ class ProductControllerTest {
         }
 
         @Test
-        @DisplayName("список с авторизацией и непустым результатом -- enrich applied")
+        @DisplayName("list with auth and non-empty result -- enrich applied")
         @WithMockUser(authorities = "BULK_EXPORT")
         void list_authenticated_enrichesItems() throws Exception {
             UUID id = UUID.randomUUID();
@@ -436,7 +436,7 @@ class ProductControllerTest {
         }
 
         @Test
-        @DisplayName("список с авторизацией и enrichment с ценами и SKU")
+        @DisplayName("list with auth and enrichment with prices and SKU")
         @WithMockUser(authorities = "BULK_EXPORT")
         void list_authenticated_enrichesWithPrices() throws Exception {
             UUID id = UUID.randomUUID();
@@ -463,7 +463,7 @@ class ProductControllerTest {
     class GetByToolNoWithPrice {
 
         @Test
-        @DisplayName("с ценой и dealerSku возвращает enriched DTO")
+        @DisplayName("with price and dealerSku returns enriched DTO")
         @WithMockUser(authorities = "BULK_EXPORT")
         void getByToolNo_withPrice_returnsEnriched() throws Exception {
             ProductDetailDto detail = createDetailDto("TOOL-001");
@@ -479,7 +479,7 @@ class ProductControllerTest {
         }
 
         @Test
-        @DisplayName("без price и dealerSku возвращает оригинальный DTO")
+        @DisplayName("without price and dealerSku returns original DTO")
         void getByToolNo_noPrice_returnsOriginal() throws Exception {
             ProductDetailDto detail = createDetailDto("TOOL-002");
             when(productService.findByToolNo("TOOL-002", "en")).thenReturn(detail);

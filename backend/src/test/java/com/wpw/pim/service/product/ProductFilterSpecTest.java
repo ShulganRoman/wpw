@@ -54,7 +54,7 @@ class ProductFilterSpecTest {
     // ========================= Минимальный фильтр =========================
 
     @Test
-    @DisplayName("toPredicate — пустой фильтр добавляет только status=active")
+    @DisplayName("toPredicate — empty filter adds only status=active")
     void toPredicate_emptyFilter_onlyStatusActive() {
         ProductFilter filter = new ProductFilter("en", null, null, null, null,
             null, null, null, null, null, null, null, null, null, null, null, 1, 48, null, null, null);
@@ -183,7 +183,7 @@ class ProductFilterSpecTest {
     // ========================= ProductType фильтр =========================
 
     @Test
-    @DisplayName("toPredicate — productType=main добавляет фильтр")
+    @DisplayName("toPredicate — productType=main adds filter")
     void toPredicate_productType_addsPredicate() {
         ProductFilter filter = new ProductFilter("en", null, null, null, null,
             null, null, null, null, null, null, null, null, null, "main", null, 1, 48, null, null, null);
@@ -194,7 +194,7 @@ class ProductFilterSpecTest {
     }
 
     @Test
-    @DisplayName("toPredicate — invalid productType игнорируется")
+    @DisplayName("toPredicate — invalid productType is ignored")
     void toPredicate_invalidProductType_ignored() {
         ProductFilter filter = new ProductFilter("en", null, null, null, null,
             null, null, null, null, null, null, null, null, null, "invalid_type", null, 1, 48, null, null, null);
@@ -268,7 +268,7 @@ class ProductFilterSpecTest {
     // ========================= Operation filter =========================
 
     @Test
-    @DisplayName("toPredicate — operation добавляет subquery")
+    @DisplayName("toPredicate — operation adds subquery")
     void toPredicate_operation_addsSubquery() {
         when(query.subquery(Long.class)).thenReturn(subquery);
         when(subquery.correlate(root)).thenReturn(root);
@@ -303,7 +303,7 @@ class ProductFilterSpecTest {
     }
 
     @Test
-    @DisplayName("toPredicate — count query не sets distinct")
+    @DisplayName("toPredicate — count query does not set distinct")
     void toPredicate_countQuery_doesNotSetDistinct() {
         when(query.getResultType()).thenReturn((Class) Long.class);
 

@@ -20,14 +20,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/export")
 @RequiredArgsConstructor
-@Tag(name = "Export", description = "Экспорт каталога товаров в CSV, XLSX, XML")
+@Tag(name = "Export", description = "Product catalog export to CSV, XLSX, XML")
 public class ExportController {
 
     private final ExportService exportService;
     private final ProductService productService;
 
     @GetMapping("/preview")
-    @Operation(summary = "Превью экспорта", description = "Предварительный просмотр товаров с применёнными фильтрами перед экспортом.")
+    @Operation(summary = "Export preview", description = "Preview products with applied filters before export.")
     public PagedResponse<ProductSummaryDto> preview(
         @RequestParam(defaultValue = "en") String locale,
         @RequestParam(required = false) UUID sectionId,
@@ -55,7 +55,7 @@ public class ExportController {
     }
 
     @GetMapping
-    @Operation(summary = "Скачать экспорт", description = "Экспорт каталога. Параметр format: csv (по умолчанию), xlsx, xml.")
+    @Operation(summary = "Download export", description = "Catalog export. format parameter: csv (default), xlsx, xml.")
     public ResponseEntity<byte[]> export(
         @RequestParam(defaultValue = "csv") String format,
         @RequestParam(defaultValue = "en") String locale,

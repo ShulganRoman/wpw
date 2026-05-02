@@ -24,45 +24,45 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/price/stock")
 @PreAuthorize("hasAuthority('MANAGE_PRICES')")
 @RequiredArgsConstructor
-@Tag(name = "Admin: Stock Prices", description = "Управление публичным прайс-листом (складские цены). Требует MANAGE_PRICES.")
+@Tag(name = "Admin: Stock Prices", description = "Public price list management (stock prices). Requires MANAGE_PRICES.")
 public class AdminStockPriceController {
 
     private final StockPriceService stockPriceService;
     private final CurrencyRepository currencyRepository;
 
     @GetMapping("/currencies")
-    @Operation(summary = "Список активных валют")
+    @Operation(summary = "List active currencies")
     public List<Currency> getCurrencies() {
         return currencyRepository.findByIsActiveTrueOrderByCode();
     }
 
     @GetMapping
-    @Operation(summary = "Все позиции прайс-листа")
+    @Operation(summary = "All price list entries")
     public List<PriceListItemDto> list() {
         return stockPriceService.getItems();
     }
 
     @PutMapping
-    @Operation(summary = "Создать или обновить позицию прайс-листа")
+    @Operation(summary = "Create or update price list entry")
     public PriceListItemDto upsert(@Valid @RequestBody PriceListItemRequest request) {
         return stockPriceService.upsertItem(request);
     }
 
     @DeleteMapping("/{toolNo}/{minQty}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Удалить позицию прайс-листа")
+    @Operation(summary = "Delete price list entry")
     public void delete(@PathVariable String toolNo, @PathVariable int minQty) {
         stockPriceService.deleteItem(toolNo, minQty);
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Импортировать прайс-лист из Excel")
+    @Operation(summary = "Import price list from Excel")
     public PriceImportResult importExcel(@RequestParam("file") MultipartFile file) throws IOException {
         return stockPriceService.importExcel(file);
     }
 
     @GetMapping("/export")
-    @Operation(summary = "Экспортировать прайс-лист в Excel")
+    @Operation(summary = "Export price list to Excel")
     public ResponseEntity<byte[]> export() throws IOException {
         return ResponseEntity.ok()
             .header("Content-Disposition", "attachment; filename=\"stock-prices.xlsx\"")
@@ -71,7 +71,7 @@ public class AdminStockPriceController {
     }
 
     @GetMapping("/template")
-    @Operation(summary = "Скачать шаблон прайс-листа Excel")
+    @Operation(summary = "Download Excel price list template")
     public ResponseEntity<byte[]> template() throws IOException {
         return ResponseEntity.ok()
             .header("Content-Disposition", "attachment; filename=\"stock-prices-template.xlsx\"")

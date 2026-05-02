@@ -22,20 +22,20 @@ import java.util.UUID;
 @RequestMapping("/api/v1/admin/dealers/{dealerId}/price-list")
 @PreAuthorize("hasAuthority('MANAGE_PRICES')")
 @RequiredArgsConstructor
-@Tag(name = "Admin: Dealer Prices", description = "Управление прайс-листом дилера: импорт из Excel, экспорт, удаление. Требует MANAGE_PRICES.")
+@Tag(name = "Admin: Dealer Prices", description = "Dealer price list management: Excel import, export, deletion. Requires MANAGE_PRICES.")
 public class AdminDealerPriceController {
 
     private final DealerPriceService dealerPriceService;
 
     @GetMapping
-    @Operation(summary = "Получить прайс-лист дилера")
+    @Operation(summary = "Get dealer price list")
     public ResponseEntity<DealerPriceListDto> get(@PathVariable UUID dealerId) {
         DealerPriceListDto dto = dealerPriceService.getForDealer(dealerId);
         return dto != null ? ResponseEntity.ok(dto) : ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Импортировать прайс-лист из Excel", description = "Файл Excel с колонками: toolNo, minQty, price. Старый прайс-лист заменяется.")
+    @Operation(summary = "Import price list from Excel", description = "Excel file with columns: toolNo, minQty, price. Previous price list is replaced.")
     public PriceImportResult importPriceList(
         @PathVariable UUID dealerId,
         @RequestParam("file") MultipartFile file,
@@ -47,13 +47,13 @@ public class AdminDealerPriceController {
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Удалить прайс-лист дилера")
+    @Operation(summary = "Delete dealer price list")
     public void delete(@PathVariable UUID dealerId) {
         dealerPriceService.deletePriceList(dealerId);
     }
 
     @GetMapping("/export")
-    @Operation(summary = "Экспортировать прайс-лист в Excel")
+    @Operation(summary = "Export price list to Excel")
     public ResponseEntity<byte[]> export(@PathVariable UUID dealerId) throws IOException {
         return ResponseEntity.ok()
             .header("Content-Disposition", "attachment; filename=\"dealer-price-list.xlsx\"")
@@ -62,7 +62,7 @@ public class AdminDealerPriceController {
     }
 
     @GetMapping("/template")
-    @Operation(summary = "Скачать шаблон прайс-листа Excel")
+    @Operation(summary = "Download Excel price list template")
     public ResponseEntity<byte[]> template() throws IOException {
         return ResponseEntity.ok()
             .header("Content-Disposition", "attachment; filename=\"price-list-template.xlsx\"")

@@ -47,7 +47,7 @@ class SystemSettingsControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRODUCTS")
-    @DisplayName("GET /settings -- возвращает 200 и JSON с тремя boolean полями")
+    @DisplayName("GET /settings -- returns 200 and JSON with three boolean fields")
     void getSettings_returnsDto() throws Exception {
         when(settingsService.get()).thenReturn(new SystemSettingsDto(true, false, true, false, false, false));
 
@@ -59,7 +59,7 @@ class SystemSettingsControllerTest {
     }
 
     @Test
-    @DisplayName("GET /settings -- без аутентификации возвращает 4xx")
+    @DisplayName("GET /settings -- without authentication returns 4xx")
     void getSettings_unauthenticated_returns4xx() throws Exception {
         mockMvc.perform(get("/api/v1/admin/settings"))
             .andExpect(status().is4xxClientError());
@@ -67,7 +67,7 @@ class SystemSettingsControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRODUCTS")
-    @DisplayName("PUT /settings -- возвращает 200 и обновлённые настройки")
+    @DisplayName("PUT /settings -- returns 200 and updated settings")
     void updateSettings_returnsUpdatedDto() throws Exception {
         SystemSettingsDto updated = new SystemSettingsDto(true, true, false, false, false, false);
         when(settingsService.update(any(SystemSettingsDto.class))).thenReturn(updated);
@@ -83,7 +83,7 @@ class SystemSettingsControllerTest {
 
     @Test
     @WithMockUser(authorities = "MANAGE_PRODUCTS")
-    @DisplayName("GET /settings/stats -- возвращает 200 и JSON со статистикой")
+    @DisplayName("GET /settings/stats -- returns 200 and JSON with statistics")
     void getStats_returnsStatsDto() throws Exception {
         SystemStatsDto stats = new SystemStatsDto(
             10L, 5L, 5L, 50.0,

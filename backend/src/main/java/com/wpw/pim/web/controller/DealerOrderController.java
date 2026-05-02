@@ -24,26 +24,26 @@ import java.util.UUID;
 @RequestMapping("/api/v1/dealer")
 @PreAuthorize("hasRole('DEALER')")
 @RequiredArgsConstructor
-@Tag(name = "Dealer: Orders", description = "Заказы дилера")
+@Tag(name = "Dealer: Orders", description = "Dealer orders")
 public class DealerOrderController {
 
     private final OrderService orderService;
     private final DealerRepository dealerRepository;
 
     @PostMapping("/cart/checkout")
-    @Operation(summary = "Оформить заказ из корзины")
+    @Operation(summary = "Place order from cart")
     public CheckoutResponse checkout(@AuthenticationPrincipal UserDetails principal) {
         return orderService.checkout(resolveDealerId(principal));
     }
 
     @GetMapping("/orders")
-    @Operation(summary = "История заказов дилера")
+    @Operation(summary = "Dealer order history")
     public List<OrderSummaryDto> myOrders(@AuthenticationPrincipal UserDetails principal) {
         return orderService.getDealerOrders(resolveDealerId(principal));
     }
 
     @GetMapping("/orders/{orderId}")
-    @Operation(summary = "Детали заказа")
+    @Operation(summary = "Order details")
     public OrderDto myOrder(
         @AuthenticationPrincipal UserDetails principal,
         @PathVariable UUID orderId

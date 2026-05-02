@@ -28,7 +28,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("generateToken -- возвращает непустой JWT-токен")
+    @DisplayName("generateToken -- returns non-empty JWT token")
     void generateToken_validUsername_returnsNonEmptyToken() {
         String token = jwtService.generateToken("admin");
 
@@ -38,7 +38,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("extractUsername -- извлекает username из валидного токена")
+    @DisplayName("extractUsername -- extracts username from valid token")
     void extractUsername_validToken_returnsUsername() {
         String token = jwtService.generateToken("admin");
 
@@ -48,7 +48,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("extractUsername -- возвращает empty для невалидного токена")
+    @DisplayName("extractUsername -- returns empty for invalid token")
     void extractUsername_invalidToken_returnsEmpty() {
         Optional<String> username = jwtService.extractUsername("invalid.token.here");
 
@@ -56,7 +56,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("extractUsername -- возвращает empty для пустой строки")
+    @DisplayName("extractUsername -- returns empty for empty string")
     void extractUsername_emptyToken_returnsEmpty() {
         Optional<String> username = jwtService.extractUsername("");
 
@@ -64,7 +64,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("extractUsername -- возвращает empty для null")
+    @DisplayName("extractUsername -- returns empty for null")
     void extractUsername_nullToken_returnsEmpty() {
         Optional<String> username = jwtService.extractUsername(null);
 
@@ -72,7 +72,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("extractUsername -- возвращает empty для токена подписанного другим ключом")
+    @DisplayName("extractUsername -- returns empty for token signed with different key")
     void extractUsername_tokenWithDifferentKey_returnsEmpty() {
         // Генерируем токен другим сервисом с другим секретом
         JwtProperties otherProperties = new JwtProperties(
@@ -86,7 +86,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("extractUsername -- возвращает empty для просроченного токена")
+    @DisplayName("extractUsername -- returns empty for expired token")
     void extractUsername_expiredToken_returnsEmpty() {
         // Создаём сервис с нулевым TTL — токен истечёт мгновенно
         JwtProperties expiredProperties = new JwtProperties(SECRET, 0L);
@@ -99,7 +99,7 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("generateToken -- разные username дают разные токены")
+    @DisplayName("generateToken -- different usernames produce different tokens")
     void generateToken_differentUsernames_produceDifferentTokens() {
         String token1 = jwtService.generateToken("user1");
         String token2 = jwtService.generateToken("user2");

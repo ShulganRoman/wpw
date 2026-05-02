@@ -34,7 +34,7 @@ class SpaFallbackControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("GET /catalog -- отдаёт index.html")
+    @DisplayName("GET /catalog -- serves index.html")
     void catalog() throws Exception {
         mockMvc.perform(get("/catalog").accept(MediaType.TEXT_HTML))
             .andExpect(status().isOk())
@@ -43,7 +43,7 @@ class SpaFallbackControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("GET /catalog/some/nested -- отдаёт index.html")
+    @DisplayName("GET /catalog/some/nested -- serves index.html")
     void catalogNested() throws Exception {
         mockMvc.perform(get("/catalog/section/sub").accept(MediaType.TEXT_HTML))
             .andExpect(status().isOk())
@@ -52,7 +52,7 @@ class SpaFallbackControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("GET /product/{slug} -- отдаёт index.html")
+    @DisplayName("GET /product/{slug} -- serves index.html")
     void product() throws Exception {
         mockMvc.perform(get("/product/some-tool").accept(MediaType.TEXT_HTML))
             .andExpect(status().isOk())
@@ -61,7 +61,7 @@ class SpaFallbackControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("GET /export -- отдаёт index.html")
+    @DisplayName("GET /export -- serves index.html")
     void export() throws Exception {
         mockMvc.perform(get("/export").accept(MediaType.TEXT_HTML))
             .andExpect(status().isOk())
@@ -70,7 +70,7 @@ class SpaFallbackControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("GET /admin -- отдаёт index.html")
+    @DisplayName("GET /admin -- serves index.html")
     void admin() throws Exception {
         mockMvc.perform(get("/admin").accept(MediaType.TEXT_HTML))
             .andExpect(status().isOk())
@@ -79,7 +79,7 @@ class SpaFallbackControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("GET /login -- отдаёт index.html")
+    @DisplayName("GET /login -- serves index.html")
     void login() throws Exception {
         mockMvc.perform(get("/login").accept(MediaType.TEXT_HTML))
             .andExpect(status().isOk())

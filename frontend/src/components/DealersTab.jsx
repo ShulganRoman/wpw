@@ -98,33 +98,33 @@ function ContactRow({ contact, index, onChange, onRemove }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: isPrimary ? '#1565c0' : 'var(--wpw-gray)' }}>
           {isPrimary ? 'Primary Contact' : `Contact ${index + 1}`}
-          {isPrimary && <span style={{ marginLeft: 6, fontSize: 10, background: '#1565c0', color: '#fff', borderRadius: 4, padding: '1px 5px' }}>notifications here</span>}
+          {isPrimary && <span style={{ marginLeft: 6, fontSize: 10, background: '#1565c0', color: '#fff', borderRadius: 4, padding: '1px 5px' }}>notifications</span>}
         </span>
-        <button type="button" className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: 11, color: '#c62828' }} onClick={() => onRemove(index)}>✕ Delete</button>
+        <button type="button" className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: 11, color: '#c62828' }} onClick={() => onRemove(index)}>✕ Remove</button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 3 }}>Имя <span style={{ color: '#c62828' }}>*</span></div>
-          <FInput value={contact.contactName} onChange={v => upd('contactName', v)} placeholder="Имя контакта" />
+          <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 3 }}>Name <span style={{ color: '#c62828' }}>*</span></div>
+          <FInput value={contact.contactName} onChange={v => upd('contactName', v)} placeholder="Contact name" />
         </div>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 3 }}>Роль</div>
+          <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 3 }}>Role</div>
           <FSelect value={contact.role} onChange={v => upd('role', v)} options={CONTACT_ROLES} />
         </div>
         <div>
           <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 3 }}>
             Email <span style={{ color: '#c62828' }}>*</span>
-            {isPrimary && <span style={{ fontSize: 10, color: '#1565c0', marginLeft: 4 }}>для уведомлений</span>}
+            {isPrimary && <span style={{ fontSize: 10, color: '#1565c0', marginLeft: 4 }}>for notifications</span>}
           </div>
           <FInput value={contact.email} onChange={v => upd('email', v)} placeholder="email@company.com" type="email" />
         </div>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 3 }}>Телефон</div>
+          <div style={{ fontSize: 11, color: 'var(--wpw-mid-gray)', marginBottom: 3 }}>Phone</div>
           <FInput value={contact.phone} onChange={v => upd('phone', v)} placeholder="+1 555 000 0000" />
         </div>
       </div>
       <div style={{ marginTop: 8 }}>
-        <FCheck label="Основной контакт (уведомления о статусах заказа)" checked={isPrimary} onChange={v => upd('isPrimary', v)} />
+        <FCheck label="Primary contact (order status notifications)" checked={isPrimary} onChange={v => upd('isPrimary', v)} />
       </div>
     </div>
   );
@@ -186,17 +186,17 @@ function DealerModal({ dealer, onSave, onClose }) {
   }
 
   async function handleSave() {
-    if (!form.dealerCode.trim()) { alert('Введите код дилера'); return; }
-    if (!form.companyName.trim()) { alert('Введите название компании'); return; }
-    if (!form.country.trim()) { alert('Введите страну'); return; }
+    if (!form.dealerCode.trim()) { alert('Enter dealer code'); return; }
+    if (!form.companyName.trim()) { alert('Enter company name'); return; }
+    if (!form.country.trim()) { alert('Enter country'); return; }
     const primaryContacts = form.contacts.filter(c => c.isPrimary);
-    if (primaryContacts.length === 0) { alert('Укажите хотя бы один основной контакт (отметьте «Основной»)'); return; }
+    if (primaryContacts.length === 0) { alert('Specify at least one primary contact (check "Primary contact")'); return; }
     const primaryMissingEmail = primaryContacts.some(c => !c.email?.trim());
-    if (primaryMissingEmail) { alert('Основной контакт должен иметь электронную почту'); return; }
+    if (primaryMissingEmail) { alert('Primary contact must have an email address'); return; }
     const invalidContact = form.contacts.find(c => !c.contactName?.trim());
-    if (invalidContact) { alert('У каждого контакта должно быть имя'); return; }
+    if (invalidContact) { alert('Each contact must have a name'); return; }
     const invalidEmail = form.contacts.find(c => c.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim()));
-    if (invalidEmail) { alert(`Некорректный email у контакта: ${invalidEmail.contactName}`); return; }
+    if (invalidEmail) { alert(`Invalid email for contact: ${invalidEmail.contactName}`); return; }
     setSaving(true);
     try {
       await onSave(form);
@@ -217,7 +217,7 @@ function DealerModal({ dealer, onSave, onClose }) {
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--wpw-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--wpw-navy)' }}>
           <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
-            {dealer ? 'Редактировать дилера' : 'Добавить дилера'}
+            {dealer ? 'Edit Dealer' : 'Add Dealer'}
           </span>
           <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: '2px 6px' }}>✕</button>
         </div>
@@ -225,103 +225,103 @@ function DealerModal({ dealer, onSave, onClose }) {
         {/* Body */}
         <div style={{ padding: '16px 20px', maxHeight: 'calc(90vh - 140px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
 
-          {/* 1. Основные данные — always open, required */}
-          <SectionToggle title="Основные данные" required defaultOpen>
-            <FieldRow label="Код дилера" required>
+          {/* 1. Basic info — always open, required */}
+          <SectionToggle title="Basic Info" required defaultOpen>
+            <FieldRow label="Dealer Code" required>
               <FInput value={form.dealerCode} onChange={v => set('dealerCode', v)} placeholder="WPW-001" />
             </FieldRow>
-            <FieldRow label="Юр. название" required>
-              <FInput value={form.companyName} onChange={v => set('companyName', v)} placeholder="ООО «Компания»" />
+            <FieldRow label="Legal Name" required>
+              <FInput value={form.companyName} onChange={v => set('companyName', v)} placeholder="Company Ltd." />
             </FieldRow>
-            <FieldRow label="Страна" required>
+            <FieldRow label="Country" required>
               <FInput value={form.country} onChange={v => set('country', v)} placeholder="Germany" />
             </FieldRow>
           </SectionToggle>
 
-          {/* 2. Торговая информация */}
-          <SectionToggle title="Торговая информация">
-            <FieldRow label="Торговое назв.">
-              <FInput value={form.brandName} onChange={v => set('brandName', v)} placeholder="Торговое название (если отличается)" />
+          {/* 2. Trade info */}
+          <SectionToggle title="Trade Info">
+            <FieldRow label="Trade Name">
+              <FInput value={form.brandName} onChange={v => set('brandName', v)} placeholder="Trade name (if different)" />
             </FieldRow>
-            <FieldRow label="Тип дилера">
+            <FieldRow label="Dealer Type">
               <FSelect value={form.dealerType} onChange={v => set('dealerType', v)} options={DEALER_TYPES} />
             </FieldRow>
-            <FieldRow label="Private label">
+            <FieldRow label="Private Label">
               <FInput value={form.privateLabelBrand} onChange={v => set('privateLabelBrand', v)} placeholder="Amana, Trend, Freud…" />
             </FieldRow>
           </SectionToggle>
 
-          {/* 3. Адрес */}
-          <SectionToggle title="Адрес">
-            <FieldRow label="Регион / штат">
+          {/* 3. Address */}
+          <SectionToggle title="Address">
+            <FieldRow label="Region / State">
               <FInput value={form.region} onChange={v => set('region', v)} placeholder="Bavaria" />
             </FieldRow>
-            <FieldRow label="Город">
+            <FieldRow label="City">
               <FInput value={form.city} onChange={v => set('city', v)} placeholder="Munich" />
             </FieldRow>
-            <FieldRow label="Адрес">
+            <FieldRow label="Address">
               <FInput value={form.address} onChange={v => set('address', v)} placeholder="Hauptstraße 1" />
             </FieldRow>
-            <FieldRow label="Индекс">
+            <FieldRow label="Postal Code">
               <FInput value={form.postalCode} onChange={v => set('postalCode', v)} placeholder="80331" />
             </FieldRow>
           </SectionToggle>
 
-          {/* 4. Онлайн-присутствие */}
-          <SectionToggle title="Онлайн-присутствие">
-            <FieldRow label="Сайт">
+          {/* 4. Online presence */}
+          <SectionToggle title="Online Presence">
+            <FieldRow label="Website">
               <FInput value={form.website} onChange={v => set('website', v)} placeholder="https://example.com" />
             </FieldRow>
-            <FieldRow label="Интернет-магазин">
-              <FCheck label="Есть интернет-магазин" checked={form.hasEcommerce} onChange={v => set('hasEcommerce', v)} />
+            <FieldRow label="E-commerce">
+              <FCheck label="Has online store" checked={form.hasEcommerce} onChange={v => set('hasEcommerce', v)} />
             </FieldRow>
             {form.hasEcommerce && (
-              <FieldRow label="URL магазина">
+              <FieldRow label="Shop URL">
                 <FInput value={form.shopUrl} onChange={v => set('shopUrl', v)} placeholder="https://shop.example.com" />
               </FieldRow>
             )}
-            <FieldRow label="Логотип (URL)">
+            <FieldRow label="Logo (URL)">
               <FInput value={form.logo} onChange={v => set('logo', v)} placeholder="https://cdn.example.com/logo.png" />
             </FieldRow>
           </SectionToggle>
 
-          {/* 5. Коммерческая информация */}
-          <SectionToggle title="Коммерческая информация">
-            <FieldRow label="Валюта">
+          {/* 5. Commercial info */}
+          <SectionToggle title="Commercial Info">
+            <FieldRow label="Currency">
               <FSelect value={form.currency} onChange={v => set('currency', v)} options={CURRENCIES} />
             </FieldRow>
-            <FieldRow label="Уровень скидки">
+            <FieldRow label="Discount Tier">
               <FInput value={form.discountTier} onChange={v => set('discountTier', v)} placeholder="Gold / Silver…" />
             </FieldRow>
-            <FieldRow label="ID прайс-листа">
-              <FInput value={form.priceListId} onChange={v => set('priceListId', v)} placeholder="UUID прайс-листа (Stage 2)" />
+            <FieldRow label="Price List ID">
+              <FInput value={form.priceListId} onChange={v => set('priceListId', v)} placeholder="Price list UUID" />
             </FieldRow>
           </SectionToggle>
 
-          {/* 6. Прочее */}
-          <SectionToggle title="Прочее">
-            <FieldRow label="Заметки">
+          {/* 6. Other */}
+          <SectionToggle title="Other">
+            <FieldRow label="Notes">
               <textarea
                 className="input"
                 value={form.notes ?? ''}
                 onChange={e => set('notes', e.target.value)}
-                placeholder="Внутренние заметки (не публичные)"
+                placeholder="Internal notes (not public)"
                 rows={3}
                 style={{ width: '100%', resize: 'vertical' }}
               />
             </FieldRow>
-            <FieldRow label="Статус">
-              <FCheck label="Дилер активен" checked={form.isActive} onChange={v => set('isActive', v)} />
+            <FieldRow label="Status">
+              <FCheck label="Dealer is active" checked={form.isActive} onChange={v => set('isActive', v)} />
             </FieldRow>
           </SectionToggle>
 
-          {/* 7. Контакты */}
-          <SectionToggle title="Контакты">
+          {/* 7. Contacts */}
+          <SectionToggle title="Contacts">
             {form.contacts.map((c, i) => (
               <ContactRow key={i} contact={c} index={i} onChange={updateContact} onRemove={removeContact} />
             ))}
             <button type="button" className="btn btn-secondary" style={{ fontSize: 12, padding: '5px 12px', marginTop: 4 }} onClick={addContact}>
-              + Добавить контакт
+              + Add Contact
             </button>
           </SectionToggle>
 
@@ -329,9 +329,9 @@ function DealerModal({ dealer, onSave, onClose }) {
 
         {/* Footer */}
         <div style={{ padding: '12px 20px', borderTop: '1px solid var(--wpw-border)', display: 'flex', justifyContent: 'flex-end', gap: 8, background: '#f9fbfd' }}>
-          <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>Отмена</button>
+          <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
           <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'Сохранение…' : (dealer ? 'Сохранить' : 'Создать')}
+            {saving ? 'Saving…' : (dealer ? 'Save' : 'Create')}
           </button>
         </div>
       </div>
@@ -353,14 +353,14 @@ function CredentialsModal({ username, password, onClose }) {
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{ background: '#fff', borderRadius: 10, width: '100%', maxWidth: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', background: '#1b5e20', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Учётные данные дилера</span>
+          <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Dealer Credentials</span>
           <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer', padding: '2px 6px' }}>✕</button>
         </div>
         <div style={{ padding: '20px 24px' }}>
           <div style={{ background: '#fff9c4', border: '1px solid #f9a825', borderRadius: 6, padding: '10px 14px', marginBottom: 20, fontSize: 12, color: '#6d4c00' }}>
-            Сохраните пароль — он отображается только один раз и не может быть восстановлен.
+            Save the password — it is shown only once and cannot be recovered.
           </div>
-          {[['Логин', username, 'login'], ['Пароль', password, 'pass']].map(([label, value, key]) => (
+          {[['Login', username, 'login'], ['Password', password, 'pass']].map(([label, value, key]) => (
             <div key={key} style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--wpw-gray)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -373,7 +373,7 @@ function CredentialsModal({ username, password, onClose }) {
                   style={{ padding: '7px 12px', fontSize: 12, minWidth: 70 }}
                   onClick={() => copy(value, key)}
                 >
-                  {copied === key ? '✓ Готово' : 'Копировать'}
+                  {copied === key ? '✓ Done' : 'Copy'}
                 </button>
               </div>
             </div>
@@ -382,13 +382,13 @@ function CredentialsModal({ username, password, onClose }) {
             type="button"
             className="btn btn-primary"
             style={{ width: '100%', marginTop: 8 }}
-            onClick={() => copy(`Логин: ${username}\nПароль: ${password}`, 'all')}
+            onClick={() => copy(`Login: ${username}\nPassword: ${password}`, 'all')}
           >
-            {copied === 'all' ? '✓ Скопировано' : 'Скопировать всё'}
+            {copied === 'all' ? '✓ Copied' : 'Copy All'}
           </button>
         </div>
         <div style={{ padding: '12px 24px', borderTop: '1px solid var(--wpw-border)', display: 'flex', justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn-primary" onClick={onClose}>Закрыть</button>
+          <button type="button" className="btn btn-primary" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>
@@ -428,7 +428,7 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
       if (modal.dealer) {
         const updated = await updateDealer(modal.dealer.id, form);
         setDealers(prev => prev.map(d => d.id === updated.id ? updated : d));
-        toast('Дилер обновлён', 'success');
+        toast('Dealer updated', 'success');
         setModal(null);
       } else {
         // create returns { dealer, username, generatedPassword }
@@ -436,7 +436,7 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
         setDealers(prev => [...prev, result.dealer]);
         setModal(null);
         setCredentials({ username: result.username, password: result.generatedPassword });
-        toast('Дилер создан', 'success');
+        toast('Dealer created', 'success');
       }
     } catch (err) {
       toast(err.message, 'error');
@@ -449,7 +449,7 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
       await deleteDealer(id);
       setDealers(prev => prev.filter(d => d.id !== id));
       setConfirmDeleteId(null);
-      toast('Дилер и учётная запись удалены', 'success');
+      toast('Dealer and account deleted', 'success');
     } catch (err) {
       toast(err.message, 'error');
     }
@@ -459,7 +459,7 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
     try {
       const result = await resetDealerPassword(id);
       setCredentials({ username: result.username, password: result.newPassword });
-      toast('Пароль сброшен', 'success');
+      toast('Password reset', 'success');
     } catch (err) {
       toast(err.message, 'error');
     }
@@ -472,23 +472,23 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--wpw-navy)' }}>Дилеры</div>
-          <div style={{ fontSize: 12, color: 'var(--wpw-mid-gray)', marginTop: 2 }}>Управление дилерской сетью</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--wpw-navy)' }}>Dealers</div>
+          <div style={{ fontSize: 12, color: 'var(--wpw-mid-gray)', marginTop: 2 }}>Dealer network management</div>
         </div>
-        <button className="btn btn-primary" onClick={() => setModal({})}>+ Добавить дилера</button>
+        <button className="btn btn-primary" onClick={() => setModal({})}>+ Add Dealer</button>
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40, color: 'var(--wpw-mid-gray)' }}>
           <div className="spinner" style={{ margin: '0 auto 12px' }} />
-          Загрузка…
+          Loading…
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #e8edf5' }}>
-                {['Код / Логин', 'Компания', 'Страна', 'Тип', 'Валюта', 'Контактов', 'Статус', ''].map(h => (
+                {['Code / Login', 'Company', 'Country', 'Type', 'Currency', 'Contacts', 'Status', ''].map(h => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
@@ -522,19 +522,19 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
                   <td style={{ ...tdStyle, textAlign: 'center' }}>{d.contacts?.length ?? 0}</td>
                   <td style={tdStyle}>
                     <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: d.isActive ? '#e8f5e9' : '#f5f5f5', color: d.isActive ? '#2e7d32' : '#757575', fontWeight: 600 }}>
-                      {d.isActive ? 'Активен' : 'Неактивен'}
+                      {d.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
                     {confirmDeleteId === d.id ? (
                       <span style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12 }}>
-                        <span style={{ color: '#c62828' }}>Удалить дилера и аккаунт?</span>
-                        <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12, background: '#c62828', borderColor: '#c62828' }} onClick={() => handleDelete(d.id)}>Да</button>
-                        <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setConfirmDeleteId(null)}>Нет</button>
+                        <span style={{ color: '#c62828' }}>Delete dealer and account?</span>
+                        <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12, background: '#c62828', borderColor: '#c62828' }} onClick={() => handleDelete(d.id)}>Yes</button>
+                        <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setConfirmDeleteId(null)}>No</button>
                       </span>
                     ) : (
                       <span style={{ display: 'flex', gap: 6 }}>
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setModal({ dealer: d })}>Изменить</button>
+                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setModal({ dealer: d })}>Edit</button>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--wpw-blue)' }} onClick={() => onSkuMapping?.(d)}>SKU</button>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: '#2e7d32' }} onClick={() => onPriceList?.(d)}>Price</button>
                         <button
@@ -542,7 +542,7 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
                           style={{ padding: '4px 10px', fontSize: 12, color: '#5c35ab', position: 'relative' }}
                           onClick={() => setOrdersDealer(d)}
                         >
-                          Заказы
+                          Orders
                           {pendingDealerIds.has(d.id) && (
                             <span style={{
                               position: 'absolute', top: -4, right: -4,
@@ -552,9 +552,9 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
                           )}
                         </button>
                         {d.username && (
-                          <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--wpw-blue)' }} onClick={() => handleResetPassword(d.id)} title="Сбросить пароль">↺ Пароль</button>
+                          <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: 'var(--wpw-blue)' }} onClick={() => handleResetPassword(d.id)} title="Reset password">↺ Password</button>
                         )}
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: '#c62828' }} onClick={() => setConfirmDeleteId(d.id)}>Удалить</button>
+                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: '#c62828' }} onClick={() => setConfirmDeleteId(d.id)}>Delete</button>
                       </span>
                     )}
                   </td>
@@ -563,7 +563,7 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
               {dealers.length === 0 && (
                 <tr>
                   <td colSpan={8} style={{ padding: '40px 12px', textAlign: 'center', color: 'var(--wpw-mid-gray)', fontSize: 13 }}>
-                    Дилеры не добавлены
+                    No dealers added
                   </td>
                 </tr>
               )}
@@ -600,10 +600,10 @@ export default function DealersTab({ onSkuMapping, onPriceList }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700 }}>
-                  Заказы: {ordersDealer.companyName || ordersDealer.name}
+                  Orders: {ordersDealer.companyName || ordersDealer.name}
                 </div>
                 <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
-                  История заказов дилера
+                  Dealer order history
                 </div>
               </div>
               <button onClick={() => setOrdersDealer(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999' }}>×</button>

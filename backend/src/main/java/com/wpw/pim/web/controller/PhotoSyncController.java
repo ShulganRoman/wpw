@@ -25,7 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/admin/photos")
 @RequiredArgsConstructor
-@Tag(name = "Admin: Photos", description = "Импорт и управление фотографиями товаров (конвертация в WebP, архивы ZIP/7Z/TAR)")
+@Tag(name = "Admin: Photos", description = "Product photo import and management (WebP conversion, ZIP/7Z/TAR archives)")
 public class PhotoSyncController {
 
     private final PhotoImportService photoImportService;
@@ -39,7 +39,7 @@ public class PhotoSyncController {
      * @return отчёт о валидации с информацией о сопоставлении
      */
     @PostMapping("/validate")
-    @Operation(summary = "Валидация фото", description = "Проверяет соответствие имён файлов артикулам без импорта.")
+    @Operation(summary = "Validate photos", description = "Validates file names against SKUs without importing.")
     public Map<String, Object> validatePhotos(@RequestParam("files") MultipartFile[] files) {
         return photoImportService.validatePhotos(files);
     }
@@ -52,7 +52,7 @@ public class PhotoSyncController {
      * @throws IOException при ошибке конвертации или записи файлов
      */
     @PostMapping("/import")
-    @Operation(summary = "Импорт фото", description = "Конвертирует файлы в WebP и сохраняет. Файл без суффикса (_N) становится главным (sort_order=0).")
+    @Operation(summary = "Import photos", description = "Converts files to WebP and saves. File without suffix (_N) becomes the main image (sort_order=0).")
     public Map<String, Object> importPhotos(@RequestParam("files") MultipartFile[] files) throws IOException {
         return photoImportService.importPhotos(files);
     }
@@ -64,7 +64,7 @@ public class PhotoSyncController {
      * @throws IOException при ошибке чтения файловой системы
      */
     @PostMapping("/sync")
-    @Operation(summary = "Синхронизация фото с диска", description = "Создаёт записи MediaFile для WebP-файлов, уже находящихся на диске (без импорта).")
+    @Operation(summary = "Sync photos from disk", description = "Creates MediaFile records for WebP files already on disk (no import).")
     public Map<String, Object> syncExistingPhotos() throws IOException {
         return photoImportService.syncExistingPhotos();
     }
@@ -72,7 +72,7 @@ public class PhotoSyncController {
     // ========================= Импорт из архивов =========================
 
     /**
-     * Валидация архива с фотографиями — извлечение изображений и сопоставление с продуктами.
+     * Validate archive с фотографиями — извлечение изображений и сопоставление с продуктами.
      * <p>
      * Поддерживаемые форматы: ZIP, 7Z, TAR, TAR.GZ, TGZ.
      * Архив может содержать вложенные директории — все изображения будут найдены рекурсивно.
@@ -84,13 +84,13 @@ public class PhotoSyncController {
      * @throws IOException при ошибке чтения или распаковки архива
      */
     @PostMapping("/archive/validate")
-    @Operation(summary = "Валидация архива", description = "Сканирует архив (ZIP/7Z/TAR) и проверяет соответствие файлов артикулам без распаковки на диск.")
+    @Operation(summary = "Validate archive", description = "Scans archive (ZIP/7Z/TAR) and validates file names against SKUs without extracting to disk.")
     public Map<String, Object> validateArchive(@RequestParam("archive") MultipartFile archive) throws IOException {
         return photoImportService.validateArchive(archive);
     }
 
     /**
-     * Импорт фотографий из архива — извлечение, конвертация в WebP и сохранение.
+     * Import photosграфий из архива — извлечение, конвертация в WebP и сохранение.
      * <p>
      * Поддерживаемые форматы: ZIP, 7Z, TAR, TAR.GZ, TGZ.
      * Каждое изображение конвертируется в WebP и привязывается к продукту по номеру инструмента (toolNo).
@@ -101,14 +101,14 @@ public class PhotoSyncController {
      * @throws IOException при ошибке распаковки, конвертации или записи файлов
      */
     @PostMapping("/archive/import")
-    @Operation(summary = "Импорт из архива", description = "Извлекает, конвертирует в WebP и импортирует все фото из архива.")
+    @Operation(summary = "Import from archive", description = "Extracts, converts to WebP and imports all photos from archive.")
     public Map<String, Object> importArchive(@RequestParam("archive") MultipartFile archive) throws IOException {
         return photoImportService.importArchive(archive);
     }
 
     @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @DeleteMapping("/all")
-    @Operation(summary = "Удалить все медиафайлы товаров", description = "Удаляет все записи MediaFile из БД и все директории товаров с диска. Директория catalog/ (изображения каталога) сохраняется. Требует MODIFY_PRODUCTS.")
+    @Operation(summary = "Delete all product media files", description = "Deletes all MediaFile records from DB and all product directories from disk. The catalog/ directory (catalog node images) is preserved. Requires MODIFY_PRODUCTS.")
     public Map<String, Object> deleteAllProductMedia() throws IOException {
         return photoImportService.deleteAllProductMedia();
     }

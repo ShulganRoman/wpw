@@ -44,7 +44,7 @@ class CatalogControllerTest {
     @MockitoBean private ApiKeyAuthProvider apiKeyAuthProvider;
 
     @Test
-    @DisplayName("GET /api/v1/categories -- возвращает дерево каталога")
+    @DisplayName("GET /api/v1/categories -- returns catalog tree")
     void getTree_returnsTreeStructure() throws Exception {
         ProductGroupDto group = new ProductGroupDto(UUID.randomUUID(), "straight", "GRP-001", "Straight Bits", 0, null, 0L);
         CategoryDto category = new CategoryDto(UUID.randomUUID(), "router-bits", "Router Bits", 0, null, List.of(group));
@@ -61,7 +61,7 @@ class CatalogControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/categories?locale=ru -- передаёт locale в сервис")
+    @DisplayName("GET /api/v1/categories?locale=ru -- passes locale to service")
     void getTree_withLocale_passesLocale() throws Exception {
         when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean(), any())).thenReturn(List.of());
 
@@ -71,7 +71,7 @@ class CatalogControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/categories -- пустой каталог возвращает пустой массив")
+    @DisplayName("GET /api/v1/categories -- empty catalog returns empty array")
     void getTree_empty_returnsEmptyArray() throws Exception {
         when(catalogService.getSectionTree(anyString(), anyBoolean(), anyBoolean(), any())).thenReturn(List.of());
 

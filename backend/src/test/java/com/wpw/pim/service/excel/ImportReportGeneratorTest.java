@@ -25,34 +25,34 @@ class ImportReportGeneratorTest {
     }
 
     @Test
-    @DisplayName("generate — включает заголовок и дату")
+    @DisplayName("generate — includes header and date")
     void generate_containsHeaderAndDate() {
         ImportStats stats = buildStats(Duration.ofMillis(500), 10, 5, 3, 2);
         String md = generator.generate(stats);
 
         assertThat(md).contains("# WPW PIM — Import Report");
-        assertThat(md).contains("**Дата импорта:**");
+        assertThat(md).contains("**Import date:**");
     }
 
     @Test
-    @DisplayName("generate — включает Summary таблицу с количествами")
+    @DisplayName("generate — includes Summary table with counts")
     void generate_containsSummaryTable() {
         ImportStats stats = buildStats(Duration.ofMillis(500), 100, 80, 15, 5);
         String md = generator.generate(stats);
 
         assertThat(md).contains("## Summary");
-        assertThat(md).contains("Всего строк товаров в файле");
+        assertThat(md).contains("Total product rows in file");
         assertThat(md).contains("**100**");
-        assertThat(md).contains("Товаров создано");
+        assertThat(md).contains("Products created");
         assertThat(md).contains("**80**");
-        assertThat(md).contains("Товаров обновлено");
+        assertThat(md).contains("Products updated");
         assertThat(md).contains("**15**");
-        assertThat(md).contains("Строк пропущено");
+        assertThat(md).contains("Rows skipped");
         assertThat(md).contains("**5**");
     }
 
     @Test
-    @DisplayName("generate — включает структуру каталога")
+    @DisplayName("generate — includes catalog structure")
     void generate_containsCatalogStructure() {
         ImportStats stats = ImportStats.builder()
             .importedAt("2024-01-01 12:00:00")
@@ -65,14 +65,14 @@ class ImportReportGeneratorTest {
 
         String md = generator.generate(stats);
 
-        assertThat(md).contains("## Структура каталога");
-        assertThat(md).contains("Разделы (Sections)");
-        assertThat(md).contains("Категории (Categories)");
-        assertThat(md).contains("Группы (Product Groups)");
+        assertThat(md).contains("## Catalog Structure");
+        assertThat(md).contains("Sections");
+        assertThat(md).contains("Categories");
+        assertThat(md).contains("Product Groups");
     }
 
     @Test
-    @DisplayName("generate — отображает ошибки выполнения если есть")
+    @DisplayName("generate — displays execution errors if present")
     void generate_includesExecutionErrors() {
         ImportStats stats = ImportStats.builder()
             .importedAt("2024-01-01 12:00:00")
@@ -80,19 +80,19 @@ class ImportReportGeneratorTest {
             .totalProductRows(5).productsCreated(3).productsUpdated(0).productsSkipped(2)
             .sectionsCreated(0).categoriesCreated(0).categoriesFound(0)
             .groupsCreated(0).groupsFound(0)
-            .executionErrors(List.of("Товар DR001: группа не найдена", "Товар DR002: ошибка парсинга"))
+            .executionErrors(List.of("Product DR001: group not found", "Product DR002: parsing error"))
             .executionWarnings(List.of())
             .build();
 
         String md = generator.generate(stats);
 
-        assertThat(md).contains("## Ошибки выполнения");
-        assertThat(md).contains("Товар DR001: группа не найдена");
-        assertThat(md).contains("Товар DR002: ошибка парсинга");
+        assertThat(md).contains("## Execution Errors");
+        assertThat(md).contains("Product DR001: group not found");
+        assertThat(md).contains("Product DR002: parsing error");
     }
 
     @Test
-    @DisplayName("generate — отображает предупреждения если есть")
+    @DisplayName("generate — displays warnings if present")
     void generate_includesWarnings() {
         ImportStats stats = ImportStats.builder()
             .importedAt("2024-01-01 12:00:00")
@@ -101,27 +101,27 @@ class ImportReportGeneratorTest {
             .sectionsCreated(0).categoriesCreated(0).categoriesFound(0)
             .groupsCreated(0).groupsFound(0)
             .executionErrors(List.of())
-            .executionWarnings(List.of("Поле D пустое для DR003"))
+            .executionWarnings(List.of("Field D empty for DR003"))
             .build();
 
         String md = generator.generate(stats);
 
-        assertThat(md).contains("## Предупреждения");
-        assertThat(md).contains("Поле D пустое для DR003");
+        assertThat(md).contains("## Warnings");
+        assertThat(md).contains("Field D empty for DR003");
     }
 
     @Test
-    @DisplayName("generate — без ошибок/предупреждений — нет секций ошибок")
+    @DisplayName("generate — no errors/warnings — no error sections")
     void generate_noErrorsOrWarnings_noErrorSections() {
         ImportStats stats = buildStats(Duration.ofMillis(100), 10, 10, 0, 0);
         String md = generator.generate(stats);
 
-        assertThat(md).doesNotContain("## Ошибки выполнения");
-        assertThat(md).doesNotContain("## Предупреждения");
+        assertThat(md).doesNotContain("## Execution Errors");
+        assertThat(md).doesNotContain("## Warnings");
     }
 
     @Test
-    @DisplayName("generate — длительность < 1s отображается в ms")
+    @DisplayName("generate — duration < 1s displayed in ms")
     void generate_shortDuration_displayedInMs() {
         ImportStats stats = buildStats(Duration.ofMillis(450), 10, 10, 0, 0);
         String md = generator.generate(stats);
@@ -130,7 +130,7 @@ class ImportReportGeneratorTest {
     }
 
     @Test
-    @DisplayName("generate — длительность >= 1s отображается в секундах")
+    @DisplayName("generate — duration >= 1s displayed in seconds")
     void generate_longDuration_displayedInSeconds() {
         ImportStats stats = buildStats(Duration.ofMillis(2500), 10, 10, 0, 0);
         String md = generator.generate(stats);
@@ -139,7 +139,7 @@ class ImportReportGeneratorTest {
     }
 
     @Test
-    @DisplayName("generate — null duration отображается как n/a")
+    @DisplayName("generate — null duration displayed as n/a")
     void generate_nullDuration_displayedAsNA() {
         ImportStats stats = ImportStats.builder()
             .importedAt("2024-01-01 12:00:00")

@@ -42,7 +42,7 @@ class AuthControllerTest {
     @MockitoBean private ApiKeyAuthProvider apiKeyAuthProvider;
 
     @Test
-    @DisplayName("POST /api/v1/auth/login -- успешная аутентификация возвращает 200 с токеном")
+    @DisplayName("POST /api/v1/auth/login -- successful authentication returns 200 with token")
     void login_validCredentials_returns200WithToken() throws Exception {
         LoginResponse response = new LoginResponse("jwt-token", "admin", "ADMIN",
                 Set.of("MODIFY_PRODUCTS", "BULK_IMPORT"));
@@ -60,7 +60,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/auth/login -- невалидные credentials возвращают 401")
+    @DisplayName("POST /api/v1/auth/login -- invalid credentials return 401")
     void login_invalidCredentials_returns401() throws Exception {
         when(authService.login(any(LoginRequest.class)))
                 .thenThrow(new IllegalArgumentException("Invalid username or password"));
@@ -73,7 +73,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/auth/login -- пустой username возвращает 400")
+    @DisplayName("POST /api/v1/auth/login -- empty username returns 400")
     void login_blankUsername_returns400() throws Exception {
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -82,7 +82,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/auth/login -- пустой password возвращает 400")
+    @DisplayName("POST /api/v1/auth/login -- empty password returns 400")
     void login_blankPassword_returns400() throws Exception {
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -91,7 +91,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/auth/logout -- возвращает 200 с сообщением")
+    @DisplayName("POST /api/v1/auth/logout -- returns 200 with message")
     void logout_returns200() throws Exception {
         mockMvc.perform(post("/api/v1/auth/logout"))
                 .andExpect(status().isOk())

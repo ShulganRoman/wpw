@@ -69,7 +69,7 @@ class SystemSettingsServiceTest {
     class Get {
 
         @Test
-        @DisplayName("get -- загружает singleton-строку и маппит её в DTO")
+        @DisplayName("get -- loads singleton row and maps it to DTO")
         void get_loadsSingletonAndMapsToDto() {
             when(repository.findById(1L)).thenReturn(Optional.of(settings(true, false, true)));
 
@@ -81,7 +81,7 @@ class SystemSettingsServiceTest {
         }
 
         @Test
-        @DisplayName("get -- если строки нет, создаёт дефолтную со всеми false")
+        @DisplayName("get -- if no row exists, creates default with all false")
         void get_whenMissing_createsDefaultAllFalse() {
             when(repository.findById(1L)).thenReturn(Optional.empty());
             when(repository.save(any(SystemSettings.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -100,7 +100,7 @@ class SystemSettingsServiceTest {
     class Update {
 
         @Test
-        @DisplayName("update -- сохраняет все три флага")
+        @DisplayName("update -- saves all three flags")
         void update_savesAllThreeFields() {
             SystemSettings existing = settings(false, false, false);
             when(repository.findById(1L)).thenReturn(Optional.of(existing));
@@ -170,7 +170,7 @@ class SystemSettingsServiceTest {
     class ShouldRequireImages {
 
         @Test
-        @DisplayName("shouldRequireImages(null) -- возвращает publicFlag")
+        @DisplayName("shouldRequireImages(null) -- returns publicFlag")
         void shouldRequireImages_null_returnsPublic() {
             when(repository.findById(1L)).thenReturn(Optional.of(settings(false, false, true)));
 
@@ -178,7 +178,7 @@ class SystemSettingsServiceTest {
         }
 
         @Test
-        @DisplayName("shouldRequireImages(unauthenticated) -- возвращает publicFlag")
+        @DisplayName("shouldRequireImages(unauthenticated) -- returns publicFlag")
         void shouldRequireImages_unauthenticated_returnsPublic() {
             when(repository.findById(1L)).thenReturn(Optional.of(settings(false, false, true)));
             Authentication auth = authWithAuthorities(false);
@@ -187,7 +187,7 @@ class SystemSettingsServiceTest {
         }
 
         @Test
-        @DisplayName("shouldRequireImages(ROLE_DEALER) -- возвращает dealerFlag")
+        @DisplayName("shouldRequireImages(ROLE_DEALER) -- returns dealerFlag")
         void shouldRequireImages_dealer_returnsDealer() {
             when(repository.findById(1L)).thenReturn(Optional.of(settings(false, true, false)));
             Authentication auth = authWithAuthorities(true, "ROLE_DEALER");
@@ -196,7 +196,7 @@ class SystemSettingsServiceTest {
         }
 
         @Test
-        @DisplayName("shouldRequireImages(ROLE_USER) -- возвращает publicFlag")
+        @DisplayName("shouldRequireImages(ROLE_USER) -- returns publicFlag")
         void shouldRequireImages_userRole_returnsPublic() {
             when(repository.findById(1L)).thenReturn(Optional.of(settings(false, false, true)));
             Authentication auth = authWithAuthorities(true, "ROLE_USER");
@@ -205,7 +205,7 @@ class SystemSettingsServiceTest {
         }
 
         @Test
-        @DisplayName("shouldRequireImages(admin) -- возвращает adminFlag")
+        @DisplayName("shouldRequireImages(admin) -- returns adminFlag")
         void shouldRequireImages_admin_returnsAdmin() {
             when(repository.findById(1L)).thenReturn(Optional.of(settings(true, false, false)));
             Authentication auth = authWithAuthorities(true, "MANAGE_CATALOG");
