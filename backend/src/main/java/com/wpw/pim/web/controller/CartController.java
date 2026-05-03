@@ -9,6 +9,8 @@ import com.wpw.pim.web.dto.cart.AddToCartRequest;
 import com.wpw.pim.web.dto.cart.CartDto;
 import com.wpw.pim.web.dto.product.ProductFilter;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,10 @@ import java.util.UUID;
 @PreAuthorize("hasRole('DEALER')")
 @RequiredArgsConstructor
 @Tag(name = "Cart", description = "Dealer cart: add items, manage, place order")
+@ApiResponses({
+    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+    @ApiResponse(responseCode = "403", description = "DEALER role required")
+})
 public class CartController {
 
     private final CartService cartService;
@@ -34,12 +40,14 @@ public class CartController {
 
     @GetMapping
     @Operation(summary = "Get cart")
+    @ApiResponse(responseCode = "200", description = "Cart contents")
     public CartDto getCart(@AuthenticationPrincipal UserDetails principal) {
         return cartService.getCart(resolveDealerId(principal));
     }
 
     @PostMapping("/items")
     @Operation(summary = "Add items to cart")
+    @ApiResponse(responseCode = "200", description = "Updated cart")
     public CartDto addItems(
         @AuthenticationPrincipal UserDetails principal,
         @RequestBody AddToCartRequest request
@@ -49,6 +57,7 @@ public class CartController {
 
     @PostMapping("/items/by-filter")
     @Operation(summary = "Add all items matching current filter")
+    @ApiResponse(responseCode = "200", description = "Updated cart")
     public CartDto addByFilter(
         @AuthenticationPrincipal UserDetails principal,
         @ModelAttribute ProductFilter filter
@@ -59,6 +68,10 @@ public class CartController {
 
     @PatchMapping("/items/{productId}")
     @Operation(summary = "Update item quantity in cart")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Updated cart"),
+        @ApiResponse(responseCode = "404", description = "Product not in cart")
+    })
     public CartDto updateQty(
         @AuthenticationPrincipal UserDetails principal,
         @PathVariable UUID productId,
@@ -69,6 +82,7 @@ public class CartController {
 
     @DeleteMapping("/items/{productId}")
     @Operation(summary = "Remove item from cart")
+    @ApiResponse(responseCode = "200", description = "Updated cart")
     public CartDto removeItem(
         @AuthenticationPrincipal UserDetails principal,
         @PathVariable UUID productId
@@ -79,6 +93,7 @@ public class CartController {
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Clear cart")
+    @ApiResponse(responseCode = "204", description = "Cart cleared")
     public void clearCart(@AuthenticationPrincipal UserDetails principal) {
         cartService.clearCart(resolveDealerId(principal));
     }

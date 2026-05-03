@@ -5,6 +5,8 @@ import com.wpw.pim.repository.notification.NotificationEmailRepository;
 import com.wpw.pim.web.dto.notification.NotificationEmailDto;
 import com.wpw.pim.web.dto.notification.NotificationEmailSaveRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +23,17 @@ import java.util.UUID;
 @PreAuthorize("hasAuthority('MANAGE_DEALERS')")
 @RequiredArgsConstructor
 @Tag(name = "Admin: Notification Emails", description = "Email addresses for order notifications")
+@ApiResponses({
+    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+    @ApiResponse(responseCode = "403", description = "MANAGE_DEALERS required")
+})
 public class NotificationEmailController {
 
     private final NotificationEmailRepository repository;
 
     @GetMapping
     @Operation(summary = "List addresses")
+    @ApiResponse(responseCode = "200", description = "List of email addresses")
     public List<NotificationEmailDto> list() {
         return repository.findAll().stream().map(this::toDto).toList();
     }
@@ -34,6 +41,10 @@ public class NotificationEmailController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Add address")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Email address added"),
+        @ApiResponse(responseCode = "400", description = "Invalid email")
+    })
     public NotificationEmailDto create(@Valid @RequestBody NotificationEmailSaveRequest req) {
         NotificationEmail entity = new NotificationEmail();
         entity.setEmail(req.email());
@@ -43,6 +54,10 @@ public class NotificationEmailController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update address")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Email address updated"),
+        @ApiResponse(responseCode = "404", description = "Email not found")
+    })
     public NotificationEmailDto update(@PathVariable UUID id, @Valid @RequestBody NotificationEmailSaveRequest req) {
         NotificationEmail entity = repository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Email not found"));
@@ -54,6 +69,7 @@ public class NotificationEmailController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete address")
+    @ApiResponse(responseCode = "204", description = "Email address deleted")
     public void delete(@PathVariable UUID id) {
         repository.deleteById(id);
     }

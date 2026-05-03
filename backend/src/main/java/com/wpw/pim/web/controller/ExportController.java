@@ -6,6 +6,8 @@ import com.wpw.pim.web.dto.product.ProductSummaryDto;
 import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.service.product.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -28,6 +30,7 @@ public class ExportController {
 
     @GetMapping("/preview")
     @Operation(summary = "Export preview", description = "Preview products with applied filters before export.")
+    @ApiResponse(responseCode = "200", description = "Preview of export data")
     public PagedResponse<ProductSummaryDto> preview(
         @RequestParam(defaultValue = "en") String locale,
         @RequestParam(required = false) UUID sectionId,
@@ -56,6 +59,10 @@ public class ExportController {
 
     @GetMapping
     @Operation(summary = "Download export", description = "Catalog export. format parameter: csv (default), xlsx, xml.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Exported file (csv/xlsx/xml)"),
+        @ApiResponse(responseCode = "400", description = "Unsupported format")
+    })
     public ResponseEntity<byte[]> export(
         @RequestParam(defaultValue = "csv") String format,
         @RequestParam(defaultValue = "en") String locale,

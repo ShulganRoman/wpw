@@ -2,6 +2,8 @@ package com.wpw.pim.web.controller;
 
 import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.repository.product.ProductSitemapProjection;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Sitemap", description = "XML sitemap for search engine indexing")
 public class SitemapController {
 
     private final ProductRepository productRepository;
@@ -20,6 +23,7 @@ public class SitemapController {
     private String baseUrl;
 
     @GetMapping(value = "/sitemap.xml", produces = "application/xml;charset=UTF-8")
+    @Operation(summary = "XML Sitemap", description = "Returns sitemap.xml for all published products. No authentication required.")
     public String sitemap() {
         List<ProductSitemapProjection> products = productRepository.findAllForSitemap();
 

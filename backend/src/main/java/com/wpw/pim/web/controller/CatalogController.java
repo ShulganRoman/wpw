@@ -4,6 +4,7 @@ import com.wpw.pim.service.catalog.CatalogService;
 import com.wpw.pim.service.settings.SystemSettingsService;
 import com.wpw.pim.web.dto.catalog.SectionDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -27,6 +28,7 @@ public class CatalogController {
 
     @GetMapping
     @Operation(summary = "Get catalog tree", description = "Admin sees all nodes including empty. Dealers and users see only nodes with available products.")
+    @ApiResponse(responseCode = "200", description = "Catalog tree returned")
     public List<SectionDto> getTree(@RequestParam(defaultValue = "en") String locale) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = systemSettings.isAdminRole(auth);

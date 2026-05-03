@@ -5,6 +5,8 @@ import com.wpw.pim.auth.dto.LoginRequest;
 import com.wpw.pim.auth.dto.LoginResponse;
 import com.wpw.pim.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,10 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Authenticate user and receive JWT token")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Authenticated, returns JWT"),
+        @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
             LoginResponse response = authService.login(request);
@@ -37,6 +43,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     @Operation(summary = "Logout (client should discard the token)")
+    @ApiResponse(responseCode = "200", description = "Logged out")
     public ResponseEntity<?> logout() {
         // Stateless JWT: server-side invalidation is not implemented.
         // The client must discard the token.

@@ -8,6 +8,8 @@ import com.wpw.pim.web.dto.common.PagedResponse;
 import com.wpw.pim.web.dto.media.MediaImageDto;
 import com.wpw.pim.web.dto.product.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,10 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
 @Tag(name = "Products", description = "Product catalog: filtering, product details, image management")
+@ApiResponses({
+    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+    @ApiResponse(responseCode = "403", description = "Insufficient permissions")
+})
 public class ProductController {
 
     private final ProductService productService;
@@ -36,12 +42,14 @@ public class ProductController {
 
     @GetMapping("/filter-options")
     @Operation(summary = "Filter options", description = "Returns all available values for filters (materials, machine types, etc.).")
+    @ApiResponse(responseCode = "200", description = "Available filter values")
     public Map<String, List<String>> getFilterOptions() {
         return productService.getFilterOptions();
     }
 
     @GetMapping
     @Operation(summary = "Product list with filters", description = "Filtering by catalog, attributes, price (for authenticated users). Supports pagination.")
+    @ApiResponse(responseCode = "200", description = "Paginated product list")
     public PagedResponse<ProductSummaryDto> list(
         @RequestParam(defaultValue = "en") String locale,
         @RequestParam(required = false) UUID sectionId,
@@ -92,6 +100,10 @@ public class ProductController {
 
     @GetMapping("/{toolNo}")
     @Operation(summary = "Product details", description = "Detailed product information by SKU. Dealer sees their own SKU and price.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Product details"),
+        @ApiResponse(responseCode = "404", description = "Product not found")
+    })
     public ProductDetailDto getByToolNo(
         @PathVariable String toolNo,
         @RequestParam(defaultValue = "en") String locale,
@@ -115,6 +127,10 @@ public class ProductController {
 
     @GetMapping("/{id}/spare-parts")
     @Operation(summary = "Spare parts", description = "List of spare parts for the specified product.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List returned"),
+        @ApiResponse(responseCode = "404", description = "Product not found")
+    })
     public List<SparePartDto> getSpareParts(
         @PathVariable UUID id,
         @RequestParam(defaultValue = "en") String locale
@@ -124,6 +140,10 @@ public class ProductController {
 
     @GetMapping("/{id}/compatible-tools")
     @Operation(summary = "Compatible tools", description = "List of tools compatible with the specified product.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List returned"),
+        @ApiResponse(responseCode = "404", description = "Product not found")
+    })
     public List<SparePartDto> getCompatibleTools(
         @PathVariable UUID id,
         @RequestParam(defaultValue = "en") String locale
@@ -139,6 +159,11 @@ public class ProductController {
      */
     @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @PostMapping
+    @Operation(summary = "Create product", description = "Creates a new product. Requires MODIFY_PRODUCTS.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Product created"),
+        @ApiResponse(responseCode = "400", description = "Invalid data")
+    })
     public ResponseEntity<ProductDetailDto> create(@RequestBody ProductCreateDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(dto));
     }
@@ -153,6 +178,12 @@ public class ProductController {
      */
     @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @PutMapping("/{id}")
+    @Operation(summary = "Update product", description = "Updates product by ID and locale. Requires MODIFY_PRODUCTS.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Product updated"),
+        @ApiResponse(responseCode = "400", description = "Invalid data"),
+        @ApiResponse(responseCode = "404", description = "Product not found")
+    })
     public ProductDetailDto update(
         @PathVariable UUID id,
         @RequestParam(defaultValue = "en") String locale,
@@ -169,6 +200,11 @@ public class ProductController {
      */
     @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete product", description = "Deletes product and all associated images from disk. Requires MODIFY_PRODUCTS.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Product deleted"),
+        @ApiResponse(responseCode = "404", description = "Product not found")
+    })
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
@@ -184,6 +220,7 @@ public class ProductController {
      */
     @GetMapping("/{id}/images")
     @Operation(summary = "Product images", description = "List of all product media files sorted by sort_order.")
+    @ApiResponse(responseCode = "200", description = "List of media files")
     public List<MediaImageDto> getImages(@PathVariable UUID id) {
         return productMediaService.getImages(id);
     }
@@ -198,6 +235,10 @@ public class ProductController {
     @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @PostMapping("/{id}/images")
     @Operation(summary = "Add images", description = "Uploads and converts images to WebP. Requires MODIFY_PRODUCTS.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Images uploaded and converted to WebP"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format")
+    })
     public List<MediaImageDto> addImages(
         @PathVariable UUID id,
         @RequestParam("files") MultipartFile[] files
@@ -215,6 +256,10 @@ public class ProductController {
     @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @DeleteMapping("/{id}/images/{imageId}")
     @Operation(summary = "Delete product image", description = "Deletes media file from disk and DB. Requires MODIFY_PRODUCTS.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Image deleted, returns updated list"),
+        @ApiResponse(responseCode = "404", description = "Product or image not found")
+    })
     public List<MediaImageDto> deleteImage(
         @PathVariable UUID id,
         @PathVariable UUID imageId

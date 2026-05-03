@@ -9,6 +9,8 @@ import com.wpw.pim.web.dto.dealer.PriceListDto;
 import com.wpw.pim.web.dto.dealer.SkuMappingCreateRequest;
 import com.wpw.pim.web.dto.dealer.SkuMappingDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,10 @@ import java.util.List;
 @PreAuthorize("hasRole('DEALER')")
 @RequiredArgsConstructor
 @Tag(name = "Dealer", description = "Dealer personal area: price list, SKU mapping, import. Requires DEALER role.")
+@ApiResponses({
+    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+    @ApiResponse(responseCode = "403", description = "DEALER role required")
+})
 public class DealerController {
 
     private final DealerService dealerService;
@@ -40,6 +46,7 @@ public class DealerController {
 
     @GetMapping("/price-list")
     @Operation(summary = "My price list", description = "Returns the personal price list of the current dealer.")
+    @ApiResponse(responseCode = "200", description = "Personal price list")
     public PriceListDto getPriceList(@AuthenticationPrincipal UserDetails principal) {
         return dealerService.getPriceList(resolveDealer(principal));
     }
@@ -48,12 +55,17 @@ public class DealerController {
 
     @GetMapping("/sku-mapping")
     @Operation(summary = "My SKU mapping")
+    @ApiResponse(responseCode = "200", description = "List of SKU mappings")
     public List<SkuMappingDto> getSkuMapping(@AuthenticationPrincipal UserDetails principal) {
         return dealerService.getSkuMapping(resolveDealer(principal).getId());
     }
 
     @PutMapping("/sku-mapping")
     @Operation(summary = "Create or update SKU mapping")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Mapping saved"),
+        @ApiResponse(responseCode = "400", description = "Invalid data")
+    })
     public SkuMappingDto upsertSkuMapping(
         @AuthenticationPrincipal UserDetails principal,
         @Valid @RequestBody SkuMappingCreateRequest request
@@ -65,6 +77,10 @@ public class DealerController {
     @DeleteMapping("/sku-mapping/{wpwSku}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete SKU mapping")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Mapping deleted"),
+        @ApiResponse(responseCode = "404", description = "Mapping not found")
+    })
     public void deleteSkuMapping(
         @AuthenticationPrincipal UserDetails principal,
         @PathVariable String wpwSku
@@ -76,6 +92,10 @@ public class DealerController {
 
     @PostMapping(value = "/sku-mapping/validate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Validate SKU mapping file")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Validation report"),
+        @ApiResponse(responseCode = "400", description = "Invalid file")
+    })
     public SkuMappingService.ValidationReport validate(
         @AuthenticationPrincipal UserDetails principal,
         @RequestParam("file") MultipartFile file
@@ -86,6 +106,7 @@ public class DealerController {
 
     @PostMapping(value = "/sku-mapping/execute", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Import SKU mapping from Excel")
+    @ApiResponse(responseCode = "200", description = "Import result")
     public SkuMappingService.SkuMappingImportResult execute(
         @AuthenticationPrincipal UserDetails principal,
         @RequestParam("file") MultipartFile file,
@@ -96,6 +117,7 @@ public class DealerController {
 
     @GetMapping("/sku-mapping/export")
     @Operation(summary = "Export my SKU mapping to Excel")
+    @ApiResponse(responseCode = "200", description = "Excel file")
     public ResponseEntity<byte[]> export(@AuthenticationPrincipal UserDetails principal) throws IOException {
         byte[] bytes = skuMappingService.export(resolveDealer(principal).getId());
         return ResponseEntity.ok()
@@ -106,6 +128,7 @@ public class DealerController {
 
     @GetMapping("/sku-mapping/template")
     @Operation(summary = "Download SKU mapping template")
+    @ApiResponse(responseCode = "200", description = "Excel file")
     public ResponseEntity<byte[]> template() throws IOException {
         byte[] bytes = skuMappingService.template();
         return ResponseEntity.ok()

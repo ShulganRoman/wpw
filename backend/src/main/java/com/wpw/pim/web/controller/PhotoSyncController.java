@@ -2,6 +2,8 @@ package com.wpw.pim.web.controller;
 
 import com.wpw.pim.service.media.PhotoImportService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,6 +28,10 @@ import java.util.Map;
 @RequestMapping("/api/v1/admin/photos")
 @RequiredArgsConstructor
 @Tag(name = "Admin: Photos", description = "Product photo import and management (WebP conversion, ZIP/7Z/TAR archives)")
+@ApiResponses({
+    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+    @ApiResponse(responseCode = "403", description = "Admin access required")
+})
 public class PhotoSyncController {
 
     private final PhotoImportService photoImportService;
@@ -40,6 +46,7 @@ public class PhotoSyncController {
      */
     @PostMapping("/validate")
     @Operation(summary = "Validate photos", description = "Validates file names against SKUs without importing.")
+    @ApiResponse(responseCode = "200", description = "Validation report")
     public Map<String, Object> validatePhotos(@RequestParam("files") MultipartFile[] files) {
         return photoImportService.validatePhotos(files);
     }
@@ -53,6 +60,10 @@ public class PhotoSyncController {
      */
     @PostMapping("/import")
     @Operation(summary = "Import photos", description = "Converts files to WebP and saves. File without suffix (_N) becomes the main image (sort_order=0).")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Import report"),
+        @ApiResponse(responseCode = "400", description = "Invalid files")
+    })
     public Map<String, Object> importPhotos(@RequestParam("files") MultipartFile[] files) throws IOException {
         return photoImportService.importPhotos(files);
     }
@@ -65,6 +76,7 @@ public class PhotoSyncController {
      */
     @PostMapping("/sync")
     @Operation(summary = "Sync photos from disk", description = "Creates MediaFile records for WebP files already on disk (no import).")
+    @ApiResponse(responseCode = "200", description = "Sync report")
     public Map<String, Object> syncExistingPhotos() throws IOException {
         return photoImportService.syncExistingPhotos();
     }
@@ -85,6 +97,7 @@ public class PhotoSyncController {
      */
     @PostMapping("/archive/validate")
     @Operation(summary = "Validate archive", description = "Scans archive (ZIP/7Z/TAR) and validates file names against SKUs without extracting to disk.")
+    @ApiResponse(responseCode = "200", description = "Archive validation report")
     public Map<String, Object> validateArchive(@RequestParam("archive") MultipartFile archive) throws IOException {
         return photoImportService.validateArchive(archive);
     }
@@ -102,6 +115,10 @@ public class PhotoSyncController {
      */
     @PostMapping("/archive/import")
     @Operation(summary = "Import from archive", description = "Extracts, converts to WebP and imports all photos from archive.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Import report"),
+        @ApiResponse(responseCode = "400", description = "Unsupported archive format")
+    })
     public Map<String, Object> importArchive(@RequestParam("archive") MultipartFile archive) throws IOException {
         return photoImportService.importArchive(archive);
     }
@@ -109,6 +126,10 @@ public class PhotoSyncController {
     @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
     @DeleteMapping("/all")
     @Operation(summary = "Delete all product media files", description = "Deletes all MediaFile records from DB and all product directories from disk. The catalog/ directory (catalog node images) is preserved. Requires MODIFY_PRODUCTS.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Deletion report"),
+        @ApiResponse(responseCode = "403", description = "MODIFY_PRODUCTS required")
+    })
     public Map<String, Object> deleteAllProductMedia() throws IOException {
         return photoImportService.deleteAllProductMedia();
     }

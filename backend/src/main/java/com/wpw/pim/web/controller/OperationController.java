@@ -6,6 +6,8 @@ import com.wpw.pim.web.dto.operation.ApplicationTagUpsertDto;
 import com.wpw.pim.web.dto.operation.OperationDto;
 import com.wpw.pim.web.dto.product.ProductSummaryDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,7 @@ public class OperationController {
 
     @GetMapping
     @Operation(summary = "List operations", description = "All active machining operations.")
+    @ApiResponse(responseCode = "200", description = "List of operations")
     public List<OperationDto> list() {
         return operationService.findAll().stream()
             .map(OperationDto::from)
@@ -33,6 +36,10 @@ public class OperationController {
 
     @GetMapping("/{code}/products")
     @Operation(summary = "Products by operation", description = "List of products linked to a machining operation.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Paginated products"),
+        @ApiResponse(responseCode = "404", description = "Operation not found")
+    })
     public PagedResponse<ProductSummaryDto> productsByOperation(
         @PathVariable String code,
         @RequestParam(defaultValue = "en") String locale,
@@ -47,6 +54,10 @@ public class OperationController {
     @PreAuthorize("hasAuthority('MANAGE_CATALOG')")
     @PostMapping
     @Operation(summary = "Create operation", description = "Requires MANAGE_CATALOG.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Operation created"),
+        @ApiResponse(responseCode = "403", description = "MANAGE_CATALOG required")
+    })
     public ResponseEntity<OperationDto> create(@RequestBody ApplicationTagUpsertDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(operationService.create(dto));
     }
@@ -54,6 +65,11 @@ public class OperationController {
     @PreAuthorize("hasAuthority('MANAGE_CATALOG')")
     @PutMapping("/{code}")
     @Operation(summary = "Update operation", description = "Requires MANAGE_CATALOG.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Operation updated"),
+        @ApiResponse(responseCode = "403", description = "MANAGE_CATALOG required"),
+        @ApiResponse(responseCode = "404", description = "Operation not found")
+    })
     public OperationDto update(@PathVariable String code, @RequestBody ApplicationTagUpsertDto dto) {
         return operationService.update(code, dto);
     }
@@ -61,6 +77,10 @@ public class OperationController {
     @PreAuthorize("hasAuthority('MANAGE_CATALOG')")
     @DeleteMapping("/{code}")
     @Operation(summary = "Delete operation", description = "Requires MANAGE_CATALOG.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Operation deleted"),
+        @ApiResponse(responseCode = "403", description = "MANAGE_CATALOG required")
+    })
     public ResponseEntity<Void> delete(@PathVariable String code) {
         operationService.delete(code);
         return ResponseEntity.noContent().build();
