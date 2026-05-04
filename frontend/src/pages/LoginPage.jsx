@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/api';
 import { useToast } from '../components/ToastContext';
+import { useLocale } from '../contexts/LocaleContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { t } = useLocale();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +23,7 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      setError('Please enter username and password.');
+      setError(t('login_error_empty'));
       return;
     }
 
@@ -36,17 +38,17 @@ export default function LoginPage() {
       const privileges = data.privileges || data.userPrivileges || [];
 
       if (!token) {
-        throw new Error('No token received from server.');
+        throw new Error(t('login_error_no_token'));
       }
 
       localStorage.setItem('authToken', token);
       localStorage.setItem('userRole', role);
       localStorage.setItem('userPrivileges', JSON.stringify(privileges));
 
-      toast('Welcome back!', 'success');
+      toast(t('login_welcome'), 'success');
       navigate('/catalog', { replace: true });
     } catch (err) {
-      const msg = err.message || 'Login failed. Please check your credentials.';
+      const msg = err.message || t('login_error_default');
       setError(msg);
       toast(msg, 'error');
     } finally {
@@ -61,8 +63,8 @@ export default function LoginPage() {
           <img src="/wpw-logo.png" alt="WPW" className="login-logo-img" />
         </div>
 
-        <h1 className="login-title">Sign in</h1>
-        <p className="login-subtitle">Access the WPW Product Information Manager</p>
+        <h1 className="login-title">{t('login_title')}</h1>
+        <p className="login-subtitle">{t('login_subtitle')}</p>
 
         <form className="login-form" onSubmit={handleSubmit} noValidate>
           {error && (
@@ -76,14 +78,14 @@ export default function LoginPage() {
           )}
 
           <div className="form-group">
-            <label className="form-label" htmlFor="login-username">Username</label>
+            <label className="form-label" htmlFor="login-username">{t('login_username')}</label>
             <input
               id="login-username"
               className="form-control"
               type="text"
               autoComplete="username"
               autoFocus
-              placeholder="Enter your username"
+              placeholder={t('login_username_placeholder')}
               value={username}
               onChange={e => { setUsername(e.target.value); setError(''); }}
               disabled={loading}
@@ -91,13 +93,13 @@ export default function LoginPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="login-password">Password</label>
+            <label className="form-label" htmlFor="login-password">{t('login_password')}</label>
             <input
               id="login-password"
               className="form-control"
               type="password"
               autoComplete="current-password"
-              placeholder="Enter your password"
+              placeholder={t('login_password_placeholder')}
               value={password}
               onChange={e => { setPassword(e.target.value); setError(''); }}
               disabled={loading}
@@ -112,10 +114,10 @@ export default function LoginPage() {
             {loading ? (
               <>
                 <span className="login-spinner" aria-hidden="true" />
-                Signing in…
+                {t('login_submitting')}
               </>
             ) : (
-              'Sign in'
+              t('login_submit')
             )}
           </button>
         </form>

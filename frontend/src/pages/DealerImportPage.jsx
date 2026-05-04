@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../components/ToastContext';
 import { useImportSession } from '../contexts/SessionContext';
+import { useLocale } from '../contexts/LocaleContext';
 
 const BASE = '/api/v1';
 
@@ -60,11 +61,12 @@ const tdS = { padding: '9px 12px', fontSize: 13 };
 // ── Import panel (validate → report → execute) ────────────────────────────────
 function ImportPanel({ file, setFile, report, setReport, onImported }) {
   const toast = useToast();
+  const { t } = useLocale();
   const fileRef = useRef();
   const [loading, setLoading] = useState(false);
 
   async function handleValidate() {
-    if (!file) { toast('Select a file', 'warning'); return; }
+    if (!file) { toast(t('select_file_warning'), 'warning'); return; }
     setLoading(true);
     try {
       const r = await apiUpload('/dealer/sku-mapping/validate', file);
@@ -77,7 +79,7 @@ function ImportPanel({ file, setFile, report, setReport, onImported }) {
     setLoading(true);
     try {
       const result = await apiUpload('/dealer/sku-mapping/execute', file, { skipGhosts });
-      toast(`Импортировано: ${result.imported} (создано ${result.created}, обновлено ${result.updated})`, 'success');
+      toast(`Imported: ${result.imported} (created ${result.created}, updated ${result.updated})`, 'success');
       setReport(null); setFile(null);
       if (fileRef.current) fileRef.current.value = '';
       onImported?.();
@@ -93,11 +95,11 @@ function ImportPanel({ file, setFile, report, setReport, onImported }) {
           style={{ fontSize: 13 }} />
         {file && <span style={{ fontSize: 12, color: 'var(--wpw-text-secondary)' }}>{file.name}</span>}
         <button className="btn btn-primary" onClick={handleValidate} disabled={loading || !file}>
-          {loading ? 'Processing…' : 'Validate File'}
+          {loading ? t('processing') : t('validate_file')}
         </button>
         <button className="btn btn-secondary" onClick={() => downloadFile('/dealer/sku-mapping/template', 'sku-mapping-template.xlsx')}
           style={{ fontSize: 12 }}>
-          ⬇ Template
+          {t('download_template_dealer')}
         </button>
       </div>
 
@@ -105,17 +107,17 @@ function ImportPanel({ file, setFile, report, setReport, onImported }) {
         <div style={{ border: '1px solid var(--wpw-border)', borderRadius: 8, overflow: 'hidden' }}>
           {/* summary */}
           <div style={{ padding: '12px 16px', background: '#f5f7fa', borderBottom: '1px solid var(--wpw-border)', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <Stat label="Total rows" value={report.total} />
-            <Stat label="Found in catalog" value={report.valid.length} color="#2e7d32" />
-            <Stat label="Ghost SKUs" value={report.ghosts.length} color={report.ghosts.length > 0 ? '#e65100' : '#2e7d32'} />
-            {report.errors.length > 0 && <Stat label="Format errors" value={report.errors.length} color="#c62828" />}
+            <Stat label={t('stat_total_rows')} value={report.total} />
+            <Stat label={t('stat_found_in_catalog')} value={report.valid.length} color="#2e7d32" />
+            <Stat label={t('stat_ghost_skus')} value={report.ghosts.length} color={report.ghosts.length > 0 ? '#e65100' : '#2e7d32'} />
+            {report.errors.length > 0 && <Stat label={t('stat_format_errors')} value={report.errors.length} color="#c62828" />}
           </div>
 
           {/* ghost list */}
           {report.ghosts.length > 0 && (
             <div style={{ padding: '10px 16px', background: '#fff8e1', borderBottom: '1px solid var(--wpw-border)' }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#e65100', marginBottom: 6 }}>
-                SKUs not found in WPW catalog:
+                {t('skus_not_found')}
               </div>
               <div style={{ fontSize: 12, fontFamily: 'monospace', color: '#6d4c00', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {report.ghosts.map(g => (
@@ -135,10 +137,10 @@ function ImportPanel({ file, setFile, report, setReport, onImported }) {
           {/* action buttons */}
           <div style={{ padding: '12px 16px', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button className="btn btn-primary" onClick={() => handleExecute(true)} disabled={loading || report.valid.length === 0}>
-              Import without ghosts ({report.valid.length})
+              {t('import_without_ghosts', { count: report.valid.length })}
             </button>
             <button className="btn btn-secondary" onClick={() => handleExecute(false)} disabled={loading}>
-              Import all ({report.total - report.errors.length})
+              {t('import_all', { count: report.total - report.errors.length })}
             </button>
           </div>
         </div>
@@ -159,6 +161,7 @@ function Stat({ label, value, color }) {
 // ── SKU Mapping table with inline editing ─────────────────────────────────────
 function SkuMappingTable({ rows, onUpsert, onDelete }) {
   const toast = useToast();
+  const { t } = useLocale();
   const [editKey, setEditKey] = useState(null); // wpwSku being edited
   const [editForm, setEditForm] = useState({});
   const [newRow, setNewRow] = useState({ wpwSku: '', dealerSku: '', dealerBrand: '' });
@@ -182,7 +185,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
 
   async function saveNew() {
     if (!newRow.wpwSku.trim() || !newRow.dealerSku.trim()) {
-      toast('WPW SKU and Dealer SKU are required', 'warning'); return;
+      toast(t('sku_required'), 'warning'); return;
     }
     setSaving(true);
     try {
@@ -198,7 +201,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
         {!adding && (
           <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={() => setAdding(true)}>
-            + Add Row
+            {t('add_row')}
           </button>
         )}
       </div>
@@ -206,7 +209,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #e8edf5' }}>
-              {['WPW SKU', 'Dealer SKU', 'Brand', ''].map(h => <th key={h} style={thS}>{h}</th>)}
+              {[t('col_wpw_sku'), t('col_dealer_sku'), t('col_brand'), ''].map(h => <th key={h} style={thS}>{h}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -216,8 +219,8 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
                 <td style={tdS}><input className="input" style={{ width: '100%' }} placeholder="MY-SKU" value={newRow.dealerSku} onChange={e => setNewRow(f => ({ ...f, dealerSku: e.target.value }))} /></td>
                 <td style={tdS}><input className="input" style={{ width: '100%' }} placeholder="Brand (optional)" value={newRow.dealerBrand} onChange={e => setNewRow(f => ({ ...f, dealerBrand: e.target.value }))} /></td>
                 <td style={{ ...tdS, whiteSpace: 'nowrap' }}>
-                  <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={saveNew} disabled={saving}>Save</button>
-                  <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', marginLeft: 6 }} onClick={() => setAdding(false)}>Cancel</button>
+                  <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={saveNew} disabled={saving}>{t('save')}</button>
+                  <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', marginLeft: 6 }} onClick={() => setAdding(false)}>{t('cancel')}</button>
                 </td>
               </tr>
             )}
@@ -229,8 +232,8 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
                     <td style={tdS}><input className="input" style={{ width: '100%' }} value={editForm.dealerSku} onChange={e => setEditForm(f => ({ ...f, dealerSku: e.target.value }))} autoFocus /></td>
                     <td style={tdS}><input className="input" style={{ width: '100%' }} value={editForm.dealerBrand} onChange={e => setEditForm(f => ({ ...f, dealerBrand: e.target.value }))} /></td>
                     <td style={{ ...tdS, whiteSpace: 'nowrap' }}>
-                      <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => saveEdit(row.wpwSku)} disabled={saving}>Save</button>
-                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', marginLeft: 6 }} onClick={() => setEditKey(null)}>Cancel</button>
+                      <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => saveEdit(row.wpwSku)} disabled={saving}>{t('save')}</button>
+                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', marginLeft: 6 }} onClick={() => setEditKey(null)}>{t('cancel')}</button>
                     </td>
                   </>
                 ) : (
@@ -240,14 +243,14 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
                     <td style={{ ...tdS, whiteSpace: 'nowrap' }}>
                       {confirmDelete === row.wpwSku ? (
                         <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <span style={{ fontSize: 12, color: '#c62828' }}>Delete?</span>
-                          <button className="btn btn-primary" style={{ fontSize: 12, padding: '3px 8px', background: '#c62828', borderColor: '#c62828' }} onClick={() => { onDelete(row.wpwSku); setConfirmDelete(null); }}>Yes</button>
-                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '3px 8px' }} onClick={() => setConfirmDelete(null)}>No</button>
+                          <span style={{ fontSize: 12, color: '#c62828' }}>{t('delete_confirm')}</span>
+                          <button className="btn btn-primary" style={{ fontSize: 12, padding: '3px 8px', background: '#c62828', borderColor: '#c62828' }} onClick={() => { onDelete(row.wpwSku); setConfirmDelete(null); }}>{t('yes')}</button>
+                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '3px 8px' }} onClick={() => setConfirmDelete(null)}>{t('no')}</button>
                         </span>
                       ) : (
                         <span style={{ display: 'flex', gap: 6 }}>
-                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => startEdit(row)} disabled={editKey !== null}>Edit</button>
-                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', color: '#c62828' }} onClick={() => setConfirmDelete(row.wpwSku)} disabled={editKey !== null}>Delete</button>
+                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => startEdit(row)} disabled={editKey !== null}>{t('edit')}</button>
+                          <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px', color: '#c62828' }} onClick={() => setConfirmDelete(row.wpwSku)} disabled={editKey !== null}>{t('delete')}</button>
                         </span>
                       )}
                     </td>
@@ -256,7 +259,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
               </tr>
             ))}
             {rows.length === 0 && !adding && (
-              <tr><td colSpan={4} style={{ padding: '32px 12px', textAlign: 'center', color: 'var(--wpw-mid-gray)', fontSize: 13 }}>No mappings added</td></tr>
+              <tr><td colSpan={4} style={{ padding: '32px 12px', textAlign: 'center', color: 'var(--wpw-mid-gray)', fontSize: 13 }}>{t('no_mappings')}</td></tr>
             )}
           </tbody>
         </table>
@@ -268,6 +271,7 @@ function SkuMappingTable({ rows, onUpsert, onDelete }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function DealerImportPage() {
   const toast = useToast();
+  const { t } = useLocale();
   const { tab, setTab, file, setFile, report, setReport } = useImportSession();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -293,35 +297,35 @@ export default function DealerImportPage() {
     try {
       await apiDelete(`/dealer/sku-mapping/${encodeURIComponent(wpwSku)}`);
       setRows(prev => prev.filter(r => r.wpwSku !== wpwSku));
-      toast('Row deleted', 'success');
+      toast(t('row_deleted'), 'success');
     } catch (e) { toast(e.message, 'error'); }
   }
 
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Import</h1>
-        <p className="page-subtitle">SKU mapping management</p>
+        <h1 className="page-title">{t('import_title')}</h1>
+        <p className="page-subtitle">{t('import_subtitle')}</p>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-        <button className={`btn ${tab === 'mapping' ? 'btn-primary' : ''}`} onClick={() => setTab('mapping')}>SKU Mapping</button>
-        <button className={`btn ${tab === 'import' ? 'btn-primary' : ''}`} onClick={() => setTab('import')}>Excel Import</button>
+        <button className={`btn ${tab === 'mapping' ? 'btn-primary' : ''}`} onClick={() => setTab('mapping')}>{t('tab_sku_mapping')}</button>
+        <button className={`btn ${tab === 'import' ? 'btn-primary' : ''}`} onClick={() => setTab('import')}>{t('tab_excel_import')}</button>
       </div>
 
       {tab === 'mapping' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontSize: 13, color: 'var(--wpw-mid-gray)' }}>
-              {rows.length} {rows.length === 1 ? 'record' : 'records'}
+              {t('sku_records', { count: rows.length })}
             </div>
             <button className="btn btn-secondary" style={{ fontSize: 12 }}
               onClick={() => downloadFile('/dealer/sku-mapping/export', 'my-sku-mapping.xlsx')}>
-              ⬇ Export Excel
+              {t('export_excel')}
             </button>
           </div>
           {loading
-            ? <div style={{ textAlign: 'center', padding: 40, color: 'var(--wpw-mid-gray)' }}><div className="spinner" style={{ margin: '0 auto 12px' }} />Loading…</div>
+            ? <div style={{ textAlign: 'center', padding: 40, color: 'var(--wpw-mid-gray)' }}><div className="spinner" style={{ margin: '0 auto 12px' }} />{t('loading')}</div>
             : <SkuMappingTable rows={rows} onUpsert={handleUpsert} onDelete={handleDelete} />
           }
         </div>

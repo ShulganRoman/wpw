@@ -10,7 +10,7 @@ const SessionContext = createContext(null);
 
 export function SessionProvider({ children }) {
   const [catalog, setCatalog] = useState({
-    selectedIds: [],
+    qtys: {},          // { [productId]: number } — единственный источник "выбранности"
     filters: EMPTY_FILTERS,
     selectedNode: null,
     selectedOperation: null,
@@ -47,15 +47,23 @@ export function useCatalogSession() {
     setCatalog(prev => ({ ...prev, ...updates }));
   }
 
-  function setSelected(updater) {
-    if (typeof updater === 'function') {
-      setCatalog(prev => {
-        const next = updater(new Set(prev.selectedIds));
-        return { ...prev, selectedIds: [...next] };
-      });
-    } else {
-      setCatalog(prev => ({ ...prev, selectedIds: [...updater] }));
-    }
+  function setProductQty(id, qty) {
+    setCatalog(prev => {
+      const next = { ...prev.qtys };
+      if (qty <= 0) delete next[id]; else next[id] = qty;
+      return { ...prev, qtys: next };
+    });
+  }
+
+  function setManyQtys(updater) {
+    setCatalog(prev => ({
+      ...prev,
+      qtys: typeof updater === 'function' ? updater({ ...prev.qtys }) : updater,
+    }));
+  }
+
+  function clearQtys() {
+    setCatalog(prev => ({ ...prev, qtys: {} }));
   }
 
   function setPage(updater) {
@@ -73,8 +81,10 @@ export function useCatalogSession() {
   }
 
   return {
-    selected: new Set(catalog.selectedIds),
-    setSelected,
+    qtys: new Map(Object.entries(catalog.qtys || {})),
+    setProductQty,
+    setManyQtys,
+    clearQtys,
 
     filters: catalog.filters,
     setFilters: (f) => patch({ filters: f }),

@@ -3,72 +3,127 @@ import { useNavigate } from 'react-router-dom';
 import { getCart, updateCartQty, removeFromCart, clearCart, checkout, getDealerOrders, getDealerOrder } from '../api/api';
 import { LoadingSpinner } from '../components/LoadingState';
 import { useToast } from '../components/ToastContext';
+import { useLocale } from '../contexts/LocaleContext';
 
 const PAGE_SIZE = 10;
 
-function QtyControl({ qty, onChange, disabled }) {
+// qty      — последнее сохранённое значение (для восстановления при отмене)
+// onCommit — вызывается с новым числом (только при blur или кнопках)
+// onDelete — вызывается, когда пользователь хочет удалить позицию
+function QtyControl({ qty, onCommit, onDelete, disabled }) {
+  const [display, setDisplay] = useState(String(qty));
+
+  // синхронизируем display при внешнем изменении qty (после ответа сервера)
+  useEffect(() => { setDisplay(String(qty)); }, [qty]);
+
+  const btnStyle = {
+    width: 28, height: 28, border: '1px solid var(--wpw-border)', borderRadius: 4,
+    background: disabled ? 'var(--wpw-light-gray)' : 'var(--wpw-off-white)',
+    cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 16,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0, padding: 0,
+  };
+
+  function handleDecrement() {
+    if (qty <= 1) { onDelete(); return; }
+    const n = qty - 1;
+    setDisplay(String(n));
+    onCommit(n);
+  }
+
+  function handleIncrement() {
+    const n = qty + 1;
+    setDisplay(String(n));
+    onCommit(n);
+  }
+
+  function handleBlur() {
+    const parsed = parseInt(display, 10);
+    if (display === '' || isNaN(parsed) || parsed < 1) {
+      onDelete();
+    } else if (parsed !== qty) {
+      onCommit(parsed);
+    }
+  }
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-      <button
-        onClick={() => onChange(qty - 1)}
-        disabled={disabled}
-        style={{
-          width: 28, height: 28, border: '1px solid var(--wpw-border)', borderRadius: 4,
-          background: 'var(--wpw-surface)', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 16,
-        }}
-      >−</button>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <button onClick={handleDecrement} disabled={disabled} style={btnStyle}>−</button>
       <input
-        type="number" min="1" value={qty}
-        onChange={e => onChange(parseInt(e.target.value, 10) || 1)}
+        type="text"
+        inputMode="numeric"
+        value={display}
+        onChange={e => setDisplay(e.target.value.replace(/[^0-9]/g, ''))}
+        onFocus={e => e.target.select()}
+        onBlur={handleBlur}
         disabled={disabled}
         style={{
           width: 52, textAlign: 'center', border: '1px solid var(--wpw-border)',
           borderRadius: 4, padding: '4px', fontSize: 14,
         }}
       />
-      <button
-        onClick={() => onChange(qty + 1)}
-        disabled={disabled}
-        style={{
-          width: 28, height: 28, border: '1px solid var(--wpw-border)', borderRadius: 4,
-          background: 'var(--wpw-surface)', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 16,
-        }}
-      >+</button>
+      <button onClick={handleIncrement} disabled={disabled} style={btnStyle}>+</button>
     </div>
   );
 }
 
-function PriceTiers({ tiers, qty, currency }) {
-  if (!tiers || tiers.length === 0) return <span style={{ fontSize: 12, color: 'var(--wpw-text-secondary)' }}>No price</span>;
+function PriceTiers({ tiers, qty }) {
+  const [show, setShow] = useState(false);
+  if (!tiers || tiers.length === 0) return null;
+
+  const sorted = [...tiers].sort((a, b) => a.minQty - b.minQty);
+  const activeTier = sorted.filter(t => t.minQty <= qty).at(-1) ?? sorted[0];
+
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-      {tiers.map(t => {
-        const active = qty >= t.minQty && (!tiers.find(x => x.minQty > t.minQty && qty >= x.minQty));
-        return (
-          <span key={t.minQty} style={{
-            fontSize: 11, padding: '2px 6px', borderRadius: 4,
-            background: active ? 'var(--wpw-accent)' : 'var(--wpw-surface)',
-            color: active ? '#fff' : 'var(--wpw-text-secondary)',
-            border: `1px solid ${active ? 'var(--wpw-accent)' : 'var(--wpw-border)'}`,
-            fontWeight: active ? 600 : 400,
-          }}>
-            {t.minQty}+ = {Number(t.price).toFixed(2)}
-          </span>
-        );
-      })}
+    <div
+      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'default' }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <span style={{ fontSize: 12, color: 'var(--wpw-accent)', fontWeight: 600 }}>
+        {activeTier.minQty}+ → {Number(activeTier.price).toFixed(2)}
+      </span>
+      {sorted.length > 1 && (
+        <span style={{ fontSize: 10, color: 'var(--wpw-mid-gray)' }}>▾</span>
+      )}
+      {show && sorted.length > 1 && (
+        <div style={{
+          position: 'absolute', bottom: 'calc(100% + 4px)', left: 0,
+          background: '#fff', border: '1px solid var(--wpw-border)',
+          borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+          padding: '6px 0', minWidth: 130, zIndex: 20,
+        }}>
+          {sorted.map(t => {
+            const isActive = t.minQty === activeTier.minQty;
+            return (
+              <div key={t.minQty} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '3px 10px', fontSize: 12,
+                background: isActive ? 'var(--wpw-light-blue)' : 'transparent',
+                color: isActive ? 'var(--wpw-accent)' : 'var(--wpw-gray)',
+                fontWeight: isActive ? 600 : 400,
+              }}>
+                <span style={{ color: isActive ? 'var(--wpw-accent)' : 'var(--wpw-mid-gray)' }}>{t.minQty}+</span>
+                <span>{Number(t.price).toFixed(2)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
 function CartRow({ item, onUpdate }) {
   const toast = useToast();
+  const { t } = useLocale();
   const [qty, setQty] = useState(item.qty);
   const [updating, setUpdating] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => { setQty(item.qty); }, [item.qty]);
 
   async function applyQty(newQty) {
-    if (newQty < 1) { await handleRemove(); return; }
     setUpdating(true);
     try {
       const cart = await updateCartQty(item.productId, newQty);
@@ -81,20 +136,24 @@ function CartRow({ item, onUpdate }) {
   }
 
   async function handleRemove() {
+    setConfirmDelete(false);
     setUpdating(true);
     try {
       const cart = await removeFromCart(item.productId);
       onUpdate(cart);
     } catch (err) {
       toast(err.message, 'error');
-    } finally {
       setUpdating(false);
     }
   }
 
-  // find which tier is next (to show hint)
+  function handleCommit(newQty) {
+    setQty(newQty);
+    applyQty(newQty);
+  }
+
   const sortedTiers = [...(item.tiers || [])].sort((a, b) => a.minQty - b.minQty);
-  const nextTier = sortedTiers.find(t => t.minQty > qty);
+  const nextTier = sortedTiers.find(tier => tier.minQty > qty);
 
   return (
     <tr style={{ opacity: updating ? 0.6 : 1, transition: 'opacity 0.15s', verticalAlign: 'top' }}>
@@ -110,14 +169,41 @@ function CartRow({ item, onUpdate }) {
             <PriceTiers tiers={sortedTiers} qty={qty} />
             {nextTier && (
               <div style={{ fontSize: 11, color: 'var(--wpw-accent)', marginTop: 3 }}>
-                Add {nextTier.minQty - qty} more → {Number(nextTier.price).toFixed(2)}/pc
+                {t('add_more_hint', { count: nextTier.minQty - qty, price: Number(nextTier.price).toFixed(2) })}
               </div>
             )}
           </div>
         </div>
       </td>
       <td style={{ textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-        <QtyControl qty={qty} disabled={updating} onChange={n => { setQty(n); applyQty(n); }} />
+        {confirmDelete ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 12, color: '#c62828', whiteSpace: 'nowrap' }}>Remove?</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                className="btn btn-primary"
+                style={{ padding: '2px 10px', fontSize: 12, background: '#c62828', borderColor: '#c62828' }}
+                onClick={handleRemove}
+              >
+                Yes
+              </button>
+              <button
+                className="btn btn-secondary"
+                style={{ padding: '2px 10px', fontSize: 12 }}
+                onClick={() => setConfirmDelete(false)}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        ) : (
+          <QtyControl
+            qty={qty}
+            disabled={updating}
+            onCommit={handleCommit}
+            onDelete={() => setConfirmDelete(true)}
+          />
+        )}
       </td>
       <td style={{ textAlign: 'right', fontSize: 14, padding: '12px 8px', verticalAlign: 'middle' }}>
         {item.unitPrice != null ? Number(item.unitPrice).toFixed(2) : '—'}
@@ -127,7 +213,7 @@ function CartRow({ item, onUpdate }) {
       </td>
       <td style={{ textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
         <button
-          onClick={handleRemove}
+          onClick={() => setConfirmDelete(true)}
           disabled={updating}
           style={{ background: 'none', border: 'none', color: 'var(--wpw-error, #e53e3e)', cursor: 'pointer', fontSize: 18 }}
         >✕</button>
@@ -160,15 +246,15 @@ function exportCSV(items, currency, notes) {
   URL.revokeObjectURL(url);
 }
 
-const DEALER_STATUS_LABELS = {
-  SUBMITTED:     { label: 'Submitted',    color: '#1565c0', bg: '#e3f2fd' },
-  IN_PROCESSING: { label: 'In Processing', color: '#e65100', bg: '#fff3e0' },
-  CONFIRMED:     { label: 'Confirmed',    color: '#2e7d32', bg: '#e8f5e9' },
-  REJECTED:      { label: 'Rejected',     color: '#c62828', bg: '#ffebee' },
-};
-
 function DealerStatusBadge({ status }) {
-  const s = DEALER_STATUS_LABELS[status] || { label: status, color: '#555', bg: '#f5f5f5' };
+  const { t } = useLocale();
+  const labels = {
+    SUBMITTED:     { label: t('status_submitted'),     color: '#1565c0', bg: '#e3f2fd' },
+    IN_PROCESSING: { label: t('status_in_processing'), color: '#e65100', bg: '#fff3e0' },
+    CONFIRMED:     { label: t('status_confirmed'),     color: '#2e7d32', bg: '#e8f5e9' },
+    REJECTED:      { label: t('status_rejected'),      color: '#c62828', bg: '#ffebee' },
+  };
+  const s = labels[status] || { label: status, color: '#555', bg: '#f5f5f5' };
   return (
     <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 600, color: s.color, background: s.bg }}>
       {s.label}
@@ -178,39 +264,42 @@ function DealerStatusBadge({ status }) {
 
 function OrderDetailDrawer({ orderId, onClose }) {
   const toast = useToast();
+  const { t, locale } = useLocale();
   const [order, setOrder] = useState(null);
 
   useEffect(() => {
     getDealerOrder(orderId)
       .then(setOrder)
-      .catch(() => toast('Failed to load order', 'error'));
+      .catch(() => toast(t('failed_load_order'), 'error'));
   }, [orderId]);
+
+  const dateLocale = locale === 'ru' ? 'ru-RU' : locale === 'he' ? 'he-IL' : 'en-US';
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={onClose}>
       <div style={{ background: '#fff', borderRadius: 8, padding: 24, maxWidth: 680, width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>
-            Order #{order?.id?.slice(0, 8).toUpperCase() || '...'}
+            {t('order_hash')}{order?.id?.slice(0, 8).toUpperCase() || '...'}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#999' }}>×</button>
         </div>
-        {!order && <div style={{ color: '#888', textAlign: 'center', padding: 40 }}>Loading...</div>}
+        {!order && <div style={{ color: '#888', textAlign: 'center', padding: 40 }}>{t('loading_order')}</div>}
         {order && (
           <>
             <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 13 }}>Status: <DealerStatusBadge status={order.status} /></div>
-              <div style={{ fontSize: 13 }}>Total: <strong>{Number(order.total).toFixed(2)} {order.currency}</strong></div>
-              <div style={{ fontSize: 13, color: '#888' }}>{new Date(order.submittedAt).toLocaleString('ru-RU')}</div>
+              <div style={{ fontSize: 13 }}>{t('order_status_label')} <DealerStatusBadge status={order.status} /></div>
+              <div style={{ fontSize: 13 }}>{t('order_total_label')} <strong>{Number(order.total).toFixed(2)} {order.currency}</strong></div>
+              <div style={{ fontSize: 13, color: '#888' }}>{new Date(order.submittedAt).toLocaleString(dateLocale)}</div>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--wpw-border)' }}>
-                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>SKU</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>Name</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Qty</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Price</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>Total</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>{t('col_sku')}</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left' }}>{t('col_name')}</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>{t('col_qty')}</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>{t('col_price')}</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>{t('col_total')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -226,7 +315,7 @@ function OrderDetailDrawer({ orderId, onClose }) {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>Total:</td>
+                  <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>{t('order_total_label')}</td>
                   <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700 }}>{Number(order.total).toFixed(2)} {order.currency}</td>
                 </tr>
               </tfoot>
@@ -240,6 +329,7 @@ function OrderDetailDrawer({ orderId, onClose }) {
 
 function OrdersSection() {
   const toast = useToast();
+  const { t, locale } = useLocale();
   const [orders, setOrders] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
@@ -247,14 +337,16 @@ function OrdersSection() {
   useEffect(() => {
     getDealerOrders()
       .then(setOrders)
-      .catch(() => toast('Failed to load order history', 'error'))
+      .catch(() => toast(t('failed_load_orders'), 'error'))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ padding: 20, color: '#888', fontSize: 13 }}>Loading...</div>;
+  const dateLocale = locale === 'ru' ? 'ru-RU' : locale === 'he' ? 'he-IL' : 'en-US';
+
+  if (loading) return <div style={{ padding: 20, color: '#888', fontSize: 13 }}>{t('loading')}</div>;
   if (!orders || orders.length === 0) return (
     <div style={{ padding: '40px 0', textAlign: 'center', color: '#888', fontSize: 14 }}>
-      You have no orders yet
+      {t('no_orders_yet')}
     </div>
   );
 
@@ -265,10 +357,10 @@ function OrdersSection() {
           <thead>
             <tr>
               <th>#</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th style={{ textAlign: 'right' }}>Items</th>
-              <th style={{ textAlign: 'right' }}>Total</th>
+              <th>{t('col_date')}</th>
+              <th>{t('col_status')}</th>
+              <th style={{ textAlign: 'right' }}>{t('col_items')}</th>
+              <th style={{ textAlign: 'right' }}>{t('col_total')}</th>
               <th></th>
             </tr>
           </thead>
@@ -278,7 +370,7 @@ function OrdersSection() {
                 <td style={{ fontFamily: 'var(--wpw-font-mono)', color: '#888', fontSize: 12 }}>
                   {o.id.slice(0, 8).toUpperCase()}
                 </td>
-                <td style={{ fontSize: 13 }}>{new Date(o.submittedAt).toLocaleString('ru-RU')}</td>
+                <td style={{ fontSize: 13 }}>{new Date(o.submittedAt).toLocaleString(dateLocale)}</td>
                 <td><DealerStatusBadge status={o.status} /></td>
                 <td style={{ textAlign: 'right' }}>{o.itemCount}</td>
                 <td style={{ textAlign: 'right', fontWeight: 600 }}>
@@ -286,7 +378,7 @@ function OrdersSection() {
                 </td>
                 <td>
                   <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setSelectedId(o.id)}>
-                    Open
+                    {t('open')}
                   </button>
                 </td>
               </tr>
@@ -302,6 +394,7 @@ function OrdersSection() {
 export default function DealerPage() {
   const toast = useToast();
   const navigate = useNavigate();
+  const { t } = useLocale();
   const isDealer = localStorage.getItem('userRole') === 'dealer';
 
   const [activeTab, setActiveTab] = useState('cart');
@@ -342,7 +435,7 @@ export default function DealerPage() {
     setCheckingOut(true);
     try {
       const res = await checkout();
-      toast(`Order submitted: #${res.orderId?.toString().slice(0, 8).toUpperCase()}`, 'success');
+      toast(t('order_submitted', { id: res.orderId?.toString().slice(0, 8).toUpperCase() }), 'success');
       const fresh = await getCart();
       setCartData(fresh);
       setPage(1);
@@ -358,13 +451,13 @@ export default function DealerPage() {
     return (
       <div className="empty-state" style={{ marginTop: 60 }}>
         <div className="empty-state-icon">🔒</div>
-        <h3>Dealer access only</h3>
-        <p>This page is available for registered dealers only.</p>
+        <h3>{t('dealer_access_only')}</h3>
+        <p>{t('dealer_access_only_desc')}</p>
       </div>
     );
   }
 
-  if (loading) return <LoadingSpinner text="Loading order…" />;
+  if (loading) return <LoadingSpinner text={t('loading_order')} />;
 
   const allItems = cartData?.items || [];
   const total = cartData?.total ?? 0;
@@ -380,26 +473,26 @@ export default function DealerPage() {
     <div>
       <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 className="page-title">{activeTab === 'cart' ? 'My Order' : 'Order History'}</h1>
+          <h1 className="page-title">{activeTab === 'cart' ? t('my_order') : t('order_history')}</h1>
           {activeTab === 'cart' && (
             <p className="page-subtitle">
-              {allItems.length} items
+              {t('items_count', { count: allItems.length })}
               {hasTotal ? ` · ${currency} ${Number(total).toFixed(2)}` : ''}
-              {itemsNoPrice.length > 0 && ` · ${itemsNoPrice.length} without price`}
+              {itemsNoPrice.length > 0 && ` · ${t('without_price', { count: itemsNoPrice.length })}`}
             </p>
           )}
         </div>
         <button className="btn btn-secondary" onClick={() => navigate('/catalog')}>
-          ← Back to Catalog
+          {t('back_to_catalog')}
         </button>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <button className={`btn ${activeTab === 'cart' ? 'btn-primary' : ''}`} onClick={() => setActiveTab('cart')}>
-          Cart {allItems.length > 0 && `(${allItems.length})`}
+          {t('cart_label')} {allItems.length > 0 && `(${allItems.length})`}
         </button>
         <button className={`btn ${activeTab === 'orders' ? 'btn-primary' : ''}`} onClick={() => setActiveTab('orders')}>
-          My Orders
+          {t('nav_my_orders')}
         </button>
       </div>
 
@@ -408,10 +501,10 @@ export default function DealerPage() {
       {activeTab === 'cart' && (allItems.length === 0 ? (
         <div className="empty-state" style={{ marginTop: 40 }}>
           <div className="empty-state-icon">🛒</div>
-          <h3>Your cart is empty</h3>
-          <p>Go to the catalog and add products to your order.</p>
+          <h3>{t('cart_empty')}</h3>
+          <p>{t('cart_empty_desc')}</p>
           <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => navigate('/catalog')}>
-            Browse Catalog
+            {t('browse_catalog')}
           </button>
         </div>
       ) : (
@@ -424,10 +517,10 @@ export default function DealerPage() {
                 <table className="data-table" style={{ margin: 0 }}>
                   <thead>
                     <tr>
-                      <th style={{ minWidth: 260 }}>Product / Price tiers</th>
-                      <th style={{ textAlign: 'center', width: 140 }}>Qty</th>
-                      <th style={{ textAlign: 'right', width: 90 }}>Unit</th>
-                      <th style={{ textAlign: 'right', width: 90 }}>Total</th>
+                      <th style={{ minWidth: 260 }}>{t('col_product_tiers')}</th>
+                      <th style={{ textAlign: 'center', width: 140 }}>{t('col_qty')}</th>
+                      <th style={{ textAlign: 'right', width: 90 }}>{t('col_unit')}</th>
+                      <th style={{ textAlign: 'right', width: 90 }}>{t('col_total')}</th>
                       <th style={{ width: 40 }}></th>
                     </tr>
                   </thead>
@@ -446,12 +539,12 @@ export default function DealerPage() {
                   gap: 8, padding: '12px 16px', borderTop: '1px solid var(--wpw-border)',
                 }}>
                   <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px' }}
-                    disabled={page <= 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
+                    disabled={page <= 1} onClick={() => setPage(p => p - 1)}>{t('prev')}</button>
                   <span style={{ fontSize: 13, color: 'var(--wpw-text-secondary)' }}>
-                    {page} / {totalPages} ({allItems.length} items)
+                    {page} / {totalPages} ({t('items_count', { count: allItems.length })})
                   </span>
                   <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 10px' }}
-                    disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next →</button>
+                    disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>{t('next')}</button>
                 </div>
               )}
             </div>
@@ -462,27 +555,27 @@ export default function DealerPage() {
 
             {/* Summary */}
             <div className="card" style={{ marginBottom: 16 }}>
-              <div className="card-title" style={{ marginBottom: 12 }}>Order Summary</div>
+              <div className="card-title" style={{ marginBottom: 12 }}>{t('order_summary')}</div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14, marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--wpw-text-secondary)' }}>Total items</span>
+                  <span style={{ color: 'var(--wpw-text-secondary)' }}>{t('total_items')}</span>
                   <span style={{ fontWeight: 500 }}>{allItems.length}</span>
                 </div>
                 {itemsWithPrice.length > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--wpw-text-secondary)' }}>Priced items</span>
+                    <span style={{ color: 'var(--wpw-text-secondary)' }}>{t('priced_items')}</span>
                     <span>{itemsWithPrice.length}</span>
                   </div>
                 )}
                 {itemsNoPrice.length > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--wpw-text-secondary)' }}>No price</span>
+                    <span style={{ color: 'var(--wpw-text-secondary)' }}>{t('no_price')}</span>
                     <span style={{ color: 'var(--wpw-error, #e53e3e)' }}>{itemsNoPrice.length}</span>
                   </div>
                 )}
                 <div style={{ borderTop: '1px solid var(--wpw-border)', paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 600 }}>Subtotal</span>
+                  <span style={{ fontWeight: 600 }}>{t('subtotal')}</span>
                   <span style={{ fontWeight: 700, fontSize: 16 }}>
                     {hasTotal ? `${currency} ${Number(total).toFixed(2)}` : '—'}
                   </span>
@@ -495,24 +588,24 @@ export default function DealerPage() {
                 onClick={handleCheckout}
                 disabled={checkingOut}
               >
-                {checkingOut ? 'Processing…' : '📦 Submit Order'}
+                {checkingOut ? t('processing') : t('submit_order')}
               </button>
               <button
                 className="btn btn-secondary"
                 style={{ width: '100%', fontSize: 13 }}
                 onClick={() => exportCSV(allItems, currency, notes)}
               >
-                ↓ Export CSV
+                {t('export_csv')}
               </button>
             </div>
 
             {/* Notes */}
             <div className="card">
-              <div className="card-title" style={{ marginBottom: 8 }}>Order Notes</div>
+              <div className="card-title" style={{ marginBottom: 8 }}>{t('order_notes')}</div>
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                placeholder="Delivery address, special instructions, reference number…"
+                placeholder={t('order_notes_placeholder')}
                 style={{
                   width: '100%', minHeight: 100, resize: 'vertical',
                   border: '1px solid var(--wpw-border)', borderRadius: 6,
@@ -529,7 +622,7 @@ export default function DealerPage() {
                 style={{ width: '100%', fontSize: 13, color: 'var(--wpw-error, #e53e3e)' }}
                 onClick={handleClear}
               >
-                🗑 Clear all items
+                {t('clear_all_items')}
               </button>
             </div>
           </div>

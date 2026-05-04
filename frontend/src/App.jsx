@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import { ToastProvider } from './components/Toast';
 import { SessionProvider } from './contexts/SessionContext';
+import { LocaleProvider, useLocale } from './contexts/LocaleContext';
 import CatalogPage from './pages/CatalogPage';
 import ProductPage from './pages/ProductPage';
 import ExportPage from './pages/ExportPage';
@@ -12,16 +13,17 @@ import DealerPage from './pages/DealerPage';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/LandingPage';
 
-function Layout({ locale, onLocaleChange }) {
+function Layout() {
+  const { locale } = useLocale();
+
   useEffect(() => {
-    const isRtl = locale === 'he';
-    document.documentElement.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+    document.documentElement.setAttribute('dir', locale === 'he' ? 'rtl' : 'ltr');
     document.documentElement.setAttribute('lang', locale);
   }, [locale]);
 
   return (
     <div className="app-layout">
-      <Navbar locale={locale} onLocaleChange={onLocaleChange} />
+      <Navbar />
       <main className="page-content">
         <Outlet />
       </main>
@@ -41,12 +43,7 @@ function PrivateRoute() {
 }
 
 function AppInner() {
-  const [locale, setLocale] = useState(() => localStorage.getItem('pim_locale') || 'en');
-
-  function handleLocaleChange(l) {
-    setLocale(l);
-    localStorage.setItem('pim_locale', l);
-  }
+  const { locale } = useLocale();
 
   const router = createBrowserRouter([
     // Public routes (without Navbar)
@@ -60,7 +57,7 @@ function AppInner() {
     },
     // Public routes (with Navbar, no auth required)
     {
-      element: <Layout locale={locale} onLocaleChange={handleLocaleChange} />,
+      element: <Layout />,
       children: [
         { path: 'catalog', element: <CatalogPage locale={locale} /> },
         { path: 'product/:toolNo', element: <ProductPage locale={locale} /> },
@@ -74,7 +71,7 @@ function AppInner() {
       element: <PrivateRoute />,
       children: [
         {
-          element: <Layout locale={locale} onLocaleChange={handleLocaleChange} />,
+          element: <Layout />,
           children: [
             { path: 'export', element: <ExportPage locale={locale} /> },
             { path: 'admin', element: <AdminPage /> },
@@ -93,7 +90,9 @@ export default function App() {
   return (
     <ToastProvider>
       <SessionProvider>
-        <AppInner />
+        <LocaleProvider>
+          <AppInner />
+        </LocaleProvider>
       </SessionProvider>
     </ToastProvider>
   );

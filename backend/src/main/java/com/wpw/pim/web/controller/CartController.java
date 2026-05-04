@@ -7,6 +7,7 @@ import com.wpw.pim.service.cart.CartService;
 import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.cart.AddToCartRequest;
 import com.wpw.pim.web.dto.cart.CartDto;
+import com.wpw.pim.web.dto.cart.CartItemRequest;
 import com.wpw.pim.web.dto.product.ProductFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -52,7 +53,7 @@ public class CartController {
         @AuthenticationPrincipal UserDetails principal,
         @RequestBody AddToCartRequest request
     ) {
-        return cartService.addItems(resolveDealerId(principal), request.productIds());
+        return cartService.addItems(resolveDealerId(principal), request.items());
     }
 
     @PostMapping("/items/by-filter")

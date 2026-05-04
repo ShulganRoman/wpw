@@ -18,6 +18,7 @@ import com.wpw.pim.repository.media.MediaFileRepository;
 import com.wpw.pim.repository.pricing.PriceListItemRepository;
 import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.web.dto.cart.CartDto;
+import com.wpw.pim.web.dto.cart.CartItemRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -240,7 +241,7 @@ class CartServiceTest {
             when(cartItemRepository.findById(new CartItemId(dealerId, productId))).thenReturn(Optional.empty());
             stubEmptyCart();
 
-            cartService.addItems(dealerId, List.of(productId));
+            cartService.addItems(dealerId, List.of(new CartItemRequest(productId, 1)));
 
             verify(cartItemRepository).save(argThat(ci -> ci.getQty() == 1));
         }
@@ -254,7 +255,7 @@ class CartServiceTest {
             when(cartItemRepository.findById(new CartItemId(dealerId, productId))).thenReturn(Optional.of(existing));
             stubEmptyCart();
 
-            cartService.addItems(dealerId, List.of(productId));
+            cartService.addItems(dealerId, List.of(new CartItemRequest(productId, 1)));
 
             assertThat(existing.getQty()).isEqualTo(4);
             verify(cartItemRepository).save(existing);
@@ -266,7 +267,7 @@ class CartServiceTest {
             stubDealerFound();
             when(productRepository.findById(productId)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> cartService.addItems(dealerId, List.of(productId)))
+            assertThatThrownBy(() -> cartService.addItems(dealerId, List.of(new CartItemRequest(productId, 1))))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Product not found");
         }
@@ -275,7 +276,7 @@ class CartServiceTest {
         @DisplayName("404 if dealer not found")
         void dealerNotFound() {
             when(dealerRepository.findById(dealerId)).thenReturn(Optional.empty());
-            assertThatThrownBy(() -> cartService.addItems(dealerId, List.of(productId)))
+            assertThatThrownBy(() -> cartService.addItems(dealerId, List.of(new CartItemRequest(productId, 1))))
                 .isInstanceOf(ResponseStatusException.class);
         }
     }

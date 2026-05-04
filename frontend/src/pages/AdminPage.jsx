@@ -7,6 +7,7 @@ import AdminSkuMappingPanel from '../components/AdminSkuMappingPanel';
 import StockPricePanel from '../components/StockPricePanel';
 import AdminDealerPricePanel from '../components/AdminDealerPricePanel';
 import SettingsTab from '../components/SettingsTab';
+import { useLocale } from '../contexts/LocaleContext';
 
 function parseMarkdown(text) {
   // Minimal markdown rendering: headings, bold, code, tables, lists
@@ -65,6 +66,7 @@ function MarkdownReport({ text }) {
 }
 
 function ValidationReport({ report }) {
+  const { t } = useLocale();
   if (!report) return null;
 
   const { valid, errors, warnings, summary } = report;
@@ -74,7 +76,7 @@ function ValidationReport({ report }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 20 }}>{valid ? '✅' : '❌'}</span>
         <strong style={{ fontSize: 14, color: valid ? '#2e7d32' : '#c62828' }}>
-          {valid ? 'Validation Passed' : 'Validation Failed'}
+          {valid ? t('validation_passed') : t('validation_failed')}
         </strong>
       </div>
 
@@ -87,7 +89,7 @@ function ValidationReport({ report }) {
       {errors && errors.length > 0 && (
         <div style={{ marginBottom: 10 }}>
           <strong style={{ fontSize: 12, color: '#c62828', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Errors ({errors.length})
+            {t('errors_label', { count: errors.length })}
           </strong>
           <ul style={{ marginTop: 6, paddingLeft: 20, listStyle: 'disc', display: 'flex', flexDirection: 'column', gap: 4 }}>
             {errors.slice(0, 50).map((e, i) => (
@@ -96,7 +98,7 @@ function ValidationReport({ report }) {
               </li>
             ))}
             {errors.length > 50 && (
-              <li style={{ fontSize: 12, color: 'var(--wpw-mid-gray)' }}>…and {errors.length - 50} more errors</li>
+              <li style={{ fontSize: 12, color: 'var(--wpw-mid-gray)' }}>{t('more_errors', { count: errors.length - 50 })}</li>
             )}
           </ul>
         </div>
@@ -105,7 +107,7 @@ function ValidationReport({ report }) {
       {warnings && warnings.length > 0 && (
         <div>
           <strong style={{ fontSize: 12, color: '#e65100', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Warnings ({warnings.length})
+            {t('warnings_label', { count: warnings.length })}
           </strong>
           <ul style={{ marginTop: 6, paddingLeft: 20, listStyle: 'disc', display: 'flex', flexDirection: 'column', gap: 4 }}>
             {warnings.slice(0, 30).map((w, i) => (
@@ -114,7 +116,7 @@ function ValidationReport({ report }) {
               </li>
             ))}
             {warnings.length > 30 && (
-              <li style={{ fontSize: 12, color: 'var(--wpw-mid-gray)' }}>…and {warnings.length - 30} more warnings</li>
+              <li style={{ fontSize: 12, color: 'var(--wpw-mid-gray)' }}>{t('more_warnings', { count: warnings.length - 30 })}</li>
             )}
           </ul>
         </div>
@@ -131,6 +133,7 @@ function ValidationReport({ report }) {
 
 function ImportPanel({ onValidate, onExecute, instructions }) {
   const toast = useToast();
+  const { t } = useLocale();
   const fileInputRef = useRef(null);
   const dropzoneRef = useRef(null);
 
@@ -179,7 +182,7 @@ function ImportPanel({ onValidate, onExecute, instructions }) {
       setValidationReport(report);
       const isValid = report.canProceed !== false;
       setValidationValid(isValid);
-      toast(isValid ? 'Validation passed — ready to import.' : 'Validation failed. Please review the errors.', isValid ? 'success' : 'warning');
+      toast(isValid ? t('validation_passed_toast') : t('validation_failed_toast'), isValid ? 'success' : 'warning');
     } catch (err) {
       toast(`Validation error: ${err.message}`, 'error');
     } finally {
@@ -194,7 +197,7 @@ function ImportPanel({ onValidate, onExecute, instructions }) {
     try {
       const report = await onExecute(file);
       setExecuteReport(report);
-      toast('Import completed successfully!', 'success');
+      toast(t('import_success_toast'), 'success');
     } catch (err) {
       toast(`Import failed: ${err.message}`, 'error');
     } finally {
@@ -220,9 +223,9 @@ function ImportPanel({ onValidate, onExecute, instructions }) {
         >
           <div className="dropzone-icon">📂</div>
           <div className="dropzone-text">
-            {file ? 'Click or drop to replace file' : 'Click to select or drag & drop an Excel file here'}
+            {file ? t('dropzone_click_replace') : t('dropzone_select_excel')}
           </div>
-          <div className="dropzone-hint">Supported formats: .xlsx, .xls</div>
+          <div className="dropzone-hint">{t('dropzone_formats_excel')}</div>
           {file && <div className="dropzone-filename">📎 {file.name}</div>}
         </div>
 
@@ -236,27 +239,27 @@ function ImportPanel({ onValidate, onExecute, instructions }) {
 
         <div className="import-actions">
           <button className="btn btn-secondary" onClick={handleValidate} disabled={!file || validating || executing}>
-            {validating ? <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />Validating…</> : '✓ Validate'}
+            {validating ? <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />{t('validating')}</> : t('do_validate_btn')}
           </button>
           <button
             className="btn btn-primary"
             onClick={handleExecute}
             disabled={!file || executing || validating || validationValid === false}
-            title={validationValid === false ? 'Fix validation errors before importing' : ''}
+            title={validationValid === false ? t('fix_validation') : ''}
           >
-            {executing ? <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />Importing…</> : '⬆ Execute Import'}
+            {executing ? <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />{t('importing')}</> : t('execute_import')}
           </button>
-          {file && <button className="btn btn-secondary" onClick={handleReset}>✕ Reset</button>}
+          {file && <button className="btn btn-secondary" onClick={handleReset}>{t('reset_btn')}</button>}
         </div>
 
         {validationValid === false && (
           <p style={{ marginTop: 8, fontSize: 12, color: '#c62828' }}>
-            Validation must pass before executing the import.
+            {t('fix_validation')}
           </p>
         )}
 
         <div className="card" style={{ marginTop: 24 }}>
-          <div className="card-title">Import Instructions</div>
+          <div className="card-title">{t('import_instructions_title')}</div>
           {instructions}
         </div>
       </div>
@@ -266,13 +269,13 @@ function ImportPanel({ onValidate, onExecute, instructions }) {
           <div className="admin-report-panel">
             {validationReport && (
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>Validation Report</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>{t('validation_report_title')}</div>
                 <ValidationReport report={validationReport} />
               </div>
             )}
             {executeReport && (
               <div style={{ marginTop: validationReport ? 20 : 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>Import Report</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>{t('import_report_title')}</div>
                 <div className="import-report"><MarkdownReport text={executeReport} /></div>
               </div>
             )}
@@ -285,13 +288,14 @@ function ImportPanel({ onValidate, onExecute, instructions }) {
 
 function ExcelImportTab() {
   const toast = useToast();
+  const { t } = useLocale();
   const [downloading, setDownloading] = useState(false);
 
   async function handleDownloadTemplate() {
     setDownloading(true);
     try {
       await downloadImportTemplate();
-      toast('Template downloaded', 'success');
+      toast(t('template_downloaded'), 'success');
     } catch (err) {
       toast(`Download failed: ${err.message}`, 'error');
     } finally {
@@ -309,8 +313,8 @@ function ExcelImportTab() {
           style={{ display: 'flex', alignItems: 'center', gap: 6 }}
         >
           {downloading
-            ? <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />Downloading…</>
-            : <>⬇ Download Template</>
+            ? <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />{t('downloading')}</>
+            : <>{t('download_template_btn')}</>
           }
         </button>
       </div>
@@ -320,17 +324,42 @@ function ExcelImportTab() {
         onExecute={executeImport}
         instructions={
           <ol style={{ paddingLeft: 20, listStyle: 'decimal', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
-            <li>Click <strong>⬇ Download Template</strong> to get the Excel file with all supported columns.</li>
-            <li>Fill in products starting from row 3 — row 2 contains column headers.</li>
-            <li>Groups are created automatically from <code>Category</code> + <code>Group Name</code> columns.</li>
-            <li>Upload the completed file using the drop zone above.</li>
-            <li>Click <strong>✓ Validate</strong> to check for errors before importing.</li>
-            <li>If validation passes, click <strong>⬆ Execute Import</strong> to apply changes.</li>
+            <li><InstrStep1 /></li>
+            <li><InstrStep2 /></li>
+            <li><InstrStep3 /></li>
+            <li><InstrStep4 /></li>
+            <li><InstrStep5 /></li>
+            <li><InstrStep6 /></li>
           </ol>
         }
       />
     </div>
   );
+}
+
+function InstrStep1() {
+  const { t } = useLocale();
+  return <span dangerouslySetInnerHTML={{ __html: t('instr_step1') }} />;
+}
+function InstrStep2() {
+  const { t } = useLocale();
+  return <span>{t('instr_step2')}</span>;
+}
+function InstrStep3() {
+  const { t } = useLocale();
+  return <span>{t('instr_step3')}</span>;
+}
+function InstrStep4() {
+  const { t } = useLocale();
+  return <span>{t('instr_step4')}</span>;
+}
+function InstrStep5() {
+  const { t } = useLocale();
+  return <span>{t('instr_step5')}</span>;
+}
+function InstrStep6() {
+  const { t } = useLocale();
+  return <span>{t('instr_step6')}</span>;
 }
 
 function formatFileSize(bytes) {
@@ -367,6 +396,7 @@ function ArchiveIcon() {
 
 function IndividualPhotosTab() {
   const toast = useToast();
+  const { t } = useLocale();
   const [files, setFiles] = useState([]);
   const [dragging, setDragging] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -448,14 +478,14 @@ function IndividualPhotosTab() {
         {files.length > 0 ? (
           <div>
             <div className="dropzone-icon">🖼</div>
-            <div className="dropzone-text">{files.length} images selected</div>
-            <div className="dropzone-hint">Click or drop to replace</div>
+            <div className="dropzone-text">{t('photos_count_selected', { count: files.length })}</div>
+            <div className="dropzone-hint">{t('click_drop_replace')}</div>
           </div>
         ) : (
           <div>
             <div className="dropzone-icon">📸</div>
-            <div className="dropzone-text">Drop product photos here</div>
-            <div className="dropzone-hint">JPG, PNG, or WebP · Name files as TOOLNO.jpg or TOOLNO_2.jpg</div>
+            <div className="dropzone-text">{t('drop_photos_here')}</div>
+            <div className="dropzone-hint">{t('drop_photos_hint')}</div>
           </div>
         )}
       </div>
@@ -466,18 +496,18 @@ function IndividualPhotosTab() {
             {validating ? (
               <>
                 <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                Validating…
+                {t('validating')}
               </>
-            ) : 'Validate Photos'}
+            ) : t('validate_photos_btn')}
           </button>
           {validation && validation.matched > 0 && (
             <button className="btn btn-primary" onClick={handleImport} disabled={importing}>
               {importing ? (
                 <>
                   <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                  Importing…
+                  {t('importing')}
                 </>
-              ) : `Import ${validation.matched} Matched Photos`}
+              ) : t('import_photos_btn', { count: validation.matched })}
             </button>
           )}
         </div>
@@ -486,23 +516,23 @@ function IndividualPhotosTab() {
       {validation && (
         <div className="card" style={{ marginTop: 16 }}>
           <div className="card-body">
-            <h3 style={{ marginBottom: 12 }}>Validation Result</h3>
+            <h3 style={{ marginBottom: 12 }}>{t('validation_result')}</h3>
             <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
               <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
-                {validation.matched} matched
+                {t('matched_count', { count: validation.matched })}
               </div>
               <div style={{ background: '#fbe9e7', color: '#c62828', padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
-                {validation.unmatched} unmatched
+                {t('unmatched_count', { count: validation.unmatched })}
               </div>
               <div style={{ padding: '8px 16px', color: '#666', fontSize: 13 }}>
-                {validation.totalFiles} total files
+                {t('total_files_count', { count: validation.totalFiles })}
               </div>
             </div>
 
             {validation.matchedFiles && validation.matchedFiles.length > 0 && (
               <details open>
                 <summary style={{ cursor: 'pointer', fontWeight: 600, marginBottom: 8, color: '#2e7d32', fontSize: 13 }}>
-                  Matched files ({validation.matchedFiles.length})
+                  {t('matched_files', { count: validation.matchedFiles.length })}
                 </summary>
                 <div style={{ maxHeight: 200, overflow: 'auto', fontSize: 13 }}>
                   {validation.matchedFiles.map((f, i) => (
@@ -518,7 +548,7 @@ function IndividualPhotosTab() {
             {validation.unmatchedFiles && validation.unmatchedFiles.length > 0 && (
               <details style={{ marginTop: 12 }}>
                 <summary style={{ cursor: 'pointer', fontWeight: 600, marginBottom: 8, color: '#c62828', fontSize: 13 }}>
-                  Unmatched files ({validation.unmatchedFiles.length})
+                  {t('unmatched_files', { count: validation.unmatchedFiles.length })}
                 </summary>
                 <div style={{ maxHeight: 200, overflow: 'auto', fontSize: 13 }}>
                   {validation.unmatchedFiles.map((f, i) => (
@@ -537,12 +567,12 @@ function IndividualPhotosTab() {
       {importResult && (
         <div className="card" style={{ marginTop: 16 }}>
           <div className="card-body">
-            <h3 style={{ marginBottom: 12, color: '#2e7d32' }}>Import Complete</h3>
+            <h3 style={{ marginBottom: 12, color: '#2e7d32' }}>{t('import_complete')}</h3>
             <div style={{ fontSize: 14, lineHeight: 1.8 }}>
-              <div>Products matched: <strong>{importResult.matchedProducts}</strong></div>
-              <div>Photos converted to WebP: <strong>{importResult.converted}</strong></div>
-              {importResult.skipped > 0 && <div>Skipped: {importResult.skipped}</div>}
-              {importResult.errors > 0 && <div style={{ color: '#c62828' }}>Errors: {importResult.errors}</div>}
+              <div>{t('products_matched_label')} <strong>{importResult.matchedProducts}</strong></div>
+              <div>{t('photos_converted_webp')} <strong>{importResult.converted}</strong></div>
+              {importResult.skipped > 0 && <div>{t('skipped_label')} {importResult.skipped}</div>}
+              {importResult.errors > 0 && <div style={{ color: '#c62828' }}>{t('errors_count_label')} {importResult.errors}</div>}
             </div>
           </div>
         </div>
@@ -553,6 +583,7 @@ function IndividualPhotosTab() {
 
 function ArchiveImportTab() {
   const toast = useToast();
+  const { t } = useLocale();
   const [archiveFile, setArchiveFile] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -646,12 +677,12 @@ function ArchiveImportTab() {
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
             <ArchiveIcon />
           </div>
-          <div className="dropzone-text">Drag and drop archive file here or click to browse</div>
+          <div className="dropzone-text">{t('drag_archive_here')}</div>
           <div className="dropzone-hint" style={{ marginTop: 8 }}>
-            Accepted formats: .zip, .7z, .tar, .tar.gz, .tgz
+            {t('archive_formats')}
           </div>
           <div className="dropzone-hint" style={{ marginTop: 4 }}>
-            Up to 1 GB
+            {t('archive_size')}
           </div>
         </div>
       )}
@@ -701,7 +732,7 @@ function ArchiveImportTab() {
             disabled={validating || importing}
             style={{ flexShrink: 0 }}
           >
-            Remove
+            {t('remove')}
           </button>
         </div>
       )}
@@ -717,9 +748,9 @@ function ArchiveImportTab() {
             {validating ? (
               <>
                 <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                Validating…
+                {t('validating')}
               </>
-            ) : 'Validate'}
+            ) : t('validate')}
           </button>
 
           <button
@@ -731,11 +762,11 @@ function ArchiveImportTab() {
             {importing ? (
               <>
                 <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                Importing…
+                {t('importing')}
               </>
             ) : validation && validation.matched > 0
-              ? `Import ${validation.matched} Photos`
-              : 'Import'}
+              ? t('import_photos_btn', { count: validation.matched })
+              : t('importing')}
           </button>
         </div>
       )}
@@ -743,7 +774,7 @@ function ArchiveImportTab() {
       {/* Importing long-running notice */}
       {importing && (
         <p style={{ marginTop: 10, fontSize: 12, color: 'var(--wpw-mid-gray)' }}>
-          Importing... This may take a few minutes for large archives.
+          {t('importing_notice')}
         </p>
       )}
 
@@ -751,7 +782,7 @@ function ArchiveImportTab() {
       {validation && (
         <div className="import-report" style={{ marginTop: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 12 }}>
-            Validation Result
+            {t('validation_result')}
           </div>
 
           {/* Summary banner */}
@@ -779,11 +810,11 @@ function ArchiveImportTab() {
             marginBottom: 14,
           }}>
             {[
-              { label: 'Total files in archive', value: validation.totalFiles ?? '—' },
-              { label: 'Image files found', value: validation.imageFiles ?? '—' },
-              { label: 'Non-image files skipped', value: validation.nonImageFiles ?? '—' },
-              { label: 'Products matched', value: validation.matched ?? '—' },
-              { label: 'Products not found', value: validation.unmatched ?? '—' },
+              { label: t('stat_total_files'), value: validation.totalFiles ?? '—' },
+              { label: t('stat_image_files'), value: validation.imageFiles ?? '—' },
+              { label: t('stat_non_image'), value: validation.nonImageFiles ?? '—' },
+              { label: t('stat_products_matched'), value: validation.matched ?? '—' },
+              { label: t('stat_products_not_found'), value: validation.unmatched ?? '—' },
             ].map(({ label, value }) => (
               <div key={label} style={{
                 background: '#fff',
@@ -828,7 +859,7 @@ function ArchiveImportTab() {
                 }}>
                   &#9654;
                 </span>
-                Not found ({validation.unmatchedFiles.length} filenames)
+                {t('not_found_count', { count: validation.unmatchedFiles.length })}
               </button>
 
               {unmatchedOpen && (
@@ -862,26 +893,26 @@ function ArchiveImportTab() {
       {importResult && (
         <div className="import-report" style={{ marginTop: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#2e7d32', marginBottom: 12 }}>
-            Import Complete
+            {t('import_complete')}
           </div>
           <div style={{ fontSize: 13, lineHeight: 2 }}>
             <div>
-              Photos converted:{' '}
+              {t('photos_converted_label')}{' '}
               <strong style={{ color: 'var(--wpw-navy)' }}>{importResult.converted ?? '—'}</strong>
             </div>
             <div>
-              Products updated:{' '}
+              {t('products_updated_label')}{' '}
               <strong style={{ color: 'var(--wpw-navy)' }}>{importResult.productsUpdated ?? importResult.matchedProducts ?? '—'}</strong>
             </div>
             {(importResult.skipped ?? 0) > 0 && (
               <div>
-                Skipped:{' '}
+                {t('skipped_label')}{' '}
                 <strong style={{ color: 'var(--wpw-mid-gray)' }}>{importResult.skipped}</strong>
               </div>
             )}
             {(importResult.errors ?? 0) > 0 && (
               <div style={{ color: '#c62828' }}>
-                Errors: <strong>{importResult.errors}</strong>
+                {t('errors_count_label')} <strong>{importResult.errors}</strong>
                 {importResult.errorDetails && importResult.errorDetails.length > 0 && (
                   <ul style={{ marginTop: 6, paddingLeft: 20, listStyle: 'disc', display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {importResult.errorDetails.slice(0, 20).map((e, i) => (
@@ -906,6 +937,7 @@ function ArchiveImportTab() {
 }
 
 function PhotoImportTab() {
+  const { t } = useLocale();
   const [mode, setMode] = useState('individual');
 
   return (
@@ -922,8 +954,8 @@ function PhotoImportTab() {
         aria-label="Photo import mode"
       >
         {[
-          { value: 'individual', label: 'Individual Photos' },
-          { value: 'archive', label: 'Archive Import' },
+          { value: 'individual', label: t('mode_individual') },
+          { value: 'archive', label: t('mode_archive') },
         ].map(({ value, label }) => (
           <button
             key={value}
@@ -980,6 +1012,7 @@ function PrivilegeBadge({ name }) {
 }
 
 function UserModal({ user, roles, onSave, onClose }) {
+  const { t } = useLocale();
   const [username, setUsername] = useState(user?.username || '');
   const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState(user?.roleId || (roles[0]?.id ?? ''));
@@ -993,9 +1026,9 @@ function UserModal({ user, roles, onSave, onClose }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!username.trim()) { setError('Username is required'); return; }
-    if (!user && !password) { setError('Password is required'); return; }
-    if (!roleId) { setError('Role is required'); return; }
+    if (!username.trim()) { setError(t('error_username_required')); return; }
+    if (!user && !password) { setError(t('error_password_required')); return; }
+    if (!roleId) { setError(t('error_role_required')); return; }
 
     const payload = { username: username.trim(), roleId: Number(roleId), enabled };
     if (password) payload.password = password;
@@ -1022,13 +1055,13 @@ function UserModal({ user, roles, onSave, onClose }) {
         boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
       }}>
         <h3 style={{ margin: '0 0 20px', fontSize: 16, color: 'var(--wpw-navy)' }}>
-          {user ? 'Edit User' : 'Create User'}
+          {user ? t('edit_user_title') : t('create_user_title')}
         </h3>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--wpw-gray)', display: 'block', marginBottom: 4 }}>
-              Username
+              {t('col_username')}
             </label>
             <input
               className="input"
@@ -1042,21 +1075,21 @@ function UserModal({ user, roles, onSave, onClose }) {
 
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--wpw-gray)', display: 'block', marginBottom: 4 }}>
-              Password
+              {t('field_password')}
             </label>
             <input
               className="input"
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder={user ? 'Leave blank to keep current' : 'Password (min 4 chars)'}
+              placeholder={user ? t('pass_placeholder_existing') : t('pass_placeholder_new')}
               style={{ width: '100%', boxSizing: 'border-box' }}
             />
           </div>
 
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--wpw-gray)', display: 'block', marginBottom: 4 }}>
-              Role
+              {t('field_role')}
             </label>
             <select
               className="input"
@@ -1073,7 +1106,7 @@ function UserModal({ user, roles, onSave, onClose }) {
           {selectedRole && selectedRole.privileges && selectedRole.privileges.length > 0 && (
             <div style={{ background: '#f5f7fa', borderRadius: 6, padding: '10px 12px' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--wpw-gray)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Privileges
+                {t('col_privileges')}
               </div>
               <div>
                 {selectedRole.privileges.map(p => <PrivilegeBadge key={p} name={p} />)}
@@ -1083,7 +1116,7 @@ function UserModal({ user, roles, onSave, onClose }) {
 
           {selectedRole && (!selectedRole.privileges || selectedRole.privileges.length === 0) && (
             <div style={{ background: '#f5f7fa', borderRadius: 6, padding: '10px 12px', fontSize: 12, color: '#999' }}>
-              This role has no privileges assigned.
+              {t('no_privileges_msg')}
             </div>
           )}
 
@@ -1095,7 +1128,7 @@ function UserModal({ user, roles, onSave, onClose }) {
               onChange={e => setEnabled(e.target.checked)}
             />
             <label htmlFor="enabled-checkbox" style={{ fontSize: 13, color: 'var(--wpw-gray)', cursor: 'pointer' }}>
-              Account enabled
+              {t('account_enabled')}
             </label>
           </div>
 
@@ -1107,10 +1140,10 @@ function UserModal({ user, roles, onSave, onClose }) {
 
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>
-              Cancel
+              {t('cancel')}
             </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Saving…' : 'Save'}
+              {saving ? t('saving') : t('save')}
             </button>
           </div>
         </form>
@@ -1121,6 +1154,7 @@ function UserModal({ user, roles, onSave, onClose }) {
 
 function UsersTab() {
   const toast = useToast();
+  const { t } = useLocale();
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1138,11 +1172,11 @@ function UsersTab() {
     if (modal.user) {
       const updated = await updateUser(modal.user.id, payload);
       setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
-      toast('User updated', 'success');
+      toast(t('user_updated'), 'success');
     } else {
       const created = await createUser(payload);
       setUsers(prev => [...prev, created]);
-      toast('User created', 'success');
+      toast(t('user_created'), 'success');
     }
     setModal(null);
   }
@@ -1151,7 +1185,7 @@ function UsersTab() {
     try {
       await deleteUser(id);
       setUsers(prev => prev.filter(u => u.id !== id));
-      toast('User deleted', 'success');
+      toast(t('user_deleted'), 'success');
     } catch (err) {
       toast(`Delete failed: ${err.message}`, 'error');
     } finally {
@@ -1160,17 +1194,17 @@ function UsersTab() {
   }
 
   if (loading) {
-    return <div style={{ padding: 32, textAlign: 'center', color: 'var(--wpw-gray)' }}>Loading…</div>;
+    return <div style={{ padding: 32, textAlign: 'center', color: 'var(--wpw-gray)' }}>{t('loading')}</div>;
   }
 
   return (
     <div className="admin-section">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ fontSize: 13, color: 'var(--wpw-gray)' }}>
-          {users.length} user{users.length !== 1 ? 's' : ''}
+          {t('users_count', { count: users.length })}
         </div>
         <button className="btn btn-primary" onClick={() => setModal({ user: null })}>
-          + Create User
+          {t('create_user_btn')}
         </button>
       </div>
 
@@ -1178,7 +1212,7 @@ function UsersTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #e8edf5' }}>
-              {['Username', 'Role', 'Privileges', 'Status', 'Created', ''].map(h => (
+              {[t('col_username'), t('col_role'), t('col_privileges'), t('col_status'), t('col_created'), ''].map(h => (
                 <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--wpw-gray)', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
                   {h}
                 </th>
@@ -1209,7 +1243,7 @@ function UsersTab() {
                       background: u.enabled ? '#e8f5e9' : '#f0f0f0',
                       color: u.enabled ? '#2e7d32' : '#999',
                     }}>
-                      {u.enabled ? 'Active' : 'Disabled'}
+                      {u.enabled ? t('status_active') : t('status_disabled')}
                     </span>
                   </td>
                   <td style={{ padding: '10px 12px', color: 'var(--wpw-gray)', whiteSpace: 'nowrap', fontSize: 12 }}>
@@ -1218,17 +1252,17 @@ function UsersTab() {
                   <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
                     {confirmDeleteId === u.id ? (
                       <span style={{ fontSize: 12, display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <span style={{ color: '#c62828' }}>Delete?</span>
-                        <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12, background: '#c62828', borderColor: '#c62828' }} onClick={() => handleDelete(u.id)}>Yes</button>
-                        <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setConfirmDeleteId(null)}>No</button>
+                        <span style={{ color: '#c62828' }}>{t('delete_confirm')}</span>
+                        <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12, background: '#c62828', borderColor: '#c62828' }} onClick={() => handleDelete(u.id)}>{t('yes')}</button>
+                        <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setConfirmDeleteId(null)}>{t('no')}</button>
                       </span>
                     ) : (
                       <span style={{ display: 'flex', gap: 6 }}>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setModal({ user: u })}>
-                          Edit
+                          {t('edit')}
                         </button>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: '#c62828' }} onClick={() => setConfirmDeleteId(u.id)}>
-                          Delete
+                          {t('delete')}
                         </button>
                       </span>
                     )}
@@ -1239,7 +1273,7 @@ function UsersTab() {
             {users.length === 0 && (
               <tr>
                 <td colSpan={6} style={{ padding: '32px 12px', textAlign: 'center', color: 'var(--wpw-gray)', fontSize: 13 }}>
-                  No users found
+                  {t('no_users')}
                 </td>
               </tr>
             )}
@@ -1261,6 +1295,7 @@ function UsersTab() {
 
 function ApplicationTagsTab() {
   const toast = useToast();
+  const { t } = useLocale();
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null); // code being edited, or 'new'
@@ -1295,18 +1330,18 @@ function ApplicationTagsTab() {
   }
 
   async function handleSave() {
-    if (!formName.trim()) { toast('Name is required', 'error'); return; }
+    if (!formName.trim()) { toast(t('name_required'), 'error'); return; }
     setSaving(true);
     try {
       const payload = { name: formName.trim(), sortOrder: formOrder ? Number(formOrder) : undefined };
       if (editingId === 'new') {
         const created = await createApplicationTag(payload);
         setTags(prev => [...prev, created].sort((a, b) => a.sortOrder - b.sortOrder));
-        toast('Tag created', 'success');
+        toast(t('tag_created'), 'success');
       } else {
         const updated = await updateApplicationTag(editingId, payload);
-        setTags(prev => prev.map(t => t.code === editingId ? updated : t).sort((a, b) => a.sortOrder - b.sortOrder));
-        toast('Tag updated', 'success');
+        setTags(prev => prev.map(tag => tag.code === editingId ? updated : tag).sort((a, b) => a.sortOrder - b.sortOrder));
+        toast(t('tag_updated'), 'success');
       }
       cancelEdit();
     } catch (err) {
@@ -1319,8 +1354,8 @@ function ApplicationTagsTab() {
   async function handleDelete(code) {
     try {
       await deleteApplicationTag(code);
-      setTags(prev => prev.filter(t => t.code !== code));
-      toast('Tag deleted', 'success');
+      setTags(prev => prev.filter(tag => tag.code !== code));
+      toast(t('tag_deleted'), 'success');
     } catch (err) {
       toast(err.message, 'error');
     } finally {
@@ -1328,16 +1363,16 @@ function ApplicationTagsTab() {
     }
   }
 
-  if (loading) return <div style={{ padding: 32, textAlign: 'center', color: 'var(--wpw-gray)' }}>Loading…</div>;
+  if (loading) return <div style={{ padding: 32, textAlign: 'center', color: 'var(--wpw-gray)' }}>{t('loading')}</div>;
 
   return (
     <div className="admin-section">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ fontSize: 13, color: 'var(--wpw-gray)' }}>
-          {tags.length} tag{tags.length !== 1 ? 's' : ''}
+          {t('tags_count', { count: tags.length })}
         </div>
         <button className="btn btn-primary" onClick={openNew} disabled={editingId !== null}>
-          + Create Tag
+          {t('create_tag_btn')}
         </button>
       </div>
 
@@ -1349,7 +1384,7 @@ function ApplicationTagsTab() {
           <input
             className="input"
             style={{ flex: '1 1 200px' }}
-            placeholder="Tag name"
+            placeholder={t('tag_name_placeholder')}
             value={formName}
             onChange={e => setFormName(e.target.value)}
             autoFocus
@@ -1359,14 +1394,14 @@ function ApplicationTagsTab() {
             className="input"
             style={{ width: 80 }}
             type="number"
-            placeholder="Order"
+            placeholder={t('tag_order_placeholder')}
             value={formOrder}
             onChange={e => setFormOrder(e.target.value)}
           />
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('saving') : t('save')}
           </button>
-          <button className="btn btn-secondary" onClick={cancelEdit} disabled={saving}>Cancel</button>
+          <button className="btn btn-secondary" onClick={cancelEdit} disabled={saving}>{t('cancel')}</button>
         </div>
       )}
 
@@ -1374,7 +1409,7 @@ function ApplicationTagsTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #e8edf5' }}>
-              {['#', 'Name', 'Code', ''].map(h => (
+              {['#', t('col_name'), 'Code', ''].map(h => (
                 <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--wpw-gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   {h}
                 </th>
@@ -1404,9 +1439,9 @@ function ApplicationTagsTab() {
                         onChange={e => setFormOrder(e.target.value)}
                       />
                       <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={handleSave} disabled={saving}>
-                        {saving ? '…' : 'Save'}
+                        {saving ? '…' : t('save')}
                       </button>
-                      <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={cancelEdit}>Cancel</button>
+                      <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={cancelEdit}>{t('cancel')}</button>
                     </div>
                   ) : tag.name}
                 </td>
@@ -1417,17 +1452,17 @@ function ApplicationTagsTab() {
                   {editingId !== tag.code && (
                     confirmDeleteCode === tag.code ? (
                       <span style={{ fontSize: 12, display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <span style={{ color: '#c62828' }}>Delete?</span>
-                        <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12, background: '#c62828', borderColor: '#c62828' }} onClick={() => handleDelete(tag.code)}>Yes</button>
-                        <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setConfirmDeleteCode(null)}>No</button>
+                        <span style={{ color: '#c62828' }}>{t('delete_confirm')}</span>
+                        <button className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 12, background: '#c62828', borderColor: '#c62828' }} onClick={() => handleDelete(tag.code)}>{t('yes')}</button>
+                        <button className="btn btn-secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setConfirmDeleteCode(null)}>{t('no')}</button>
                       </span>
                     ) : (
                       <span style={{ display: 'flex', gap: 6 }}>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => openEdit(tag)} disabled={editingId !== null}>
-                          Edit
+                          {t('edit')}
                         </button>
                         <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 12, color: '#c62828' }} onClick={() => setConfirmDeleteCode(tag.code)} disabled={editingId !== null}>
-                          Delete
+                          {t('delete')}
                         </button>
                       </span>
                     )
@@ -1438,7 +1473,7 @@ function ApplicationTagsTab() {
             {tags.length === 0 && (
               <tr>
                 <td colSpan={4} style={{ padding: '32px 12px', textAlign: 'center', color: 'var(--wpw-gray)', fontSize: 13 }}>
-                  No application tags yet
+                  {t('no_tags')}
                 </td>
               </tr>
             )}
@@ -1450,6 +1485,7 @@ function ApplicationTagsTab() {
 }
 
 export default function AdminPage() {
+  const { t } = useLocale();
   const [tab, setTab] = useState('excel');
   const [skuMappingDealer, setSkuMappingDealer] = useState(null);
   const [priceListDealer, setPriceListDealer] = useState(null);
@@ -1458,21 +1494,21 @@ export default function AdminPage() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Admin</h1>
-        <p className="page-subtitle">Import product data and photos</p>
+        <h1 className="page-title">{t('admin_title')}</h1>
+        <p className="page-subtitle">{t('admin_subtitle')}</p>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-        <button className={`btn ${tab === 'excel' ? 'btn-primary' : ''}`} onClick={() => setTab('excel')}>Excel Import</button>
-        <button className={`btn ${tab === 'photos' ? 'btn-primary' : ''}`} onClick={() => setTab('photos')}>Photo Import</button>
-        <button className={`btn ${tab === 'catalog' ? 'btn-primary' : ''}`} onClick={() => setTab('catalog')}>Catalog Tree</button>
-        <button className={`btn ${tab === 'tags' ? 'btn-primary' : ''}`} onClick={() => setTab('tags')}>Application Tags</button>
-        <button className={`btn ${tab === 'dealers' ? 'btn-primary' : ''}`} onClick={() => setTab('dealers')}>Dealers</button>
-        <button className={`btn ${tab === 'prices' ? 'btn-primary' : ''}`} onClick={() => setTab('prices')}>Prices</button>
+        <button className={`btn ${tab === 'excel' ? 'btn-primary' : ''}`} onClick={() => setTab('excel')}>{t('tab_excel')}</button>
+        <button className={`btn ${tab === 'photos' ? 'btn-primary' : ''}`} onClick={() => setTab('photos')}>{t('tab_photos')}</button>
+        <button className={`btn ${tab === 'catalog' ? 'btn-primary' : ''}`} onClick={() => setTab('catalog')}>{t('tab_catalog')}</button>
+        <button className={`btn ${tab === 'tags' ? 'btn-primary' : ''}`} onClick={() => setTab('tags')}>{t('tab_tags')}</button>
+        <button className={`btn ${tab === 'dealers' ? 'btn-primary' : ''}`} onClick={() => setTab('dealers')}>{t('tab_dealers')}</button>
+        <button className={`btn ${tab === 'prices' ? 'btn-primary' : ''}`} onClick={() => setTab('prices')}>{t('tab_prices')}</button>
         {userRole === 'admin' && (
-          <button className={`btn ${tab === 'users' ? 'btn-primary' : ''}`} onClick={() => setTab('users')}>Users</button>
+          <button className={`btn ${tab === 'users' ? 'btn-primary' : ''}`} onClick={() => setTab('users')}>{t('tab_users')}</button>
         )}
-        <button className={`btn ${tab === 'settings' ? 'btn-primary' : ''}`} onClick={() => setTab('settings')}>Settings</button>
+        <button className={`btn ${tab === 'settings' ? 'btn-primary' : ''}`} onClick={() => setTab('settings')}>{t('tab_settings')}</button>
       </div>
 
       {tab === 'excel' && <ExcelImportTab />}

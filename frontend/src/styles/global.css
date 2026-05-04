@@ -415,6 +415,124 @@ ol {
   color: #f57f17;
 }
 
+/* ===== Product card: dealer qty + price tiers ===== */
+.product-card-dealer-footer {
+  margin-top: auto;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.product-qty-control {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.product-qty-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--wpw-border);
+  border-radius: 4px;
+  background: var(--wpw-off-white);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wpw-navy);
+  padding: 0;
+  flex-shrink: 0;
+}
+.product-qty-btn:hover {
+  background: var(--wpw-light-blue);
+  border-color: var(--wpw-accent);
+}
+
+.product-qty-input {
+  width: 40px;
+  height: 24px;
+  text-align: center;
+  border: 1px solid var(--wpw-border);
+  border-radius: 4px;
+  font-size: 13px;
+  padding: 0 4px;
+}
+.product-qty-input::-webkit-inner-spin-button,
+.product-qty-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+/* suppress spinners on all qty inputs (cart rows use inline styles) */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.product-add-btn {
+  padding: 3px 10px !important;
+  font-size: 12px !important;
+  height: 24px;
+  line-height: 1;
+}
+
+.product-price-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  user-select: none;
+}
+
+.product-price-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wpw-navy);
+}
+
+.product-price-unit {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--wpw-mid-gray);
+  margin-left: 2px;
+}
+
+.product-price-tiers-hint {
+  font-size: 11px;
+  color: var(--wpw-mid-gray);
+  cursor: pointer;
+}
+
+.product-price-tiers-popup {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  background: #fff;
+  border: 1px solid var(--wpw-border);
+  border-radius: var(--wpw-radius);
+  box-shadow: var(--wpw-shadow-md);
+  padding: 6px 0;
+  min-width: 130px;
+  z-index: 10;
+}
+
+.product-tier-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--wpw-gray);
+}
+
+.product-tier-row.active {
+  background: var(--wpw-light-blue);
+  color: var(--wpw-accent);
+  font-weight: 600;
+}
+
+.tier-qty { color: var(--wpw-mid-gray); }
+.product-tier-row.active .tier-qty { color: var(--wpw-accent); }
+.tier-price { font-weight: 500; }
+
 /* ===== Pagination ===== */
 .pagination {
   display: flex;

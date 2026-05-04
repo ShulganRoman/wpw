@@ -13,6 +13,7 @@ import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.cart.AddToCartRequest;
 import com.wpw.pim.web.dto.cart.CartDto;
 import com.wpw.pim.web.dto.cart.CartItemDto;
+import com.wpw.pim.web.dto.cart.CartItemRequest;
 import com.wpw.pim.web.dto.cart.PriceTierDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -125,7 +126,7 @@ class CartControllerTest {
             UUID productId = UUID.randomUUID();
             when(cartService.addItems(eq(dealerId), any())).thenReturn(cartWithItem(productId));
 
-            AddToCartRequest req = new AddToCartRequest(List.of(productId));
+            AddToCartRequest req = new AddToCartRequest(List.of(new CartItemRequest(productId, 1)));
 
             mockMvc.perform(post("/api/v1/dealer/cart/items")
                     .with(user(dealerPrincipal))

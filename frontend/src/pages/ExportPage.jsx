@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { exportProducts, getExportPreview, getOperations, getCategories, getFilterOptions } from '../api/api';
 import { useToast } from '../components/ToastContext';
+import { useLocale } from '../contexts/LocaleContext';
 
 const FORMATS = [
   { value: 'csv', label: 'CSV', icon: '📄', desc: 'Comma-separated values' },
@@ -34,6 +35,7 @@ const EMPTY_FILTERS = {
 
 export default function ExportPage({ locale: appLocale }) {
   const toast = useToast();
+  const { t } = useLocale();
 
   const [format, setFormat] = useState('xlsx');
   const [locale, setLocale] = useState(appLocale || 'en');
@@ -132,20 +134,20 @@ export default function ExportPage({ locale: appLocale }) {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Export Catalog</h1>
-        <p className="page-subtitle">Download the product catalog in your preferred format</p>
+        <h1 className="page-title">{t('export_catalog')}</h1>
+        <p className="page-subtitle">{t('export_catalog_subtitle')}</p>
       </div>
 
       <div className="export-layout">
         {/* Left column: settings + about */}
         <div className="export-left">
           <form className="card" onSubmit={handleExport}>
-            <div className="card-title">Export Settings</div>
+            <div className="card-title">{t('export_settings')}</div>
 
             <div className="export-form">
               {/* Format selection */}
               <div className="form-group">
-                <label className="form-label">Format</label>
+                <label className="form-label">{t('format_label')}</label>
                 <div className="export-format-group">
                   {FORMATS.map(f => (
                     <div key={f.value}>
@@ -169,7 +171,7 @@ export default function ExportPage({ locale: appLocale }) {
 
               {/* Locale */}
               <div className="form-group">
-                <label className="form-label" htmlFor="export-locale">Language / Locale</label>
+                <label className="form-label" htmlFor="export-locale">{t('language_locale')}</label>
                 <select
                   id="export-locale"
                   className="form-control"
@@ -188,8 +190,8 @@ export default function ExportPage({ locale: appLocale }) {
                 className="export-filters-toggle"
                 onClick={() => setShowFilters(prev => !prev)}
               >
-                {showFilters ? '▾' : '▸'} {showFilters ? 'Hide' : 'Show'} filters
-                {hasActiveFilters && <span style={{ marginLeft: 6, color: 'var(--wpw-primary)', fontWeight: 600 }}>(active)</span>}
+                {showFilters ? '▾' : '▸'} {showFilters ? t('hide_filters') : t('show_filters')} filters
+                {hasActiveFilters && <span style={{ marginLeft: 6, color: 'var(--wpw-primary)', fontWeight: 600 }}>{t('filters_active')}</span>}
               </button>
 
               {showFilters && (
@@ -197,13 +199,13 @@ export default function ExportPage({ locale: appLocale }) {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
 
                     <div className="form-group">
-                      <label className="form-label">Application Tag</label>
+                      <label className="form-label">{t('filter_app_tag')}</label>
                       <select
                         className="form-control"
                         value={filters.operation}
                         onChange={e => handleFilterChange('operation', e.target.value)}
                       >
-                        <option value="">All</option>
+                        <option value="">{t('all')}</option>
                         {operations.map(op => (
                           <option key={op.code || op.id} value={op.code || op.id}>
                             {op.name || op.label || op.code}
@@ -213,27 +215,27 @@ export default function ExportPage({ locale: appLocale }) {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Product Type</label>
+                      <label className="form-label">{t('filter_product_type')}</label>
                       <select
                         className="form-control"
                         value={filters.productType}
                         onChange={e => handleFilterChange('productType', e.target.value)}
                       >
-                        <option value="">All</option>
-                        <option value="main">Main</option>
-                        <option value="spare_part">Spare Part</option>
-                        <option value="accessory">Accessory</option>
+                        <option value="">{t('all')}</option>
+                        <option value="main">{t('opt_main')}</option>
+                        <option value="spare_part">{t('opt_spare_part')}</option>
+                        <option value="accessory">{t('opt_accessory')}</option>
                       </select>
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Tool Material</label>
+                      <label className="form-label">{t('filter_tool_material')}</label>
                       <select
                         className="form-control"
                         value={filters.toolMaterial}
                         onChange={e => handleFilterChange('toolMaterial', e.target.value)}
                       >
-                        <option value="">All</option>
+                        <option value="">{t('all')}</option>
                         {(filterOptions.toolMaterial || []).map(v => (
                           <option key={v} value={v}>{v}</option>
                         ))}
@@ -241,13 +243,13 @@ export default function ExportPage({ locale: appLocale }) {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Workpiece Material</label>
+                      <label className="form-label">{t('filter_workpiece_material')}</label>
                       <select
                         className="form-control"
                         value={filters.workpieceMaterial}
                         onChange={e => handleFilterChange('workpieceMaterial', e.target.value)}
                       >
-                        <option value="">All</option>
+                        <option value="">{t('all')}</option>
                         {(filterOptions.workpieceMaterial || []).map(v => (
                           <option key={v} value={v}>{v}</option>
                         ))}
@@ -255,13 +257,13 @@ export default function ExportPage({ locale: appLocale }) {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Machine Type</label>
+                      <label className="form-label">{t('filter_machine_type')}</label>
                       <select
                         className="form-control"
                         value={filters.machineType}
                         onChange={e => handleFilterChange('machineType', e.target.value)}
                       >
-                        <option value="">All</option>
+                        <option value="">{t('all')}</option>
                         {(filterOptions.machineType || []).map(v => (
                           <option key={v} value={v}>{v}</option>
                         ))}
@@ -269,13 +271,13 @@ export default function ExportPage({ locale: appLocale }) {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Machine Brand</label>
+                      <label className="form-label">{t('filter_machine_brand')}</label>
                       <select
                         className="form-control"
                         value={filters.machineBrand}
                         onChange={e => handleFilterChange('machineBrand', e.target.value)}
                       >
-                        <option value="">All</option>
+                        <option value="">{t('all')}</option>
                         {(filterOptions.machineBrand || []).map(v => (
                           <option key={v} value={v}>{v}</option>
                         ))}
@@ -283,13 +285,13 @@ export default function ExportPage({ locale: appLocale }) {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Cutting Type</label>
+                      <label className="form-label">{t('filter_cutting_type')}</label>
                       <select
                         className="form-control"
                         value={filters.cuttingType}
                         onChange={e => handleFilterChange('cuttingType', e.target.value)}
                       >
-                        <option value="">All</option>
+                        <option value="">{t('all')}</option>
                         {(filterOptions.cuttingType || []).map(v => (
                           <option key={v} value={v}>{v}</option>
                         ))}
@@ -297,13 +299,13 @@ export default function ExportPage({ locale: appLocale }) {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Shank (mm)</label>
+                      <label className="form-label">{t('filter_shank')}</label>
                       <select
                         className="form-control"
                         value={filters.shankMm}
                         onChange={e => handleFilterChange('shankMm', e.target.value)}
                       >
-                        <option value="">All</option>
+                        <option value="">{t('all')}</option>
                         {(filterOptions.shankMm || []).map(v => (
                           <option key={v} value={v}>{v}</option>
                         ))}
@@ -311,7 +313,7 @@ export default function ExportPage({ locale: appLocale }) {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Diameter min (mm)</label>
+                      <label className="form-label">{t('filter_diam_min')}</label>
                       <input
                         className="form-control"
                         type="number"
@@ -322,7 +324,7 @@ export default function ExportPage({ locale: appLocale }) {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Diameter max (mm)</label>
+                      <label className="form-label">{t('filter_diam_max')}</label>
                       <input
                         className="form-control"
                         type="number"
@@ -333,28 +335,28 @@ export default function ExportPage({ locale: appLocale }) {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Availability</label>
+                      <label className="form-label">{t('filter_availability')}</label>
                       <select
                         className="form-control"
                         value={filters.inStock}
                         onChange={e => handleFilterChange('inStock', e.target.value)}
                       >
-                        <option value="">All</option>
-                        <option value="true">In Stock Only</option>
-                        <option value="false">Out of Stock Only</option>
+                        <option value="">{t('all')}</option>
+                        <option value="true">{t('opt_in_stock')}</option>
+                        <option value="false">{t('opt_out_of_stock')}</option>
                       </select>
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Ball Bearing</label>
+                      <label className="form-label">{t('filter_ball_bearing')}</label>
                       <select
                         className="form-control"
                         value={filters.hasBallBearing}
                         onChange={e => handleFilterChange('hasBallBearing', e.target.value)}
                       >
-                        <option value="">Any</option>
-                        <option value="true">Yes</option>
-                        <option value="false">No</option>
+                        <option value="">{t('any')}</option>
+                        <option value="true">{t('yes')}</option>
+                        <option value="false">{t('no')}</option>
                       </select>
                     </div>
 
@@ -366,7 +368,7 @@ export default function ExportPage({ locale: appLocale }) {
                       style={{ marginTop: 8, fontSize: 12 }}
                       onClick={clearFilters}
                     >
-                      Clear all filters
+                      {t('clear_all_filters')}
                     </button>
                   )}
                 </div>
@@ -380,7 +382,7 @@ export default function ExportPage({ locale: appLocale }) {
                   disabled={previewLoading}
                   style={{ minWidth: 120 }}
                 >
-                  {previewLoading ? 'Loading...' : 'Preview'}
+                  {previewLoading ? t('loading_preview') : t('preview')}
                 </button>
                 <button
                   type="submit"
@@ -391,15 +393,15 @@ export default function ExportPage({ locale: appLocale }) {
                   {loading ? (
                     <>
                       <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                      Preparing...
+                      {t('preparing')}
                     </>
                   ) : (
-                    `Download ${format.toUpperCase()}`
+                    t('download_format', { format: format.toUpperCase() })
                   )}
                 </button>
                 {totalCount !== null && (
                   <span style={{ fontSize: 13, color: 'var(--wpw-mid-gray)' }}>
-                    {totalCount} product{totalCount !== 1 ? 's' : ''} will be exported
+                    {t('products_will_export', { count: totalCount })}
                   </span>
                 )}
               </div>
@@ -407,30 +409,30 @@ export default function ExportPage({ locale: appLocale }) {
           </form>
 
           <div className="card" style={{ marginTop: 16 }}>
-            <div className="card-title">About Export Formats</div>
+            <div className="card-title">{t('about_export_formats')}</div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: 'var(--wpw-light-gray)' }}>
-                  <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid var(--wpw-border)', fontWeight: 600 }}>Format</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid var(--wpw-border)', fontWeight: 600 }}>Description</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid var(--wpw-border)', fontWeight: 600 }}>Best for</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid var(--wpw-border)', fontWeight: 600 }}>{t('col_format')}</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid var(--wpw-border)', fontWeight: 600 }}>{t('col_description')}</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid var(--wpw-border)', fontWeight: 600 }}>{t('col_best_for')}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>CSV</td>
-                  <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>Comma-separated plain text</td>
-                  <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>Data import, scripts</td>
+                  <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>{t('csv_desc')}</td>
+                  <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>{t('csv_best')}</td>
                 </tr>
                 <tr>
                   <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>Excel</td>
-                  <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>Formatted spreadsheet</td>
-                  <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>Business reports</td>
+                  <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>{t('excel_desc')}</td>
+                  <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--wpw-border)' }}>{t('excel_best')}</td>
                 </tr>
                 <tr>
                   <td style={{ padding: '8px 12px' }}>XML</td>
-                  <td style={{ padding: '8px 12px' }}>Structured markup data</td>
-                  <td style={{ padding: '8px 12px' }}>System integration</td>
+                  <td style={{ padding: '8px 12px' }}>{t('xml_desc')}</td>
+                  <td style={{ padding: '8px 12px' }}>{t('xml_best')}</td>
                 </tr>
               </tbody>
             </table>
@@ -442,7 +444,7 @@ export default function ExportPage({ locale: appLocale }) {
           <div className="export-right">
             <div className="card export-preview-card">
               <div className="card-title">
-                Export Preview
+                {t('export_preview_title')}
                 {totalCount !== null && (
                   <span style={{ fontWeight: 400, fontSize: 13, marginLeft: 8, color: 'var(--wpw-mid-gray)' }}>
                     ({totalCount} total)
@@ -451,9 +453,9 @@ export default function ExportPage({ locale: appLocale }) {
               </div>
 
               {previewLoading ? (
-                <div style={{ padding: 24, textAlign: 'center', color: 'var(--wpw-mid-gray)' }}>Loading…</div>
+                <div style={{ padding: 24, textAlign: 'center', color: 'var(--wpw-mid-gray)' }}>{t('loading')}</div>
               ) : previewItems.length === 0 ? (
-                <p style={{ padding: 16, color: 'var(--wpw-mid-gray)' }}>No products match the selected filters.</p>
+                <p style={{ padding: 16, color: 'var(--wpw-mid-gray)' }}>{t('no_products_match')}</p>
               ) : (
                 <>
                   <div className="export-preview-list">
@@ -491,10 +493,10 @@ export default function ExportPage({ locale: appLocale }) {
                         onClick={() => fetchPreview(previewPage - 1)}
                         style={{ fontSize: 12, padding: '4px 12px' }}
                       >
-                        Prev
+                        {t('prev_page')}
                       </button>
                       <span style={{ fontSize: 13, lineHeight: '28px' }}>
-                        Page {previewPage} of {totalPages}
+                        {t('page_of', { current: previewPage, total: totalPages })}
                       </span>
                       <button
                         className="btn"
@@ -502,7 +504,7 @@ export default function ExportPage({ locale: appLocale }) {
                         onClick={() => fetchPreview(previewPage + 1)}
                         style={{ fontSize: 12, padding: '4px 12px' }}
                       >
-                        Next
+                        {t('next_page')}
                       </button>
                     </div>
                   )}

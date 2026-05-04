@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import LocaleSwitcher from './LocaleSwitcher';
 import { getCart } from '../api/api';
+import { useLocale } from '../contexts/LocaleContext';
 
 const ADMIN_PRIVILEGES = new Set([
   'BULK_IMPORT',
@@ -23,8 +24,9 @@ function isLoggedIn() {
   return !!localStorage.getItem('authToken');
 }
 
-export default function Navbar({ locale, onLocaleChange }) {
+export default function Navbar() {
   const navigate = useNavigate();
+  const { locale, setLocale, t } = useLocale();
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
 
@@ -54,11 +56,11 @@ export default function Navbar({ locale, onLocaleChange }) {
   const isDealer = localStorage.getItem('userRole') === 'dealer';
 
   const links = [
-    { to: '/catalog', label: 'Catalog', show: true },
-    { to: '/export', label: 'Export', show: canExport },
-    { to: '/dealer', label: 'My Orders', show: isDealer },
-    { to: '/import', label: 'Import', show: isDealer },
-    { to: '/admin', label: 'Admin', show: canAdmin },
+    { to: '/catalog', label: t('nav_catalog'), show: true },
+    { to: '/export', label: t('nav_export'), show: canExport },
+    { to: '/dealer', label: t('nav_my_orders'), show: isDealer },
+    { to: '/import', label: t('nav_import'), show: isDealer },
+    { to: '/admin', label: t('nav_admin'), show: canAdmin },
   ].filter(l => l.show);
 
   return (
@@ -91,14 +93,14 @@ export default function Navbar({ locale, onLocaleChange }) {
         </div>
 
         <div className="navbar-right">
-          <LocaleSwitcher locale={locale} onChange={onLocaleChange} />
+          <LocaleSwitcher locale={locale} onChange={setLocale} />
           {loggedIn ? (
             <button className="navbar-auth-btn" onClick={handleLogout}>
-              Logout
+              {t('nav_logout')}
             </button>
           ) : (
             <NavLink to="/login" className="navbar-auth-btn">
-              Login
+              {t('nav_login')}
             </NavLink>
           )}
           {/* Hamburger — mobile only */}
@@ -127,11 +129,11 @@ export default function Navbar({ locale, onLocaleChange }) {
             </NavLink>
           ))}
           <div className="mobile-menu-footer">
-            <LocaleSwitcher locale={locale} onChange={v => { onLocaleChange(v); setMenuOpen(false); }} />
+            <LocaleSwitcher locale={locale} onChange={v => { setLocale(v); setMenuOpen(false); }} />
             {loggedIn ? (
-              <button className="navbar-auth-btn" onClick={handleLogout}>Logout</button>
+              <button className="navbar-auth-btn" onClick={handleLogout}>{t('nav_logout')}</button>
             ) : (
-              <NavLink to="/login" className="navbar-auth-btn" onClick={() => setMenuOpen(false)}>Login</NavLink>
+              <NavLink to="/login" className="navbar-auth-btn" onClick={() => setMenuOpen(false)}>{t('nav_login')}</NavLink>
             )}
           </div>
         </div>

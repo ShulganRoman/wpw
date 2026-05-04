@@ -570,10 +570,11 @@ export function getCart() {
   return request('/dealer/cart');
 }
 
-export function addToCart(productIds) {
+// items: [{ productId, qty }]
+export function addToCart(items) {
   return request('/dealer/cart/items', {
     method: 'POST',
-    body: JSON.stringify({ productIds }),
+    body: JSON.stringify({ items }),
   });
 }
 

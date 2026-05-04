@@ -1,5 +1,5 @@
 import {useState, useEffect, useCallback, useRef} from 'react';
-import {getCategories, getProducts, getOperations, search, getFilterOptions, getCart, addToCart, addToCartByFilter} from '../api/api';
+import {getCategories, getProducts, getOperations, search, getFilterOptions, getCart, addToCart, addToCartByFilter, removeFromCart} from '../api/api';
 import ProductCard from '../components/ProductCard';
 import CartSidebar from '../components/CartSidebar';
 import Pagination from '../components/Pagination';
@@ -269,11 +269,13 @@ function normalizeTree(sections) {
 
 export default function CatalogPage({locale}) {
     const toast = useToast();
-    const isDealer = localStorage.getItem('userRole') === 'dealer';
+    const userRole = localStorage.getItem('userRole');
+    const isDealer = userRole === 'dealer';
+    const isAdmin = userRole === 'admin';
 
     // Persistent session state (survives navigation)
     const {
-        selected, setSelected,
+        qtys, setProductQty, setManyQtys, clearQtys,
         filters, setFilters,
         selectedNode, setSelectedNode,
         selectedOperation, setSelectedOperation,
@@ -311,23 +313,18 @@ export default function CatalogPage({locale}) {
         return () => document.removeEventListener('mouseup', onMouseUp);
     }, []);
 
-    function handleDragStart(id, isSelected) {
+    function handleDragStart(id) {
+        const currentQty = qtys.get(id) ?? 0;
         dragRef.current.active = true;
-        dragRef.current.action = isSelected ? 'remove' : 'add';
-        setSelected(prev => {
-            const next = new Set(prev);
-            if (dragRef.current.action === 'add') next.add(id); else next.delete(id);
-            return next;
-        });
+        dragRef.current.action = currentQty > 0 ? 'remove' : 'add';
+        setProductQty(id, currentQty > 0 ? 0 : 1);
     }
 
     function handleDragMove(id) {
         if (!dragRef.current.active) return;
-        setSelected(prev => {
-            const next = new Set(prev);
-            if (dragRef.current.action === 'add') next.add(id); else next.delete(id);
-            return next;
-        });
+        const currentQty = qtys.get(id) ?? 0;
+        if (dragRef.current.action === 'add' && currentQty === 0) setProductQty(id, 1);
+        else if (dragRef.current.action === 'remove' && currentQty > 0) setProductQty(id, 0);
     }
 
     useEffect(() => {
@@ -339,14 +336,56 @@ export default function CatalogPage({locale}) {
         getCart().then(setCartData).catch(() => {});
     }, [isDealer]);
 
-    async function handleAddToCart(productIds) {
-        if (!productIds.length) return;
+    // Добавить все staged (qty>0, не в корзине) с их количеством
+    async function handleAddStagedToCart() {
+        const items = [...qtys.entries()]
+            .filter(([id, q]) => q > 0 && !cartProductIds.has(id))
+            .map(([id, q]) => ({ productId: id, qty: q }));
+        if (!items.length) return;
         setAddingToCart(true);
         try {
-            const cart = await addToCart(productIds);
+            const cart = await addToCart(items);
             setCartData(cart);
-            setSelected(new Set());
-            toast(`Added ${productIds.length} item(s) to cart`, 'success');
+            setManyQtys(prev => {
+                const next = { ...prev };
+                items.forEach(({ productId }) => delete next[productId]);
+                return next;
+            });
+            toast(`Added ${items.length} item(s) to cart`, 'success');
+        } catch (err) {
+            toast(err.message, 'error');
+        } finally {
+            setAddingToCart(false);
+        }
+    }
+
+    // Добавить товар с карточки (кнопка + Add)
+    async function handleAddToCartWithQty(product, qty) {
+        try {
+            const cart = await addToCart([{ productId: product.id, qty }]);
+            setCartData(cart);
+            setProductQty(product.id, 0);
+        } catch (err) {
+            toast(err.message, 'error');
+        }
+    }
+
+    async function handleRemoveSelectedFromCart() {
+        const ids = [...qtys.entries()]
+            .filter(([id, q]) => q > 0 && cartProductIds.has(id))
+            .map(([id]) => id);
+        if (!ids.length) return;
+        setAddingToCart(true);
+        try {
+            let cart;
+            for (const id of ids) cart = await removeFromCart(id);
+            setCartData(cart);
+            setManyQtys(prev => {
+                const next = { ...prev };
+                ids.forEach(id => delete next[id]);
+                return next;
+            });
+            toast(`Removed ${ids.length} item(s) from cart`, 'success');
         } catch (err) {
             toast(err.message, 'error');
         } finally {
@@ -374,21 +413,13 @@ export default function CatalogPage({locale}) {
         }
     }
 
-    function toggleSelect(id) {
-        setSelected(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id); else next.add(id);
-            return next;
-        });
-    }
-
     function toggleSelectAll() {
-        const pageItems = searchResults !== null ? (searchResults || []) : products;
-        const allPageSelected = pageItems.length > 0 && pageItems.every(p => selected.has(p.id));
-        setSelected(prev => {
-            const next = new Set(prev);
-            if (allPageSelected) pageItems.forEach(p => next.delete(p.id));
-            else pageItems.forEach(p => next.add(p.id));
+        const pageItems = displayProducts;
+        const allStaged = pageItems.length > 0 && pageItems.every(p => (qtys.get(p.id) ?? 0) > 0);
+        setManyQtys(prev => {
+            const next = { ...prev };
+            if (allStaged) pageItems.forEach(p => delete next[p.id]);
+            else pageItems.forEach(p => { if (!next[p.id]) next[p.id] = 1; });
             return next;
         });
     }
@@ -451,7 +482,7 @@ export default function CatalogPage({locale}) {
     function handleCategorySelect(node) {
         setSelectedNode(node);
         setPage(1);
-        setSelected(new Set());
+        clearQtys();
     }
 
     function handleClearFilters() {
@@ -508,6 +539,12 @@ export default function CatalogPage({locale}) {
 
     const cartItemCount = cartData?.totalItems || cartData?.items?.length || 0;
     const cartProductIds = new Set((cartData?.items || []).map(it => it.productId));
+
+    // staged = qty > 0; разбивка по статусу корзины
+    const stagedNotInCart = [...qtys.entries()].filter(([id, q]) => q > 0 && !cartProductIds.has(id));
+    const stagedInCart    = [...qtys.entries()].filter(([id, q]) => q > 0 && cartProductIds.has(id));
+    const totalStaged = stagedNotInCart.length + stagedInCart.length;
+    const allPageStaged = displayProducts.length > 0 && displayProducts.every(p => (qtys.get(p.id) ?? 0) > 0);
 
     return (
         <div>
@@ -623,14 +660,24 @@ export default function CatalogPage({locale}) {
                             )}
                         </div>
                         <div style={{display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap'}}>
-                            {isDealer && selected.size > 0 && (
+                            {isDealer && stagedNotInCart.length > 0 && (
                                 <button
                                     className="btn btn-primary"
                                     style={{fontSize: 13, padding: '6px 12px'}}
                                     disabled={addingToCart}
-                                    onClick={() => handleAddToCart([...selected])}
+                                    onClick={handleAddStagedToCart}
                                 >
-                                    {addingToCart ? 'Adding…' : `🛒 Add selected (${selected.size})`}
+                                    {addingToCart ? 'Adding…' : `🛒 Add to cart (${stagedNotInCart.length})`}
+                                </button>
+                            )}
+                            {isDealer && stagedInCart.length > 0 && (
+                                <button
+                                    className="btn"
+                                    style={{fontSize: 13, padding: '6px 12px', background: '#e53e3e', color: '#fff', border: 'none'}}
+                                    disabled={addingToCart}
+                                    onClick={handleRemoveSelectedFromCart}
+                                >
+                                    {addingToCart ? 'Removing…' : `🗑 Remove from cart (${stagedInCart.length})`}
                                 </button>
                             )}
                             {isDealer && !isSearchMode && displayTotal > 0 && (
@@ -661,25 +708,25 @@ export default function CatalogPage({locale}) {
                         }}>
                             <input
                                 type="checkbox"
-                                checked={displayProducts.every(p => selected.has(p.id))}
+                                checked={allPageStaged}
                                 onChange={toggleSelectAll}
                                 style={{cursor: 'pointer'}}
                             />
                             <span style={{fontSize: 13, color: 'var(--wpw-text-secondary)'}}>
-                                {selected.size > 0
-                                    ? `${selected.size} selected (this page: ${displayProducts.filter(p => selected.has(p.id)).length})`
+                                {totalStaged > 0
+                                    ? `${totalStaged} staged (this page: ${displayProducts.filter(p => (qtys.get(p.id) ?? 0) > 0).length})`
                                     : `Select all on this page (${displayProducts.length})`}
                             </span>
-                            {selected.size > 0 && (
+                            {totalStaged > 0 && (
                                 <button
                                     style={{
                                         marginLeft: 'auto', fontSize: 12,
                                         background: 'none', border: 'none',
                                         color: 'var(--wpw-text-secondary)', cursor: 'pointer',
                                     }}
-                                    onClick={() => setSelected(new Set())}
+                                    onClick={clearQtys}
                                 >
-                                    Clear selection
+                                    Clear all
                                 </button>
                             )}
                         </div>
@@ -707,12 +754,12 @@ export default function CatalogPage({locale}) {
                                     <ProductCard
                                         key={p.id || p.toolNo || p.tool_no}
                                         product={p}
-                                        selectable={isDealer}
-                                        selected={isDealer && selected.has(p.id)}
+                                        qty={isDealer ? (qtys.get(p.id) ?? 0) : undefined}
+                                        onQtyChange={isDealer ? (q) => setProductQty(p.id, q) : undefined}
                                         inCart={isDealer && cartProductIds.has(p.id)}
-                                        onSelect={() => toggleSelect(p.id)}
-                                        onAddToCart={isDealer ? prod => handleAddToCart([prod.id]) : undefined}
-                                        onDragStart={isDealer ? (isSelected) => handleDragStart(p.id, isSelected) : undefined}
+                                        showStock={isAdmin}
+                                        onAddToCart={isDealer ? handleAddToCartWithQty : undefined}
+                                        onDragStart={isDealer ? () => handleDragStart(p.id) : undefined}
                                         onDragMove={isDealer ? () => handleDragMove(p.id) : undefined}
                                     />
                                 ))}

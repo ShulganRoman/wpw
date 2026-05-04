@@ -15,6 +15,7 @@ import com.wpw.pim.repository.pricing.PriceListItemRepository;
 import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.web.dto.cart.CartDto;
 import com.wpw.pim.web.dto.cart.CartItemDto;
+import com.wpw.pim.web.dto.cart.CartItemRequest;
 import com.wpw.pim.web.dto.cart.PriceTierDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -105,18 +106,19 @@ public class CartService {
     }
 
     @Transactional
-    public CartDto addItems(UUID dealerId, List<UUID> productIds) {
+    public CartDto addItems(UUID dealerId, List<CartItemRequest> items) {
         Dealer dealer = loadDealer(dealerId);
-        for (UUID productId : productIds) {
-            Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found: " + productId));
-            CartItemId itemId = new CartItemId(dealerId, productId);
+        for (CartItemRequest req : items) {
+            int qty = Math.max(1, req.qty());
+            Product product = productRepository.findById(req.productId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found: " + req.productId()));
+            CartItemId itemId = new CartItemId(dealerId, req.productId());
             CartItem existing = cartItemRepository.findById(itemId).orElse(null);
             if (existing != null) {
-                existing.setQty(existing.getQty() + 1);
+                existing.setQty(existing.getQty() + qty);
                 cartItemRepository.save(existing);
             } else {
-                cartItemRepository.save(new CartItem(dealer, product, 1));
+                cartItemRepository.save(new CartItem(dealer, product, qty));
             }
         }
         return getCart(dealerId);
