@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from './ToastContext';
-import { getDealerPriceList, importDealerPriceList, deleteDealerPriceList, downloadDealerPriceList, downloadDealerPriceTemplate, getCurrencies } from '../api/api';
+import { getDealerPriceList, importDealerPriceList, deleteDealerPriceList, downloadDealerPriceList, downloadDealerPriceTemplate } from '../api/api';
 
 async function downloadFile(fetchFn, fallbackName) {
   const res = await fetchFn();
@@ -17,15 +17,13 @@ export default function AdminDealerPricePanel({ dealer, onClose }) {
   const toast = useToast();
   const fileRef = useRef(null);
   const [priceList, setPriceList] = useState(undefined); // undefined = loading, null = none
-  const [currencies, setCurrencies] = useState([]);
   const [file, setFile] = useState(null);
-  const [currencyCode, setCurrencyCode] = useState('USD');
+  const currencyCode = dealer.currency || 'USD';
   const [validTo, setValidTo] = useState('');
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState(null);
 
   useEffect(() => {
-    getCurrencies().then(setCurrencies).catch(() => {});
     getDealerPriceList(dealer.id)
       .then(d => setPriceList(d))
       .catch(e => {
@@ -122,9 +120,9 @@ export default function AdminDealerPricePanel({ dealer, onClose }) {
           <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div>
               <div style={{ fontSize: 11, color: 'var(--wpw-gray)', marginBottom: 4 }}>Currency</div>
-              <select className="form-control" value={currencyCode} onChange={e => setCurrencyCode(e.target.value)} style={{ width: 100 }}>
-                {currencies.map(c => <option key={c.code} value={c.code}>{c.code} {c.symbol}</option>)}
-              </select>
+              <div style={{ fontSize: 13, fontWeight: 600, padding: '6px 10px', background: '#f5f5f5', borderRadius: 4, border: '1px solid var(--wpw-border)' }}>
+                {currencyCode}
+              </div>
             </div>
             <div>
               <div style={{ fontSize: 11, color: 'var(--wpw-gray)', marginBottom: 4 }}>Valid to (optional)</div>

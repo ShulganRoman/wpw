@@ -253,8 +253,8 @@ function PriceBlock({ price }) {
 }
 
 function formatValue(val) {
-  if (val === null || val === undefined) return null;
-  if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+  if (val === null || val === undefined || val === false) return null;
+  if (typeof val === 'boolean') return 'Yes';
   if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : null;
   if (typeof val === 'object' && val instanceof Set) return [...val].join(', ');
   if (val === '' || val === 0) return null;
@@ -783,7 +783,7 @@ export default function ProductPage({ locale }) {
               {STOCK_LABELS[stockKey] || stockKey}
             </span>
             {product.isOrderable && (
-              <span className="orderable-badge">Orderable</span>
+              <span className="orderable-badge">Available to order</span>
             )}
           </div>
 

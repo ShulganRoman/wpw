@@ -204,6 +204,7 @@ function DealerModal({ dealer, onSave, onClose }) {
     if (!form.dealerCode.trim()) { alert('Enter dealer code'); return; }
     if (!form.companyName.trim()) { alert('Enter company name'); return; }
     if (!form.country.trim()) { alert('Enter country'); return; }
+    if (!form.currency) { alert('Select currency'); return; }
     const primaryContacts = form.contacts.filter(c => c.isPrimary);
     if (primaryContacts.length === 0) { alert('Specify at least one primary contact (check "Primary contact")'); return; }
     const primaryMissingEmail = primaryContacts.some(c => !c.email?.trim());
@@ -302,8 +303,8 @@ function DealerModal({ dealer, onSave, onClose }) {
 
           {/* 5. Commercial info */}
           <SectionToggle title="Commercial Info">
-            <FieldRow label="Currency">
-              <FSelect value={form.currency} onChange={v => set('currency', v)} options={CURRENCIES} />
+            <FieldRow label="Currency" required>
+              <FSelect value={form.currency} onChange={v => set('currency', v)} options={CURRENCIES} placeholder="— select currency —" />
             </FieldRow>
             <FieldRow label="Discount Tier">
               <FInput value={form.discountTier} onChange={v => set('discountTier', v)} placeholder="Gold / Silver…" />
