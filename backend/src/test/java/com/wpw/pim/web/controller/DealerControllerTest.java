@@ -1,6 +1,7 @@
 package com.wpw.pim.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wpw.pim.auth.repository.UserRepository;
 import com.wpw.pim.auth.service.JwtService;
 import com.wpw.pim.auth.service.PimUserDetailsService;
 import com.wpw.pim.config.SecurityConfig;
@@ -10,6 +11,7 @@ import com.wpw.pim.security.DealerPrincipal;
 import com.wpw.pim.repository.dealer.DealerRepository;
 import com.wpw.pim.service.dealer.DealerService;
 import com.wpw.pim.service.dealer.SkuMappingService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import com.wpw.pim.web.dto.dealer.PriceListDto;
 import com.wpw.pim.web.dto.dealer.SkuMappingCreateRequest;
 import com.wpw.pim.web.dto.dealer.SkuMappingDto;
@@ -44,6 +46,8 @@ class DealerControllerTest {
     @MockitoBean private DealerService dealerService;
     @MockitoBean private SkuMappingService skuMappingService;
     @MockitoBean private DealerRepository dealerRepository;
+    @MockitoBean private UserRepository userRepository;
+    @MockitoBean private PasswordEncoder passwordEncoder;
     @MockitoBean private JwtService jwtService;
     @MockitoBean private PimUserDetailsService pimUserDetailsService;
     @MockitoBean private ApiKeyAuthProvider apiKeyAuthProvider;
