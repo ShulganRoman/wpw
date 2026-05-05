@@ -1,17 +1,27 @@
 package com.wpw.pim.service.email;
 
+import com.wpw.pim.domain.media.MediaFile;
 import com.wpw.pim.domain.order.Order;
+import com.wpw.pim.domain.order.OrderItem;
 import com.wpw.pim.domain.order.OrderStatus;
+import com.wpw.pim.repository.media.MediaFileRepository;
 import com.wpw.pim.repository.notification.NotificationEmailRepository;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -20,9 +30,14 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final NotificationEmailRepository notificationEmailRepository;
+    private final MediaFileRepository mediaFileRepository;
+    private final OrderExcelExporter orderExcelExporter;
 
     @Value("${spring.mail.username}")
     private String fromAddress;
+
+    @Value("${pim.export.base-url}")
+    private String exportBaseUrl;
 
     @Async
     public void sendOrderSubmittedToAdmins(Order order) {
@@ -43,7 +58,11 @@ public class EmailService {
         if (order.getComment() != null && !order.getComment().isBlank()) {
             body.append(String.format("%n%nComment from dealer:%n%s", order.getComment()));
         }
-        send(recipients, subject, body.toString());
+
+        Map<UUID, String> imageUrls = resolveImageUrls(order);
+        byte[] excel = orderExcelExporter.export(order, imageUrls);
+        String filename = buildFilename(dealerName, order);
+        sendWithAttachment(recipients, subject, body.toString(), excel, filename);
     }
 
     @Async
@@ -96,6 +115,42 @@ public class EmailService {
         } catch (Exception e) {
             log.error("Failed to send email to {}: {}", to, e.getMessage());
         }
+    }
+
+    private void sendWithAttachment(List<String> to, String subject, String body, byte[] attachment, String filename) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(to.toArray(String[]::new));
+            helper.setSubject(subject);
+            helper.setText(body);
+            helper.addAttachment(filename, new ByteArrayDataSource(attachment,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            mailSender.send(message);
+        } catch (Exception e) {
+            log.error("Failed to send email with attachment to {}: {}", to, e.getMessage());
+        }
+    }
+
+    private Map<UUID, String> resolveImageUrls(Order order) {
+        List<UUID> productIds = order.getItems().stream()
+            .map(OrderItem::getProductId)
+            .filter(id -> id != null)
+            .distinct()
+            .toList();
+        if (productIds.isEmpty()) return Collections.emptyMap();
+        return mediaFileRepository.findByProductIds(productIds).stream()
+            .collect(Collectors.toMap(
+                m -> m.getProduct().getId(),
+                m -> exportBaseUrl + m.getUrl(),
+                (first, second) -> first // keep primary image (lowest sort_order)
+            ));
+    }
+
+    private String buildFilename(String dealerName, Order order) {
+        String safeName = dealerName.replaceAll("[^A-Za-z0-9_\\-]", "_");
+        return safeName + "_order_" + order.getId() + ".xlsx";
     }
 
     private String dealerStatusLabel(OrderStatus status) {

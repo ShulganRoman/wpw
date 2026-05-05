@@ -5,7 +5,10 @@ import com.wpw.pim.domain.notification.NotificationEmail;
 import com.wpw.pim.domain.order.Order;
 import com.wpw.pim.domain.order.OrderItem;
 import com.wpw.pim.domain.order.OrderStatus;
+import com.wpw.pim.repository.media.MediaFileRepository;
 import com.wpw.pim.repository.notification.NotificationEmailRepository;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,11 +22,13 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Properties;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,15 +38,21 @@ class EmailServiceTest {
 
     @Mock private JavaMailSender mailSender;
     @Mock private NotificationEmailRepository notificationEmailRepository;
+    @Mock private MediaFileRepository mediaFileRepository;
+    @Mock private OrderExcelExporter orderExcelExporter;
 
     @InjectMocks
     private EmailService service;
 
     @BeforeEach
-    void setUp() throws Exception {
-        var f = EmailService.class.getDeclaredField("fromAddress");
-        f.setAccessible(true);
-        f.set(service, "from@test.com");
+    void injectValues() throws Exception {
+        var fromField = EmailService.class.getDeclaredField("fromAddress");
+        fromField.setAccessible(true);
+        fromField.set(service, "from@test.com");
+
+        var baseUrlField = EmailService.class.getDeclaredField("exportBaseUrl");
+        baseUrlField.setAccessible(true);
+        baseUrlField.set(service, "https://example.com");
     }
 
     private NotificationEmail recipient(String email, boolean active) {
@@ -79,15 +90,22 @@ class EmailServiceTest {
     @DisplayName("sendOrderSubmittedToAdmins")
     class OrderSubmitted {
 
+        @BeforeEach
+        void stubMailSender() {
+            lenient().when(orderExcelExporter.export(any(), any())).thenReturn(new byte[0]);
+            lenient().when(mailSender.createMimeMessage())
+                .thenReturn(new MimeMessage(Session.getInstance(new Properties())));
+        }
+
         @Test
-        @DisplayName("sends email if active recipients exist")
+        @DisplayName("sends mime email with attachment if active recipients exist")
         void sendsWhenRecipientsExist() {
             when(notificationEmailRepository.findByActiveTrue())
                 .thenReturn(List.of(recipient("admin@example.com", true)));
 
             service.sendOrderSubmittedToAdmins(buildOrder());
 
-            verify(mailSender).send(any(SimpleMailMessage.class));
+            verify(mailSender).send(any(MimeMessage.class));
         }
 
         @Test
@@ -97,7 +115,7 @@ class EmailServiceTest {
 
             service.sendOrderSubmittedToAdmins(buildOrder());
 
-            verify(mailSender, never()).send(any(SimpleMailMessage.class));
+            verify(mailSender, never()).send(any(MimeMessage.class));
         }
 
         @Test
@@ -106,7 +124,7 @@ class EmailServiceTest {
             when(notificationEmailRepository.findByActiveTrue())
                 .thenReturn(List.of(recipient("admin@example.com", true)));
             doThrow(new RuntimeException("smtp down"))
-                .when(mailSender).send(any(SimpleMailMessage.class));
+                .when(mailSender).send(any(MimeMessage.class));
 
             assertThatCode(() -> service.sendOrderSubmittedToAdmins(buildOrder()))
                 .doesNotThrowAnyException();
