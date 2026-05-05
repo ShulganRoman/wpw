@@ -5,20 +5,27 @@ import com.wpw.pim.repository.dealer.DealerRepository;
 import com.wpw.pim.security.DealerPrincipal;
 import com.wpw.pim.service.cart.CartService;
 import com.wpw.pim.service.product.ProductService;
+import com.wpw.pim.service.cart.CartImportService;
+import com.wpw.pim.service.cart.CartImportTemplateGenerator;
 import com.wpw.pim.web.dto.cart.AddToCartRequest;
 import com.wpw.pim.web.dto.cart.CartDto;
-import com.wpw.pim.web.dto.cart.CartItemRequest;
+import com.wpw.pim.web.dto.cart.CartImportResult;
 import com.wpw.pim.web.dto.product.ProductFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -36,6 +43,8 @@ import java.util.UUID;
 public class CartController {
 
     private final CartService cartService;
+    private final CartImportService cartImportService;
+    private final CartImportTemplateGenerator cartImportTemplateGenerator;
     private final ProductService productService;
     private final DealerRepository dealerRepository;
 
@@ -97,6 +106,31 @@ public class CartController {
     @ApiResponse(responseCode = "204", description = "Cart cleared")
     public void clearCart(@AuthenticationPrincipal UserDetails principal) {
         cartService.clearCart(resolveDealerId(principal));
+    }
+
+    @PostMapping("/import")
+    @Operation(summary = "Import cart from Excel", description = "Parses Excel with Tool No + Quantity columns. Replaces quantity if item already in cart.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Import result with updated cart"),
+        @ApiResponse(responseCode = "400", description = "Invalid file format")
+    })
+
+    public CartImportResult importFromExcel(
+        @AuthenticationPrincipal UserDetails principal,
+        @RequestParam("file") MultipartFile file
+    ) {
+        return cartImportService.importFromExcel(resolveDealerId(principal), file);
+    }
+
+    @GetMapping("/import/template")
+    @Operation(summary = "Download cart import template", description = "Returns an Excel template with Tool No and Quantity columns.")
+    @ApiResponse(responseCode = "200", description = "Excel file")
+    public ResponseEntity<byte[]> importTemplate() throws Exception {
+        byte[] bytes = cartImportTemplateGenerator.generate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDisposition(ContentDisposition.attachment().filename("cart-import-template.xlsx").build());
+        return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
     private UUID resolveDealerId(UserDetails principal) {

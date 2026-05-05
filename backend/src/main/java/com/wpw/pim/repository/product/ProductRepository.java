@@ -17,6 +17,9 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
 
     Optional<Product> findByToolNo(String toolNo);
 
+    @Query("SELECT p FROM Product p WHERE UPPER(p.toolNo) IN :toolNos")
+    List<Product> findByToolNoUpperIn(@Param("toolNos") Collection<String> toolNos);
+
     @Query("SELECT p.group.id FROM Product p WHERE p.id = :productId")
     UUID findGroupIdByProductId(UUID productId);
 

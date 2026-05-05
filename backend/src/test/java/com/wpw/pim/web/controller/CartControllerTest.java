@@ -8,6 +8,8 @@ import com.wpw.pim.domain.dealer.Dealer;
 import com.wpw.pim.repository.dealer.DealerRepository;
 import com.wpw.pim.security.ApiKeyAuthProvider;
 import com.wpw.pim.security.DealerPrincipal;
+import com.wpw.pim.service.cart.CartImportService;
+import com.wpw.pim.service.cart.CartImportTemplateGenerator;
 import com.wpw.pim.service.cart.CartService;
 import com.wpw.pim.service.product.ProductService;
 import com.wpw.pim.web.dto.cart.AddToCartRequest;
@@ -47,6 +49,8 @@ class CartControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockitoBean private CartService cartService;
+    @MockitoBean private CartImportService cartImportService;
+    @MockitoBean private CartImportTemplateGenerator cartImportTemplateGenerator;
     @MockitoBean private ProductService productService;
     @MockitoBean private DealerRepository dealerRepository;
     @MockitoBean private JwtService jwtService;

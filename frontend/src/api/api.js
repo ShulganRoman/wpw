@@ -618,6 +618,33 @@ export function clearCart() {
   return request('/dealer/cart', { method: 'DELETE' });
 }
 
+export async function importCartFromExcel(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch('/api/v1/dealer/cart/import', {
+    method: 'POST',
+    headers: { ...getAuthHeaders() }, // no Content-Type — browser sets multipart boundary
+    body: form,
+  });
+  if (res.status === 401) {
+    localStorage.removeItem('authToken');
+    window.location.hash = '#/login';
+    throw new Error('Session expired');
+  }
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function downloadCartImportTemplate() {
+  const token = localStorage.getItem('authToken');
+  return fetch('/api/v1/dealer/cart/import/template', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
 export function checkout(comment) {
   return request('/dealer/cart/checkout', {
     method: 'POST',

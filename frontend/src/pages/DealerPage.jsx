@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCart, updateCartQty, removeFromCart, clearCart, checkout, getDealerOrders, getDealerOrder, changePassword } from '../api/api';
+import { useRef } from 'react';
+import { getCart, updateCartQty, removeFromCart, clearCart, checkout, getDealerOrders, getDealerOrder, changePassword, importCartFromExcel, downloadCartImportTemplate } from '../api/api';
 import { LoadingSpinner } from '../components/LoadingState';
 import { useToast } from '../components/ToastContext';
 import { useLocale } from '../contexts/LocaleContext';
@@ -497,6 +498,9 @@ export default function DealerPage() {
   const [checkingOut, setCheckingOut] = useState(false);
   const [notes, setNotes] = useState('');
   const [page, setPage] = useState(1);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const importFileRef = useRef(null);
 
   useEffect(() => {
     if (!isDealer) { setLoading(false); return; }
@@ -522,6 +526,42 @@ export default function DealerPage() {
       setPage(1);
     } catch (err) {
       toast(err.message, 'error');
+    }
+  }
+
+  async function handleImport(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const res = await importCartFromExcel(file);
+      setImportResult(res);
+      setCartData(res.cart);
+      setPage(1);
+      if (res.errors.length === 0) {
+        toast(`Imported: ${res.imported}, replaced: ${res.replaced}`, 'success');
+      }
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function handleDownloadTemplate() {
+    try {
+      const res = await downloadCartImportTemplate();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cart-import-template.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast('Failed to download template', 'error');
     }
   }
 
@@ -600,6 +640,53 @@ export default function DealerPage() {
           <div className="card-title" style={{ marginBottom: 20 }}>Change Password</div>
           <ChangePasswordSection />
         </div>
+      )}
+
+      {activeTab === 'cart' && (
+        <>
+          {/* Import from Excel — always visible on cart tab */}
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            ref={importFileRef}
+            style={{ display: 'none' }}
+            onChange={handleImport}
+          />
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: 13 }}
+              onClick={() => importFileRef.current.click()}
+              disabled={importing}
+            >
+              {importing ? 'Importing…' : '↑ Import from Excel'}
+            </button>
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: 13 }}
+              onClick={handleDownloadTemplate}
+              title="Download template"
+            >
+              ↓ Template
+            </button>
+          </div>
+          {importResult && (
+            <div style={{
+              fontSize: 13, padding: '10px 12px', borderRadius: 6, marginBottom: 16,
+              background: importResult.errors.length > 0 ? '#fff8e1' : '#e8f5e9',
+              border: `1px solid ${importResult.errors.length > 0 ? '#ffe082' : '#a5d6a7'}`,
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: importResult.errors.length > 0 ? 4 : 0 }}>
+                Imported: {importResult.imported} · Replaced: {importResult.replaced}
+              </div>
+              {importResult.errors.length > 0 && (
+                <ul style={{ margin: '4px 0 0', paddingLeft: 16, color: '#c62828' }}>
+                  {importResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {activeTab === 'cart' && (allItems.length === 0 ? (
