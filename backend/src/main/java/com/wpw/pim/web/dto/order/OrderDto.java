@@ -17,5 +17,6 @@ public record OrderDto(
     BigDecimal total,
     OffsetDateTime submittedAt,
     OffsetDateTime updatedAt,
-    List<OrderItemDto> items
+    List<OrderItemDto> items,
+    String comment
 ) {}

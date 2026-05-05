@@ -32,17 +32,40 @@ public class EmailService {
 
         String dealerName = order.getDealer().getName();
         String subject = "New order from dealer: " + dealerName;
-        String body = String.format(
-            "Dealer \"%s\" submitted order #%s for %s %s.%n%n" +
-            "Items: %d%n" +
-            "Requires processing in the admin panel.",
+        StringBuilder body = new StringBuilder(String.format(
+            "Dealer \"%s\" submitted order #%s for %s %s.%n%nItems: %d%nRequires processing in the admin panel.",
             dealerName,
             order.getId(),
             order.getTotal().toPlainString(),
             order.getCurrency(),
             order.getItems().size()
-        );
-        send(recipients, subject, body);
+        ));
+        if (order.getComment() != null && !order.getComment().isBlank()) {
+            body.append(String.format("%n%nComment from dealer:%n%s", order.getComment()));
+        }
+        send(recipients, subject, body.toString());
+    }
+
+    @Async
+    public void sendOrderSubmittedToDealer(Order order, String dealerEmail) {
+        if (dealerEmail == null || dealerEmail.isBlank()) return;
+
+        String subject = "Your order has been submitted — #" + order.getId().toString().substring(0, 8).toUpperCase();
+        StringBuilder body = new StringBuilder(String.format(
+            "Your order has been successfully submitted.%n%n" +
+            "Order: #%s%n" +
+            "Total: %s %s%n" +
+            "Items: %d%n%n" +
+            "We will notify you when the status changes.",
+            order.getId(),
+            order.getTotal().toPlainString(),
+            order.getCurrency(),
+            order.getItems().size()
+        ));
+        if (order.getComment() != null && !order.getComment().isBlank()) {
+            body.append(String.format("%n%nYour comment:%n%s", order.getComment()));
+        }
+        send(List.of(dealerEmail), subject, body.toString());
     }
 
     @Async

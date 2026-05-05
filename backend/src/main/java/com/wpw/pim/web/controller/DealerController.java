@@ -5,6 +5,8 @@ import com.wpw.pim.repository.dealer.DealerRepository;
 import com.wpw.pim.security.DealerPrincipal;
 import com.wpw.pim.service.dealer.DealerService;
 import com.wpw.pim.service.dealer.SkuMappingService;
+import com.wpw.pim.auth.repository.UserRepository;
+import com.wpw.pim.web.dto.dealer.ChangePasswordRequest;
 import com.wpw.pim.web.dto.dealer.PriceListDto;
 import com.wpw.pim.web.dto.dealer.SkuMappingCreateRequest;
 import com.wpw.pim.web.dto.dealer.SkuMappingDto;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,6 +44,8 @@ public class DealerController {
     private final DealerService dealerService;
     private final SkuMappingService skuMappingService;
     private final DealerRepository dealerRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // --- price list ---
 
@@ -135,6 +140,28 @@ public class DealerController {
             .header("Content-Disposition", "attachment; filename=\"sku-mapping-template.xlsx\"")
             .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
             .body(bytes);
+    }
+
+    // --- change password ---
+
+    @PostMapping("/change-password")
+    @Operation(summary = "Change own password")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Password changed"),
+        @ApiResponse(responseCode = "400", description = "Wrong current password or validation error")
+    })
+    public ResponseEntity<Void> changePassword(
+        @AuthenticationPrincipal UserDetails principal,
+        @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        var user = userRepository.findByUsernameWithRole(principal.getUsername())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+        }
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        return ResponseEntity.noContent().build();
     }
 
     // --- helpers ---

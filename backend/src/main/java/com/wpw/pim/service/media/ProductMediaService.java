@@ -1,8 +1,10 @@
 package com.wpw.pim.service.media;
 
+import com.wpw.pim.domain.dealer.Dealer;
 import com.wpw.pim.domain.enums.FileType;
 import com.wpw.pim.domain.media.MediaFile;
 import com.wpw.pim.domain.product.Product;
+import com.wpw.pim.repository.dealer.DealerRepository;
 import com.wpw.pim.repository.media.MediaFileRepository;
 import com.wpw.pim.repository.product.ProductRepository;
 import com.wpw.pim.web.dto.media.MediaImageDto;
@@ -39,6 +41,7 @@ public class ProductMediaService {
 
     private final ProductRepository productRepo;
     private final MediaFileRepository mediaFileRepo;
+    private final DealerRepository dealerRepo;
 
     @Value("${pim.media.base-path:/media/products}")
     private String mediaBasePath;
@@ -59,8 +62,13 @@ public class ProductMediaService {
      */
     @Transactional(readOnly = true)
     public List<MediaImageDto> getImages(UUID productId) {
+        return getImages(productId, null, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MediaImageDto> getImages(UUID productId, UUID dealerId, boolean isAdmin) {
         ensureProductExists(productId);
-        return toImageDtoList(productId);
+        return toImageDtoList(productId, dealerId, isAdmin);
     }
 
     /**
@@ -83,6 +91,13 @@ public class ProductMediaService {
      */
     @Transactional
     public List<MediaImageDto> addImages(UUID productId, MultipartFile[] files) {
+        return addImages(productId, files, null, false);
+    }
+
+    @Transactional
+    public List<MediaImageDto> addImages(UUID productId, MultipartFile[] files, UUID dealerId, boolean isAdmin) {
+        Dealer uploader = dealerId != null ? dealerRepo.findById(dealerId).orElse(null) : null;
+
         Product product = productRepo.findById(productId)
             .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Product not found: " + productId));
 
@@ -130,6 +145,7 @@ public class ProductMediaService {
                 mf.setThumbnailUrl(url);
                 mf.setAltText(product.getToolNo() + " image " + nextVariant);
                 mf.setSortOrder(nextVariant - 1);
+                mf.setUploadedByDealer(uploader);
                 mediaFileRepo.save(mf);
 
                 log.info("Added image for product {}: {}", product.getToolNo(), url);
@@ -142,7 +158,7 @@ public class ProductMediaService {
             }
         }
 
-        return toImageDtoList(productId);
+        return toImageDtoList(productId, dealerId, isAdmin);
     }
 
     /**
@@ -159,26 +175,37 @@ public class ProductMediaService {
      */
     @Transactional
     public List<MediaImageDto> deleteImage(UUID productId, UUID imageId) {
+        return deleteImage(productId, imageId, null, false);
+    }
+
+    @Transactional
+    public List<MediaImageDto> deleteImage(UUID productId, UUID imageId, UUID dealerId, boolean isAdmin) {
         ensureProductExists(productId);
 
         MediaFile mediaFile = mediaFileRepo.findById(imageId)
             .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Image not found: " + imageId));
 
-        // Проверка принадлежности изображения к указанному товару
         if (mediaFile.getProduct() == null || !mediaFile.getProduct().getId().equals(productId)) {
             throw new ResponseStatusException(FORBIDDEN, "Image does not belong to this product");
         }
 
-        // Удаление записи из БД
+        // dealerId != null means the request comes from a dealer — enforce ownership
+        if (dealerId != null) {
+            UUID uploaderDealerId = mediaFile.getUploadedByDealer() != null
+                ? mediaFile.getUploadedByDealer().getId() : null;
+            if (!dealerId.equals(uploaderDealerId)) {
+                throw new ResponseStatusException(FORBIDDEN, "You can only delete images you uploaded");
+            }
+        }
+        // dealerId == null → request comes from a non-dealer user (admin) → allowed
+
         mediaFileRepo.delete(mediaFile);
         mediaFileRepo.flush();
-
-        // Попытка удалить файл с диска (не откатываем БД при ошибке)
         tryDeleteFileFromDisk(mediaFile.getUrl());
 
         log.info("Deleted image {} for product {}", imageId, productId);
 
-        return toImageDtoList(productId);
+        return toImageDtoList(productId, dealerId, isAdmin);
     }
 
     /**
@@ -191,11 +218,25 @@ public class ProductMediaService {
     }
 
     /**
-     * Возвращает список MediaImageDto для товара, отсортированный по sortOrder.
+     * Возвращает список MediaImageDto для товара. canDelete:
+     *   - admin: всегда true
+     *   - dealer: true только для своих изображений (uploadedByDealer.id == dealerId)
+     *   - anonymous: false
      */
-    private List<MediaImageDto> toImageDtoList(UUID productId) {
+    private List<MediaImageDto> toImageDtoList(UUID productId, UUID dealerId, boolean isAdmin) {
         return mediaFileRepo.findByProductIdOrderBySortOrder(productId).stream()
-            .map(mf -> new MediaImageDto(mf.getId(), mf.getUrl(), mf.getSortOrder()))
+            .map(mf -> {
+                boolean canDelete;
+                if (dealerId != null) {
+                    // dealer: can only delete their own images
+                    canDelete = mf.getUploadedByDealer() != null
+                        && dealerId.equals(mf.getUploadedByDealer().getId());
+                } else {
+                    // non-dealer (admin): can delete any image
+                    canDelete = true;
+                }
+                return new MediaImageDto(mf.getId(), mf.getUrl(), mf.getSortOrder(), canDelete);
+            })
             .toList();
     }
 

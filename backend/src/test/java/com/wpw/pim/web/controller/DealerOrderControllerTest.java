@@ -27,6 +27,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -62,7 +64,7 @@ class DealerOrderControllerTest {
     @DisplayName("POST /api/v1/dealer/cart/checkout -- 200 with orderId")
     void checkout() throws Exception {
         UUID orderId = UUID.randomUUID();
-        when(orderService.checkout(dealerId)).thenReturn(new CheckoutResponse(orderId, "Order placed successfully"));
+        when(orderService.checkout(eq(dealerId), any())).thenReturn(new CheckoutResponse(orderId, "Order placed successfully"));
 
         mockMvc.perform(post("/api/v1/dealer/cart/checkout")
                 .with(user(dealerPrincipal)))
@@ -96,7 +98,7 @@ class DealerOrderControllerTest {
             OrderStatus.SUBMITTED, "Submitted", "USD",
             new BigDecimal("100.00"),
             OffsetDateTime.now(), OffsetDateTime.now(),
-            List.of()
+            List.of(), null
         );
         when(orderService.getDealerOrder(dealerId, orderId)).thenReturn(dto);
 

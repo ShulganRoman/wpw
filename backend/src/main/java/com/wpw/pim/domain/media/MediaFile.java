@@ -2,6 +2,7 @@ package com.wpw.pim.domain.media;
 
 import com.wpw.pim.domain.catalog.Category;
 import com.wpw.pim.domain.catalog.ProductGroup;
+import com.wpw.pim.domain.dealer.Dealer;
 import com.wpw.pim.domain.enums.FileType;
 import com.wpw.pim.domain.product.Product;
 import jakarta.persistence.*;
@@ -51,4 +52,8 @@ public class MediaFile {
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploaded_by_dealer_id")
+    private Dealer uploadedByDealer;
 }

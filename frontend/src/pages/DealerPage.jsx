@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCart, updateCartQty, removeFromCart, clearCart, checkout, getDealerOrders, getDealerOrder } from '../api/api';
+import { getCart, updateCartQty, removeFromCart, clearCart, checkout, getDealerOrders, getDealerOrder, changePassword } from '../api/api';
 import { LoadingSpinner } from '../components/LoadingState';
 import { useToast } from '../components/ToastContext';
 import { useLocale } from '../contexts/LocaleContext';
@@ -292,6 +292,16 @@ function OrderDetailDrawer({ orderId, onClose }) {
               <div style={{ fontSize: 13 }}>{t('order_total_label')} <strong>{Number(order.total).toFixed(2)} {order.currency}</strong></div>
               <div style={{ fontSize: 13, color: '#888' }}>{new Date(order.submittedAt).toLocaleString(dateLocale)}</div>
             </div>
+            {order.comment && (
+              <div style={{
+                marginBottom: 16, padding: '10px 12px',
+                background: '#f9f9f9', borderRadius: 6,
+                border: '1px solid var(--wpw-border)', fontSize: 13,
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 4, color: '#555' }}>{t('order_comment')}</div>
+                <div style={{ whiteSpace: 'pre-wrap', color: '#333' }}>{order.comment}</div>
+              </div>
+            )}
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--wpw-border)' }}>
@@ -391,6 +401,90 @@ function OrdersSection() {
   );
 }
 
+function ChangePasswordSection() {
+  const toast = useToast();
+  const [form, setForm] = useState({ current: '', next: '', confirm: '' });
+  const [saving, setSaving] = useState(false);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (form.next !== form.confirm) {
+      toast('New passwords do not match', 'error');
+      return;
+    }
+    if (form.next.length < 6) {
+      toast('New password must be at least 6 characters', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      await changePassword(form.current, form.next);
+      toast('Password changed successfully', 'success');
+      setForm({ current: '', next: '', confirm: '' });
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputStyle = {
+    width: '100%', padding: '8px 10px', border: '1px solid var(--wpw-border)',
+    borderRadius: 6, fontSize: 14, boxSizing: 'border-box',
+  };
+  const labelStyle = { fontSize: 13, fontWeight: 600, color: 'var(--wpw-gray)', marginBottom: 4, display: 'block' };
+
+  return (
+    <div style={{ maxWidth: 400 }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div>
+          <label style={labelStyle}>Current password</label>
+          <input
+            type="password"
+            value={form.current}
+            onChange={e => set('current', e.target.value)}
+            style={inputStyle}
+            autoComplete="current-password"
+            required
+          />
+        </div>
+        <div>
+          <label style={labelStyle}>New password</label>
+          <input
+            type="password"
+            value={form.next}
+            onChange={e => set('next', e.target.value)}
+            style={inputStyle}
+            autoComplete="new-password"
+            required
+          />
+        </div>
+        <div>
+          <label style={labelStyle}>Confirm new password</label>
+          <input
+            type="password"
+            value={form.confirm}
+            onChange={e => set('confirm', e.target.value)}
+            style={inputStyle}
+            autoComplete="new-password"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          style={{ alignSelf: 'flex-start', minWidth: 160 }}
+          disabled={saving || !form.current || !form.next || !form.confirm}
+        >
+          {saving ? 'Saving…' : 'Change Password'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function DealerPage() {
   const toast = useToast();
   const navigate = useNavigate();
@@ -434,8 +528,9 @@ export default function DealerPage() {
   async function handleCheckout() {
     setCheckingOut(true);
     try {
-      const res = await checkout();
+      const res = await checkout(notes);
       toast(t('order_submitted', { id: res.orderId?.toString().slice(0, 8).toUpperCase() }), 'success');
+      setNotes('');
       const fresh = await getCart();
       setCartData(fresh);
       setPage(1);
@@ -494,9 +589,18 @@ export default function DealerPage() {
         <button className={`btn ${activeTab === 'orders' ? 'btn-primary' : ''}`} onClick={() => setActiveTab('orders')}>
           {t('nav_my_orders')}
         </button>
+        <button className={`btn ${activeTab === 'password' ? 'btn-primary' : ''}`} onClick={() => setActiveTab('password')}>
+          Change Password
+        </button>
       </div>
 
       {activeTab === 'orders' && <OrdersSection />}
+      {activeTab === 'password' && (
+        <div className="card" style={{ maxWidth: 480 }}>
+          <div className="card-title" style={{ marginBottom: 20 }}>Change Password</div>
+          <ChangePasswordSection />
+        </div>
+      )}
 
       {activeTab === 'cart' && (allItems.length === 0 ? (
         <div className="empty-state" style={{ marginTop: 40 }}>

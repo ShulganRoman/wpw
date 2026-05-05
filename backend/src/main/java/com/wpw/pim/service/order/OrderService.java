@@ -33,7 +33,7 @@ public class OrderService {
     private final EmailService emailService;
 
     @Transactional
-    public CheckoutResponse checkout(UUID dealerId) {
+    public CheckoutResponse checkout(UUID dealerId, String comment) {
         Dealer dealer = loadDealer(dealerId);
         CartDto cart = cartService.getCart(dealerId);
 
@@ -45,6 +45,9 @@ public class OrderService {
         order.setDealer(dealer);
         order.setCurrency(cart.currency());
         order.setTotal(cart.total());
+        if (comment != null && !comment.isBlank()) {
+            order.setComment(comment.trim());
+        }
 
         for (CartItemDto ci : cart.items()) {
             OrderItem item = new OrderItem();
@@ -62,6 +65,9 @@ public class OrderService {
         cartService.clearCart(dealerId);
 
         emailService.sendOrderSubmittedToAdmins(saved);
+
+        String dealerEmail = resolveDealerEmail(dealer);
+        emailService.sendOrderSubmittedToDealer(saved, dealerEmail);
 
         return new CheckoutResponse(saved.getId(), "Order placed successfully");
     }
@@ -168,7 +174,8 @@ public class OrderService {
             o.getTotal(),
             o.getSubmittedAt(),
             o.getUpdatedAt(),
-            items
+            items,
+            o.getComment()
         );
     }
 

@@ -5,6 +5,7 @@ import com.wpw.pim.auth.service.JwtService;
 import com.wpw.pim.auth.service.PimUserDetailsService;
 import com.wpw.pim.domain.enums.ProductStatus;
 import com.wpw.pim.domain.enums.ProductType;
+import com.wpw.pim.repository.dealer.DealerRepository;
 import com.wpw.pim.security.ApiKeyAuthProvider;
 import com.wpw.pim.service.dealer.DealerSkuResolverService;
 import com.wpw.pim.service.media.ProductMediaService;
@@ -30,7 +31,9 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -51,6 +54,7 @@ class ProductControllerTest {
     @MockitoBean private ProductMediaService productMediaService;
     @MockitoBean private PriceResolverService priceResolverService;
     @MockitoBean private DealerSkuResolverService dealerSkuResolverService;
+    @MockitoBean private DealerRepository dealerRepository;
     @MockitoBean private JwtService jwtService;
     @MockitoBean private PimUserDetailsService pimUserDetailsService;
     @MockitoBean private ApiKeyAuthProvider apiKeyAuthProvider;
@@ -293,8 +297,8 @@ class ProductControllerTest {
         void getImages_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             UUID imgId = UUID.randomUUID();
-            when(productMediaService.getImages(id))
-                    .thenReturn(List.of(new MediaImageDto(imgId, "/media/products/T-001/1.webp", 0)));
+            when(productMediaService.getImages(eq(id), isNull(), eq(false)))
+                    .thenReturn(List.of(new MediaImageDto(imgId, "/media/products/T-001/1.webp", 0, true)));
 
             mockMvc.perform(get("/api/v1/products/" + id + "/images"))
                     .andExpect(status().isOk())
@@ -306,7 +310,7 @@ class ProductControllerTest {
         @DisplayName("empty list -- 200")
         void getImages_empty_returns200() throws Exception {
             UUID id = UUID.randomUUID();
-            when(productMediaService.getImages(id)).thenReturn(List.of());
+            when(productMediaService.getImages(eq(id), isNull(), eq(false))).thenReturn(List.of());
 
             mockMvc.perform(get("/api/v1/products/" + id + "/images"))
                     .andExpect(status().isOk())
@@ -326,8 +330,8 @@ class ProductControllerTest {
             MockMultipartFile file = new MockMultipartFile(
                     "files", "img.jpg", "image/jpeg", new byte[]{1, 2, 3});
             UUID imgId = UUID.randomUUID();
-            when(productMediaService.addImages(eq(id), any()))
-                    .thenReturn(List.of(new MediaImageDto(imgId, "/media/products/T-001/1.webp", 0)));
+            when(productMediaService.addImages(eq(id), any(), isNull(), anyBoolean()))
+                    .thenReturn(List.of(new MediaImageDto(imgId, "/media/products/T-001/1.webp", 0, true)));
 
             mockMvc.perform(multipart("/api/v1/products/" + id + "/images").file(file))
                     .andExpect(status().isOk())
@@ -355,13 +359,13 @@ class ProductControllerTest {
         void deleteImage_authorized_returns200() throws Exception {
             UUID id = UUID.randomUUID();
             UUID imgId = UUID.randomUUID();
-            when(productMediaService.deleteImage(id, imgId)).thenReturn(List.of());
+            when(productMediaService.deleteImage(eq(id), eq(imgId), isNull(), eq(true))).thenReturn(List.of());
 
             mockMvc.perform(delete("/api/v1/products/" + id + "/images/" + imgId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray());
 
-            verify(productMediaService).deleteImage(id, imgId);
+            verify(productMediaService).deleteImage(eq(id), eq(imgId), isNull(), eq(true));
         }
 
         @Test

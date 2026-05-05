@@ -4,6 +4,7 @@ import com.wpw.pim.domain.dealer.Dealer;
 import com.wpw.pim.repository.dealer.DealerRepository;
 import com.wpw.pim.security.DealerPrincipal;
 import com.wpw.pim.service.order.OrderService;
+import com.wpw.pim.web.dto.order.CheckoutRequest;
 import com.wpw.pim.web.dto.order.CheckoutResponse;
 import com.wpw.pim.web.dto.order.OrderDto;
 import com.wpw.pim.web.dto.order.OrderSummaryDto;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -42,8 +44,12 @@ public class DealerOrderController {
         @ApiResponse(responseCode = "200", description = "Order placed"),
         @ApiResponse(responseCode = "400", description = "Cart is empty")
     })
-    public CheckoutResponse checkout(@AuthenticationPrincipal UserDetails principal) {
-        return orderService.checkout(resolveDealerId(principal));
+    public CheckoutResponse checkout(
+        @AuthenticationPrincipal UserDetails principal,
+        @RequestBody(required = false) CheckoutRequest request
+    ) {
+        String comment = request != null ? request.comment() : null;
+        return orderService.checkout(resolveDealerId(principal), comment);
     }
 
     @GetMapping("/orders")

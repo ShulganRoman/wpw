@@ -1,5 +1,7 @@
 package com.wpw.pim.web.controller;
 
+import com.wpw.pim.repository.dealer.DealerRepository;
+import com.wpw.pim.security.DealerPrincipal;
 import com.wpw.pim.service.dealer.DealerSkuResolverService;
 import com.wpw.pim.service.media.ProductMediaService;
 import com.wpw.pim.service.pricing.PriceResolverService;
@@ -39,6 +41,27 @@ public class ProductController {
     private final ProductMediaService productMediaService;
     private final PriceResolverService priceResolverService;
     private final DealerSkuResolverService dealerSkuResolverService;
+    private final DealerRepository dealerRepository;
+
+    private UUID extractDealerId(Authentication auth) {
+        if (auth == null) return null;
+        if (auth.getPrincipal() instanceof DealerPrincipal dp) return dp.getDealer().getId();
+        boolean isDealer = auth.getAuthorities().stream()
+            .anyMatch(a -> "ROLE_DEALER".equals(a.getAuthority()));
+        if (isDealer) {
+            return dealerRepository.findByUserUsername(auth.getName())
+                .map(d -> d.getId())
+                .orElse(null);
+        }
+        return null;
+    }
+
+    private boolean isAdmin(Authentication auth) {
+        if (auth == null) return false;
+        // dealers have ROLE_DEALER — they are never treated as admins for image management
+        return auth.getAuthorities().stream()
+            .noneMatch(a -> "ROLE_DEALER".equals(a.getAuthority()));
+    }
 
     @GetMapping("/filter-options")
     @Operation(summary = "Filter options", description = "Returns all available values for filters (materials, machine types, etc.).")
@@ -221,8 +244,8 @@ public class ProductController {
     @GetMapping("/{id}/images")
     @Operation(summary = "Product images", description = "List of all product media files sorted by sort_order.")
     @ApiResponse(responseCode = "200", description = "List of media files")
-    public List<MediaImageDto> getImages(@PathVariable UUID id) {
-        return productMediaService.getImages(id);
+    public List<MediaImageDto> getImages(@PathVariable UUID id, Authentication auth) {
+        return productMediaService.getImages(id, extractDealerId(auth), isAdmin(auth));
     }
 
     /**
@@ -232,18 +255,19 @@ public class ProductController {
      * @param files массив загружаемых файлов изображений
      * @return обновлённый список {@link MediaImageDto}
      */
-    @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
+    @PreAuthorize("hasAuthority('MODIFY_PRODUCTS') or hasRole('DEALER')")
     @PostMapping("/{id}/images")
-    @Operation(summary = "Add images", description = "Uploads and converts images to WebP. Requires MODIFY_PRODUCTS.")
+    @Operation(summary = "Add images", description = "Uploads and converts images to WebP. Requires MODIFY_PRODUCTS or DEALER role.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Images uploaded and converted to WebP"),
         @ApiResponse(responseCode = "400", description = "Invalid file format")
     })
     public List<MediaImageDto> addImages(
         @PathVariable UUID id,
-        @RequestParam("files") MultipartFile[] files
+        @RequestParam("files") MultipartFile[] files,
+        Authentication auth
     ) {
-        return productMediaService.addImages(id, files);
+        return productMediaService.addImages(id, files, extractDealerId(auth), isAdmin(auth));
     }
 
     /**
@@ -253,17 +277,18 @@ public class ProductController {
      * @param imageId идентификатор медиафайла
      * @return обновлённый список {@link MediaImageDto}
      */
-    @PreAuthorize("hasAuthority('MODIFY_PRODUCTS')")
+    @PreAuthorize("hasAuthority('MODIFY_PRODUCTS') or hasRole('DEALER')")
     @DeleteMapping("/{id}/images/{imageId}")
-    @Operation(summary = "Delete product image", description = "Deletes media file from disk and DB. Requires MODIFY_PRODUCTS.")
+    @Operation(summary = "Delete product image", description = "Deletes media file from disk and DB. Requires MODIFY_PRODUCTS or DEALER role.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Image deleted, returns updated list"),
         @ApiResponse(responseCode = "404", description = "Product or image not found")
     })
     public List<MediaImageDto> deleteImage(
         @PathVariable UUID id,
-        @PathVariable UUID imageId
+        @PathVariable UUID imageId,
+        Authentication auth
     ) {
-        return productMediaService.deleteImage(id, imageId);
+        return productMediaService.deleteImage(id, imageId, extractDealerId(auth), isAdmin(auth));
     }
 }

@@ -103,8 +103,9 @@ class OrderServiceTest {
                 o.setId(UUID.randomUUID());
                 return o;
             });
+            when(contactRepository.findPrimaryByDealerId(dealerId)).thenReturn(Optional.empty());
 
-            CheckoutResponse response = service.checkout(dealerId);
+            CheckoutResponse response = service.checkout(dealerId, null);
 
             assertThat(response.orderId()).isNotNull();
             assertThat(response.message()).isNotBlank();
@@ -121,7 +122,7 @@ class OrderServiceTest {
                 new CartDto(List.of(), "USD", BigDecimal.ZERO, 0, List.of())
             );
 
-            assertThatThrownBy(() -> service.checkout(dealerId))
+            assertThatThrownBy(() -> service.checkout(dealerId, null))
                 .isInstanceOf(ResponseStatusException.class);
             verify(orderRepository, never()).save(any());
             verify(emailService, never()).sendOrderSubmittedToAdmins(any());
@@ -133,7 +134,7 @@ class OrderServiceTest {
             UUID dealerId = UUID.randomUUID();
             when(dealerRepository.findById(dealerId)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.checkout(dealerId))
+            assertThatThrownBy(() -> service.checkout(dealerId, null))
                 .isInstanceOf(ResponseStatusException.class);
         }
     }

@@ -7,6 +7,21 @@ const DEALER_TYPES = ['Distributor', 'Reseller', 'Online Store', 'OEM Partner'];
 const CURRENCIES = ['EUR', 'USD', 'ILS', 'GBP', 'AUD', 'PLN', 'CAD', 'CHF'];
 const CONTACT_ROLES = ['Sales', 'Technical', 'Management', 'Purchasing'];
 
+const COUNTRIES = [
+  'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Armenia', 'Australia',
+  'Austria', 'Azerbaijan', 'Bahrain', 'Bangladesh', 'Belarus', 'Belgium', 'Bolivia', 'Bosnia and Herzegovina',
+  'Brazil', 'Bulgaria', 'Cambodia', 'Canada', 'Chile', 'China', 'Colombia', 'Croatia', 'Cyprus',
+  'Czech Republic', 'Denmark', 'Ecuador', 'Egypt', 'Estonia', 'Ethiopia', 'Finland', 'France',
+  'Georgia', 'Germany', 'Ghana', 'Greece', 'Guatemala', 'Honduras', 'Hungary', 'India', 'Indonesia',
+  'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kosovo',
+  'Kuwait', 'Latvia', 'Lebanon', 'Lithuania', 'Luxembourg', 'Malaysia', 'Mexico', 'Moldova', 'Morocco',
+  'Netherlands', 'New Zealand', 'Nigeria', 'North Macedonia', 'Norway', 'Oman', 'Pakistan', 'Panama',
+  'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Saudi Arabia',
+  'Serbia', 'Singapore', 'Slovakia', 'Slovenia', 'South Africa', 'South Korea', 'Spain', 'Sweden',
+  'Switzerland', 'Taiwan', 'Thailand', 'Tunisia', 'Turkey', 'Ukraine', 'United Arab Emirates',
+  'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Venezuela', 'Vietnam',
+];
+
 function SectionToggle({ title, required, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -234,7 +249,7 @@ function DealerModal({ dealer, onSave, onClose }) {
               <FInput value={form.companyName} onChange={v => set('companyName', v)} placeholder="Company Ltd." />
             </FieldRow>
             <FieldRow label="Country" required>
-              <FInput value={form.country} onChange={v => set('country', v)} placeholder="Germany" />
+              <FSelect value={form.country} onChange={v => set('country', v)} options={COUNTRIES} placeholder="— select country —" />
             </FieldRow>
           </SectionToggle>
 

@@ -9,4 +9,4 @@ import java.util.UUID;
  * @param url       URL изображения
  * @param sortOrder порядок сортировки
  */
-public record MediaImageDto(UUID id, String url, int sortOrder) {}
+public record MediaImageDto(UUID id, String url, int sortOrder, boolean canDelete) {}

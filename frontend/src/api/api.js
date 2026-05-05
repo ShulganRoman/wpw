@@ -618,11 +618,21 @@ export function clearCart() {
   return request('/dealer/cart', { method: 'DELETE' });
 }
 
-export function checkout() {
-  return request('/dealer/cart/checkout', { method: 'POST' });
+export function checkout(comment) {
+  return request('/dealer/cart/checkout', {
+    method: 'POST',
+    body: JSON.stringify({ comment: comment || null }),
+  });
 }
 
 // ── Dealer Orders ──────────────────────────────────────────────────────────────
+
+export function changePassword(currentPassword, newPassword) {
+  return request('/dealer/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
 
 export function getDealerOrders() {
   return request('/dealer/orders');

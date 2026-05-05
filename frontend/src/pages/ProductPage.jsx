@@ -178,7 +178,7 @@ function Gallery({ images, editing, productId, imageData, onUpload, onDeleteImag
                     alt={`View ${i + 1}`}
                     onClick={() => setActive(i)}
                   />
-                  {editing && imgEntry && (
+                  {editing && imgEntry && imgEntry.canDelete !== false && (
                     <button
                       className="gallery-thumb-delete"
                       aria-label="Delete image"
@@ -557,12 +557,17 @@ export default function ProductPage({ locale }) {
   const [saving, setSaving] = useState(false);
   const [imageData, setImageData] = useState([]);
 
-  const canEdit = (() => {
+  const isDealer = localStorage.getItem('userRole') === 'dealer';
+
+  const canEdit = !isDealer && (() => {
     try {
       const privs = JSON.parse(localStorage.getItem('userPrivileges') || '[]');
       return privs.includes('MODIFY_PRODUCTS');
     } catch { return false; }
   })();
+
+  // dealers can manage images but cannot edit other product fields
+  const [dealerImgMode, setDealerImgMode] = useState(false);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -590,14 +595,14 @@ export default function ProductPage({ locale }) {
     fetchProduct();
   }, [toolNo, locale]);
 
-  // Load image data when entering edit mode
+  // Load image data when entering edit mode or dealer image mode
   useEffect(() => {
-    if (editing && product?.id) {
+    if ((editing || dealerImgMode) && product?.id) {
       getProductImages(product.id)
         .then(setImageData)
         .catch(() => {});
     }
-  }, [editing, product?.id]);
+  }, [editing, dealerImgMode, product?.id]);
 
   function startEditing() {
     setEditData({
@@ -709,11 +714,7 @@ export default function ProductPage({ locale }) {
           <div className="product-edit-actions">
             {editing ? (
               <>
-                <button
-                  className="btn-save"
-                  onClick={handleSave}
-                  disabled={saving}
-                >
+                <button className="btn-save" onClick={handleSave} disabled={saving}>
                   {saving ? 'Saving...' : 'Save'}
                 </button>
                 <button className="btn-cancel" onClick={cancelEditing} disabled={saving}>
@@ -722,13 +723,25 @@ export default function ProductPage({ locale }) {
               </>
             ) : (
               <>
-                <button className="btn-edit" onClick={startEditing}>
-                  Edit
-                </button>
+                <button className="btn-edit" onClick={startEditing}>Edit</button>
                 <button className="btn-delete" onClick={handleDelete} disabled={deleting}>
                   {deleting ? 'Deleting...' : 'Delete'}
                 </button>
               </>
+            )}
+          </div>
+        )}
+
+        {isDealer && !canEdit && (
+          <div className="product-edit-actions">
+            {dealerImgMode ? (
+              <button className="btn-cancel" onClick={() => { setDealerImgMode(false); setImageData([]); }}>
+                Done
+              </button>
+            ) : (
+              <button className="btn-edit" onClick={() => setDealerImgMode(true)}>
+                Manage Images
+              </button>
             )}
           </div>
         )}
@@ -737,7 +750,7 @@ export default function ProductPage({ locale }) {
       <div className="product-detail-top">
         <Gallery
           images={images}
-          editing={editing}
+          editing={editing || dealerImgMode}
           productId={product.id}
           imageData={imageData}
           onUpload={handleUpload}

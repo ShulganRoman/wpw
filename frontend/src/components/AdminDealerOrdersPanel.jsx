@@ -108,6 +108,17 @@ function OrderDetailModal({ orderId, onClose, onStatusChanged }) {
               </div>
             )}
 
+            {order.comment && (
+              <div style={{
+                marginBottom: 16, padding: '10px 12px',
+                background: '#f9f9f9', borderRadius: 6,
+                border: '1px solid var(--wpw-border)', fontSize: 13,
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 4, color: '#555' }}>Comment from dealer</div>
+                <div style={{ whiteSpace: 'pre-wrap', color: '#333' }}>{order.comment}</div>
+              </div>
+            )}
+
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--wpw-border)' }}>

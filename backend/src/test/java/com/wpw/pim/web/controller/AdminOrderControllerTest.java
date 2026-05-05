@@ -63,7 +63,7 @@ class AdminOrderControllerTest {
             OrderStatus.SUBMITTED, "New", "USD",
             new BigDecimal("100.00"),
             OffsetDateTime.now(), OffsetDateTime.now(),
-            List.of(item)
+            List.of(item), null
         );
     }
 
@@ -107,7 +107,7 @@ class AdminOrderControllerTest {
             OrderStatus.CONFIRMED, "Confirmed", "USD",
             new BigDecimal("100.00"),
             OffsetDateTime.now(), OffsetDateTime.now(),
-            List.of()
+            List.of(), null
         );
         when(orderService.changeStatus(eq(orderId), eq(OrderStatus.CONFIRMED))).thenReturn(dto);
 
