@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -160,5 +161,45 @@ class ImportV4ValidatorTest {
         ValidationReport report = validator.validate(rows, Collections.emptyList());
 
         assertThat(report.isCanProceed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("dry-run splits rows into create/update/skip and exposes markdown")
+    void validate_dryRunCounters() {
+        List<RawV4Row> rows = List.of(
+            validRow(3).toolNo("NEW-001").build(),
+            validRow(4).toolNo("OLD-001").build(),                  // exists in DB
+            validRow(5).toolNo("old-001").build(),                  // duplicate of OLD-001 → WARNING + не считаем
+            RawV4Row.builder().rowNum(6).build()                    // нет toolNo → skip
+        );
+
+        ValidationReport report = validator.validate(rows, Collections.emptyList(), Set.of("OLD-001"));
+
+        assertThat(report.getWouldCreate()).isEqualTo(1);
+        assertThat(report.getWouldUpdate()).isEqualTo(1);
+        assertThat(report.getWouldSkip()).isEqualTo(1);
+        assertThat(report.getDryRunReport())
+            .contains("# WPW PIM — Import Validation Report (Dry Run)")
+            .contains("Will be created")
+            .contains("NEW-001")
+            .contains("Will be updated")
+            .contains("OLD-001")
+            .contains("Will be skipped")
+            .contains("Row 6");
+    }
+
+    @Test
+    @DisplayName("dry-run with empty existing set treats every valid row as new")
+    void validate_dryRunNoExisting_allCreate() {
+        List<RawV4Row> rows = List.of(
+            validRow(3).toolNo("A").build(),
+            validRow(4).toolNo("B").build()
+        );
+
+        ValidationReport report = validator.validate(rows, Collections.emptyList(), Set.of());
+
+        assertThat(report.getWouldCreate()).isEqualTo(2);
+        assertThat(report.getWouldUpdate()).isZero();
+        assertThat(report.getWouldSkip()).isZero();
     }
 }

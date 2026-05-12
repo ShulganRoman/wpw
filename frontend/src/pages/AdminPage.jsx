@@ -65,37 +65,84 @@ function MarkdownReport({ text }) {
   );
 }
 
-function ValidationReport({ report }) {
+function formatIssue(issue) {
+  if (typeof issue === 'string') return issue;
+  const parts = [];
+  if (issue.sheet) parts.push(issue.sheet);
+  if (issue.rowNum) parts.push(`row ${issue.rowNum}`);
+  if (issue.field) parts.push(issue.field);
+  const prefix = parts.length ? `[${parts.join(' · ')}] ` : '';
+  const value = issue.rawValue ? ` (value: "${issue.rawValue}")` : '';
+  return `${prefix}${issue.message || JSON.stringify(issue)}${value}`;
+}
+
+function ValidationReport({ report, fileName }) {
   const { t } = useLocale();
   if (!report) return null;
 
-  const { valid, errors, warnings, summary } = report;
+  const valid = report.canProceed !== false;
+  const issues = Array.isArray(report.issues) ? report.issues : [];
+  const errors = issues.filter(i => (i.severity || '').toUpperCase() === 'ERROR');
+  const warnings = issues.filter(i => (i.severity || '').toUpperCase() === 'WARNING');
+  const unknownHeaders = Array.isArray(report.unknownHeaders) ? report.unknownHeaders : [];
+
+  const created = report.wouldCreate ?? 0;
+  const updated = report.wouldUpdate ?? 0;
+  const skipped = report.wouldSkip ?? 0;
+  const md = report.dryRunReport;
+
+  function handleDownloadReport() {
+    if (!md) return;
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const base = (fileName || 'import').replace(/\.[^.]+$/, '');
+    a.href = url;
+    a.download = `${base}-validation-report.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div className="import-report">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 20 }}>{valid ? '✅' : '❌'}</span>
         <strong style={{ fontSize: 14, color: valid ? '#2e7d32' : '#c62828' }}>
           {valid ? t('validation_passed') : t('validation_failed')}
         </strong>
+        {md && (
+          <button
+            className="btn btn-secondary"
+            style={{ marginLeft: 'auto', fontSize: 12, padding: '4px 10px' }}
+            onClick={handleDownloadReport}
+            title="Download dry-run report as Markdown"
+          >
+            ↓ Report.md
+          </button>
+        )}
       </div>
 
-      {summary && (
-        <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--wpw-gray)' }}>
-          {typeof summary === 'string' ? summary : JSON.stringify(summary)}
-        </div>
-      )}
+      <div style={{ marginBottom: 8, fontSize: 13, color: 'var(--wpw-gray)' }}>
+        Products: <strong>{report.totalProductRows ?? 0}</strong>
+        {' · '}Groups: <strong>{report.totalGroupRows ?? 0}</strong>
+        {' · '}Errors: <strong style={{ color: errors.length ? '#c62828' : 'inherit' }}>{report.errorCount ?? errors.length}</strong>
+        {' · '}Warnings: <strong style={{ color: warnings.length ? '#e65100' : 'inherit' }}>{report.warningCount ?? warnings.length}</strong>
+      </div>
 
-      {errors && errors.length > 0 && (
+      <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--wpw-gray)' }}>
+        Will be created: <strong style={{ color: '#2e7d32' }}>{created}</strong>
+        {' · '}Will be updated: <strong style={{ color: '#1565c0' }}>{updated}</strong>
+        {' · '}Will be skipped: <strong style={{ color: skipped ? '#c62828' : 'inherit' }}>{skipped}</strong>
+      </div>
+
+      {errors.length > 0 && (
         <div style={{ marginBottom: 10 }}>
           <strong style={{ fontSize: 12, color: '#c62828', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {t('errors_label', { count: errors.length })}
           </strong>
           <ul style={{ marginTop: 6, paddingLeft: 20, listStyle: 'disc', display: 'flex', flexDirection: 'column', gap: 4 }}>
             {errors.slice(0, 50).map((e, i) => (
-              <li key={i} style={{ fontSize: 12, color: '#c62828' }}>
-                {typeof e === 'string' ? e : e.message || JSON.stringify(e)}
-              </li>
+              <li key={i} style={{ fontSize: 12, color: '#c62828' }}>{formatIssue(e)}</li>
             ))}
             {errors.length > 50 && (
               <li style={{ fontSize: 12, color: 'var(--wpw-mid-gray)' }}>{t('more_errors', { count: errors.length - 50 })}</li>
@@ -104,16 +151,14 @@ function ValidationReport({ report }) {
         </div>
       )}
 
-      {warnings && warnings.length > 0 && (
-        <div>
+      {warnings.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
           <strong style={{ fontSize: 12, color: '#e65100', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {t('warnings_label', { count: warnings.length })}
           </strong>
           <ul style={{ marginTop: 6, paddingLeft: 20, listStyle: 'disc', display: 'flex', flexDirection: 'column', gap: 4 }}>
             {warnings.slice(0, 30).map((w, i) => (
-              <li key={i} style={{ fontSize: 12, color: '#e65100' }}>
-                {typeof w === 'string' ? w : w.message || JSON.stringify(w)}
-              </li>
+              <li key={i} style={{ fontSize: 12, color: '#e65100' }}>{formatIssue(w)}</li>
             ))}
             {warnings.length > 30 && (
               <li style={{ fontSize: 12, color: 'var(--wpw-mid-gray)' }}>{t('more_warnings', { count: warnings.length - 30 })}</li>
@@ -122,10 +167,17 @@ function ValidationReport({ report }) {
         </div>
       )}
 
-      {!errors && !warnings && !summary && (
-        <pre style={{ fontSize: 12, fontFamily: 'var(--wpw-font-mono)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-          {JSON.stringify(report, null, 2)}
-        </pre>
+      {unknownHeaders.length > 0 && (
+        <div>
+          <strong style={{ fontSize: 12, color: 'var(--wpw-gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Unknown headers ({unknownHeaders.length})
+          </strong>
+          <ul style={{ marginTop: 6, paddingLeft: 20, listStyle: 'disc', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {unknownHeaders.map((h, i) => (
+              <li key={i} style={{ fontSize: 12, color: 'var(--wpw-gray)' }}>{h}</li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
@@ -270,7 +322,7 @@ function ImportPanel({ onValidate, onExecute, instructions }) {
             {validationReport && (
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--wpw-navy)', marginBottom: 8 }}>{t('validation_report_title')}</div>
-                <ValidationReport report={validationReport} />
+                <ValidationReport report={validationReport} fileName={file?.name} />
               </div>
             )}
             {executeReport && (

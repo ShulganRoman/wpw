@@ -103,7 +103,7 @@ class ExcelImportV4ServiceTest {
                 .errorCount(0).warningCount(0).canProceed(true)
                 .issues(Collections.emptyList()).unknownHeaders(Collections.emptyList())
                 .build();
-            when(validator.validate(any(), any())).thenReturn(expectedReport);
+            when(validator.validate(any(), any(), any())).thenReturn(expectedReport);
 
             ValidationReport result = service.validate(file);
 

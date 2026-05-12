@@ -88,7 +88,21 @@ public class ExcelImportV4Service {
             List<RawV4Row> rows = parser.parse(sheet, evaluator);
             List<String> unknown = parser.unknownHeaders(sheet);
 
-            return validator.validate(rows, unknown);
+            // \u041f\u043e\u0434\u0442\u044f\u0433\u0438\u0432\u0430\u0435\u043c \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0435 toolNo \u043e\u0434\u043d\u043e\u0439 \u0432\u044b\u0431\u043e\u0440\u043a\u043e\u0439, \u0447\u0442\u043e\u0431\u044b \u0432\u0430\u043b\u0438\u0434\u0430\u0442\u043e\u0440 \u043c\u043e\u0433
+            // \u043e\u0442\u0434\u0435\u043b\u0438\u0442\u044c \u00ab\u0431\u0443\u0434\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u043e\u00bb \u043e\u0442 \u00ab\u0431\u0443\u0434\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u043e\u00bb \u0432 dry-run.
+            Set<String> upperToolNos = rows.stream()
+                .map(RawV4Row::getToolNo)
+                .filter(t -> t != null && !t.isBlank())
+                .map(String::toUpperCase)
+                .collect(Collectors.toSet());
+
+            Set<String> existingUpper = upperToolNos.isEmpty()
+                ? Collections.emptySet()
+                : productRepo.findByToolNoUpperIn(upperToolNos).stream()
+                    .map(p -> p.getToolNo().toUpperCase())
+                    .collect(Collectors.toSet());
+
+            return validator.validate(rows, unknown, existingUpper);
         }
     }
 

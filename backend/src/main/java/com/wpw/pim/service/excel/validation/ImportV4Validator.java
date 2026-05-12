@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -33,15 +35,30 @@ public class ImportV4Validator {
     private static final Set<String> VALID_BORE_TYPES = Set.of("shank", "bore");
 
     /**
-     * Валидирует список строк и неизвестные заголовки.
-     *
-     * @param rows           распарсенные строки из листа Products
-     * @param unknownHeaders заголовки, не распознанные конфигом
-     * @return отчёт с ошибками и предупреждениями
+     * Backwards-compatible overload: validates без dry-run контекста.
+     * dry-run-счётчики всё равно посчитаются (всё пойдёт в "будет создано", БД не запрашивается).
      */
     public ValidationReport validate(List<RawV4Row> rows, List<String> unknownHeaders) {
+        return validate(rows, unknownHeaders, Collections.emptySet());
+    }
+
+    /**
+     * Валидирует список строк и неизвестные заголовки, дополнительно считая dry-run превью.
+     *
+     * @param rows                    распарсенные строки из листа Products
+     * @param unknownHeaders          заголовки, не распознанные конфигом
+     * @param existingToolNosUpper    upper-case toolNo, которые уже есть в БД
+     *                                (нужно, чтобы отличать «будет обновлено» от «будет создано»)
+     * @return отчёт с ошибками, предупреждениями и dry-run превью (включая готовый markdown)
+     */
+    public ValidationReport validate(List<RawV4Row> rows,
+                                     List<String> unknownHeaders,
+                                     Set<String> existingToolNosUpper) {
         List<ValidationIssue> issues = new ArrayList<>();
         Set<String> seenToolNos = new HashSet<>();
+        List<String> toCreate = new ArrayList<>();
+        List<String> toUpdate = new ArrayList<>();
+        List<String> toSkip   = new ArrayList<>();
 
         for (RawV4Row row : rows) {
             int rowNum = row.getRowNum();
@@ -50,11 +67,15 @@ public class ImportV4Validator {
             if (blank(row.getToolNo())) {
                 issues.add(ValidationIssue.error(Sheet.PRODUCTS, rowNum, "toolNo", null,
                     "Tool No is missing"));
+                toSkip.add("Row " + rowNum + ": Tool No is missing");
                 continue;
             }
 
-            // Дублирование toolNo в файле
-            if (!seenToolNos.add(row.getToolNo())) {
+            // Дублирование toolNo в файле — case-insensitive: execute использует upsert по UPPER(toolNo).
+            // Первая встреча в dry-run считается как create/update, последующие не дублируются.
+            String toolNoKey = row.getToolNo().trim().toUpperCase();
+            boolean isDuplicateInFile = !seenToolNos.add(toolNoKey);
+            if (isDuplicateInFile) {
                 issues.add(ValidationIssue.warning(Sheet.PRODUCTS, rowNum, "toolNo", row.getToolNo(),
                     "Duplicate Tool No in file"));
             }
@@ -105,10 +126,22 @@ public class ImportV4Validator {
             validateEnum(issues, rowNum, "stockStatus", row.getStockStatus(), VALID_STOCK_STATUSES);
             validateEnum(issues, rowNum, "rotationDirection", row.getRotationDirection(), VALID_ROTATION_DIRS);
             validateEnum(issues, rowNum, "boreType", row.getBoreType(), VALID_BORE_TYPES);
+
+            // Dry-run accounting — только для первой встречи toolNo в файле,
+            // execute использует upsert по toolNo, дубль не создаёт второй продукт.
+            if (!isDuplicateInFile) {
+                if (existingToolNosUpper.contains(toolNoKey)) {
+                    toUpdate.add(row.getToolNo());
+                } else {
+                    toCreate.add(row.getToolNo());
+                }
+            }
         }
 
         long errors = issues.stream().filter(i -> i.getSeverity() == ValidationIssue.Severity.ERROR).count();
         long warnings = issues.stream().filter(i -> i.getSeverity() == ValidationIssue.Severity.WARNING).count();
+
+        String dryRunReport = buildDryRunReport(rows.size(), toCreate, toUpdate, toSkip, errors, warnings, unknownHeaders);
 
         return ValidationReport.builder()
             .totalProductRows(rows.size())
@@ -118,7 +151,66 @@ public class ImportV4Validator {
             .canProceed(errors == 0)
             .issues(issues)
             .unknownHeaders(unknownHeaders)
+            .wouldCreate(toCreate.size())
+            .wouldUpdate(toUpdate.size())
+            .wouldSkip(toSkip.size())
+            .dryRunReport(dryRunReport)
             .build();
+    }
+
+    // -------------------------------------------------------------------------
+    // Markdown dry-run report
+    // -------------------------------------------------------------------------
+
+    private static String buildDryRunReport(int total,
+                                            List<String> toCreate,
+                                            List<String> toUpdate,
+                                            List<String> toSkip,
+                                            long errors,
+                                            long warnings,
+                                            List<String> unknownHeaders) {
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String status = errors == 0
+            ? "Passed"
+            : "Failed (" + errors + " errors)";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("# WPW PIM — Import Validation Report (Dry Run)\n\n");
+        sb.append("**Generated:** ").append(now).append("  \n");
+        sb.append("**Total product rows:** ").append(total).append("  \n");
+        sb.append("**Validation:** ").append(status).append("  \n");
+        sb.append("**Warnings:** ").append(warnings).append("\n\n");
+
+        sb.append("## Summary\n\n");
+        sb.append("| Action | Count |\n");
+        sb.append("|---|---:|\n");
+        sb.append("| Will be created | ").append(toCreate.size()).append(" |\n");
+        sb.append("| Will be updated | ").append(toUpdate.size()).append(" |\n");
+        sb.append("| Will be skipped | ").append(toSkip.size()).append(" |\n\n");
+
+        appendList(sb, "Will be created", toCreate);
+        appendList(sb, "Will be updated", toUpdate);
+        appendList(sb, "Will be skipped", toSkip);
+
+        if (unknownHeaders != null && !unknownHeaders.isEmpty()) {
+            sb.append("## Unknown headers (").append(unknownHeaders.size()).append(")\n\n");
+            sb.append("> Columns from the file that the importer did not recognise — check for typos or renamed columns.\n\n");
+            for (String h : unknownHeaders) {
+                sb.append("- `").append(h).append("`\n");
+            }
+            sb.append('\n');
+        }
+
+        return sb.toString();
+    }
+
+    private static void appendList(StringBuilder sb, String title, List<String> items) {
+        if (items.isEmpty()) return;
+        sb.append("## ").append(title).append(" (").append(items.size()).append(")\n\n");
+        for (String it : items) {
+            sb.append("- ").append(it).append('\n');
+        }
+        sb.append('\n');
     }
 
     // -------------------------------------------------------------------------

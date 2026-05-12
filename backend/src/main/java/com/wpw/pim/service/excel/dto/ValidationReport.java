@@ -25,4 +25,18 @@ public class ValidationReport {
 
     /** Заголовки из файла, которые не были распознаны (помогают обнаружить переименование колонок). */
     private final List<String> unknownHeaders;
+
+    // ── Dry-run preview (что произойдёт, если запустить execute прямо сейчас) ──────
+
+    /** Сколько новых товаров будет создано (toolNo нет в БД). */
+    private final int wouldCreate;
+
+    /** Сколько существующих товаров будет обновлено (toolNo уже есть в БД). */
+    private final int wouldUpdate;
+
+    /** Сколько строк будет пропущено (Tool No отсутствует или другие ERROR'ы). */
+    private final int wouldSkip;
+
+    /** Готовый Markdown-отчёт по dry-run (для скачивания .md). */
+    private final String dryRunReport;
 }
